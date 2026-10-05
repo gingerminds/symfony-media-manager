@@ -5,26 +5,22 @@ declare(strict_types=1);
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 
-return static function (DefinitionConfigurator $definition): void {
-    $resource = static function (NodeBuilder $children, string $name, string $baseClass): void {
-        $children
-            ->arrayNode($name)
-                ->addDefaultsIfNotSet()
-                ->children()
-                    ->scalarNode('entity')
-                        ->info('Entity class, extending the bundle Base' . $baseClass . ' (null: the bundle one).')
-                        ->defaultNull()
-                    ->end()
-                    ->scalarNode('controller')->defaultNull()->end()
-                    ->scalarNode('form')->defaultNull()->end()
+$resource = static function (NodeBuilder $children, string $name, string $baseClass): void {
+    $children
+        ->arrayNode($name)
+            ->addDefaultsIfNotSet()
+            ->children()
+                ->scalarNode('entity')
+                    ->info('Entity class, extending the bundle Base' . $baseClass . ' (null: the bundle one).')
+                    ->defaultNull()
                 ->end()
-            ->end();
-    };
+                ->scalarNode('controller')->defaultNull()->end()
+                ->scalarNode('form')->defaultNull()->end()
+            ->end()
+        ->end();
+};
 
-    $imageFormats = ['jpg', 'pjpg', 'png', 'gif', 'webp', 'avif'];
-
-    $children = $definition->rootNode()->children();
-
+$storage = static function (NodeBuilder $children): void {
     $children
         ->arrayNode('storage')
             ->info('Where the files are stored. Every file row keeps the name of its disk (files.disk).')
@@ -51,7 +47,9 @@ return static function (DefinitionConfigurator $definition): void {
                 ->end()
             ->end()
         ->end();
+};
 
+$library = static function (NodeBuilder $children): void {
     $children
         ->arrayNode('library')
             ->info('File library: the single place files are uploaded to, browsed and picked from.')
@@ -96,7 +94,11 @@ return static function (DefinitionConfigurator $definition): void {
                 ->end()
             ->end()
         ->end();
+};
 
+$imageFormats = ['jpg', 'pjpg', 'png', 'gif', 'webp', 'avif'];
+
+$images = static function (NodeBuilder $children) use ($imageFormats): void {
     $children
         ->arrayNode('images')
             ->info('Image presets rendered by Glide (GET /api/files/{id}/{preset}).')
@@ -146,14 +148,9 @@ return static function (DefinitionConfigurator $definition): void {
                 ->end()
             ->end()
         ->end();
+};
 
-    $children
-        ->integerNode('files_rate_limit')
-            ->info('Requests per minute and per IP on GET /api/files/* (0: no limit).')
-            ->defaultValue(600)
-            ->min(0)
-        ->end();
-
+$basket = static function (NodeBuilder $children): void {
     $children
         ->arrayNode('basket')
             ->info('Download baskets of medias (API).')
@@ -170,14 +167,34 @@ return static function (DefinitionConfigurator $definition): void {
                 ->end()
             ->end()
         ->end();
+};
 
-    $resources = $children->arrayNode('resources')
+$resources = static function (NodeBuilder $children) use ($resource): void {
+    $node = $children->arrayNode('resources')
         ->info('Overridable resources of the bundle, registered as gingerminds_core resources.')
         ->addDefaultsIfNotSet()
         ->children();
-    $resource($resources, 'media', 'Media');
-    $resource($resources, 'media_category', 'MediaCategory');
-    $resource($resources, 'file', 'File');
-    $resource($resources, 'basket', 'Basket');
-    $resources->end()->end();
+    $resource($node, 'media', 'Media');
+    $resource($node, 'media_category', 'MediaCategory');
+    $resource($node, 'file', 'File');
+    $resource($node, 'basket', 'Basket');
+    $node->end()->end();
+};
+
+return static function (DefinitionConfigurator $definition) use ($storage, $library, $images, $basket, $resources): void {
+    $children = $definition->rootNode()->children();
+
+    $storage($children);
+    $library($children);
+    $images($children);
+
+    $children
+        ->integerNode('files_rate_limit')
+            ->info('Requests per minute and per IP on GET /api/files/* (0: no limit).')
+            ->defaultValue(600)
+            ->min(0)
+        ->end();
+
+    $basket($children);
+    $resources($children);
 };
