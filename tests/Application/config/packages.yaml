@@ -91,11 +91,25 @@ security:
         - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: IS_AUTHENTICATED }
 
+parameters:
+    env(FILE_LIBRARY_DISK): 'default'
+    env(FILE_LIBRARY_ROOT): 'library'
+    env(FILE_LIBRARY_MAX_UPLOAD_SIZE): '100'
+
+# Env placeholders on purpose: they are resolved at runtime only.
+gingerminds_media_manager:
+    storage:
+        default_disk: '%env(FILE_LIBRARY_DISK)%'
+    library:
+        root: '%env(FILE_LIBRARY_ROOT)%'
+        max_upload_size: '%env(int:FILE_LIBRARY_MAX_UPLOAD_SIZE)%'
+        allowed_mimes: ['text/plain', 'image/png', 'application/zip', 'application/docx']
+
 # In-memory files: nothing is written on disk by the tests.
 flysystem:
     storages:
         gingerminds_media_manager.storage.default:
-            adapter: 'memory'
+            memory: ~
 
 # Bootstrap SCSS lives in the bundle vendor/.
 symfonycasts_sass:

@@ -50,9 +50,6 @@ final class ConfigurationTest extends TestCase
      */
     public static function invalidConfigurations(): iterable
     {
-        yield 'undeclared default disk' => [['storage' => ['default_disk' => 'public']]];
-        yield 'absolute library root' => [['library' => ['root' => '/var/library']]];
-        yield 'library root escaping' => [['library' => ['root' => 'library/../..']]];
         yield 'preset name not URL safe' => [['images' => ['presets' => ['Big Hero' => ['w' => 100]]]]];
         yield 'unknown image format' => [['images' => ['default_format' => 'bmp']]];
         yield 'unknown claim strategy' => [['basket' => ['claim_strategy' => 'keep']]];

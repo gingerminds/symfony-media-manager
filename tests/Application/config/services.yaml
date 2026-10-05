@@ -9,3 +9,8 @@ services:
     # Keeps PHPUnit output clean.
     logger:
         class: Psr\Log\NullLogger
+
+    # Bundle services fetched by the tests.
+    test.file_storage:
+        alias: gingerminds_media_manager.file.storage
+        public: true

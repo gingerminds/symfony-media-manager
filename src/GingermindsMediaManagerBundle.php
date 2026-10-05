@@ -4,17 +4,39 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle;
 
+use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
+use Gingerminds\MediaManagerBundle\Entity\File\File;
+use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\LogicException;
+use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service_locator;
 
 /**
  * Media library, file library and image processing on top of GingermindsCoreBundle.
  */
 final class GingermindsMediaManagerBundle extends AbstractBundle
 {
+    /**
+     * Overridable entities of the bundle.
+     */
+    public const array RESOURCES = [
+        'file' => [
+            'entity' => File::class,
+            'interface' => FileInterface::class,
+        ],
+    ];
+
     public const string TRANSLATION_DOMAIN = 'GingermindsMediaManager';
+
+    public const string DEFAULT_STORAGE = 'gingerminds_media_manager.storage.default';
 
     protected string $extensionAlias = 'gingerminds_media_manager';
 
@@ -49,5 +71,86 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         $parameters->set('gingerminds_media_manager.files_rate_limit', $config['files_rate_limit']);
         $parameters->set('gingerminds_media_manager.basket.enabled', $config['basket']['enabled']);
         $parameters->set('gingerminds_media_manager.basket.claim_strategy', $config['basket']['claim_strategy']);
+
+        $container->services()->get('gingerminds_media_manager.storage.disk_registry')
+            ->arg(0, service_locator(array_map(service(...), $config['storage']['disks'])));
+
+        foreach (self::RESOURCES as $name => $resource) {
+            $entity = $this->resourceValue($config, $name, 'entity');
+            $parameters->set('gingerminds_media_manager.resource.' . $name . '.entity', $entity);
+
+            if ($entity !== $resource['entity']) {
+                OverriddenEntityPass::registerOverriddenEntity($builder, $resource['entity']);
+            }
+        }
+    }
+
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    {
+        $config = $this->resolveConfig($builder);
+        $resolveTargetEntities = [];
+
+        foreach (self::RESOURCES as $name => $resource) {
+            $resolveTargetEntities[$resource['interface']] = $this->resourceValue($config, $name, 'entity');
+        }
+
+        $builder->prependExtensionConfig('doctrine', [
+            'orm' => [
+                'resolve_target_entities' => $resolveTargetEntities,
+                'mappings' => [
+                    'GingermindsMediaManagerFile' => $this->mapping('File'),
+                ],
+            ],
+        ]);
+
+        // A project storage with the same name replaces this one entirely.
+        $builder->prependExtensionConfig('flysystem', [
+            'storages' => [
+                self::DEFAULT_STORAGE => ['local' => ['directory' => '%kernel.project_dir%/var/storage/media']],
+            ],
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function resourceValue(array $config, string $name, string $key): string
+    {
+        return $config['resources'][$name][$key] ?? self::RESOURCES[$name][$key];
+    }
+
+    /**
+     * The bundle configuration, `resources` only: the other keys may hold env placeholders.
+     *
+     * @return array<string, mixed>
+     */
+    private function resolveConfig(ContainerBuilder $builder): array
+    {
+        $extension = $this->getContainerExtension();
+        $configuration = $extension instanceof ConfigurationExtensionInterface ? $extension->getConfiguration([], $builder) : null;
+
+        if (!$configuration instanceof ConfigurationInterface) {
+            throw new LogicException('The GingermindsMediaManagerBundle configuration cannot be resolved.');
+        }
+
+        $configs = array_map(
+            static fn (array $config): array => array_intersect_key($config, ['resources' => true]),
+            $builder->getExtensionConfig($this->extensionAlias),
+        );
+
+        return new Processor()->processConfiguration($configuration, $builder->getParameterBag()->resolveValue($configs));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapping(string $directory): array
+    {
+        return [
+            'type' => 'attribute',
+            'is_bundle' => false,
+            'dir' => $this->getPath() . '/src/Entity/' . $directory,
+            'prefix' => 'Gingerminds\\MediaManagerBundle\\Entity\\' . $directory,
+        ];
     }
 }
