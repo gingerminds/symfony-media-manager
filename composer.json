@@ -1,0 +1,72 @@
+{
+    "name": "gingerminds/symfony-media-manager",
+    "description": "Media library, file library and image processing for Gingerminds Symfony projects",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gingerminds"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "ext-zip": "*",
+        "api-platform/doctrine-orm": "^4.4",
+        "api-platform/symfony": "^4.4",
+        "doctrine/doctrine-bundle": "^2.18 || ^3.0",
+        "doctrine/orm": "^3.5",
+        "gingerminds/symfony-core": "^1.5",
+        "league/flysystem-bundle": "^3.7",
+        "league/glide": "^4.1",
+        "symfony/doctrine-bridge": "^8.1",
+        "symfony/form": "^8.1",
+        "symfony/framework-bundle": "^8.1",
+        "symfony/mime": "^8.1",
+        "symfony/property-access": "^8.1",
+        "symfony/security-bundle": "^8.1",
+        "symfony/serializer": "^8.1",
+        "symfony/translation": "^8.1",
+        "symfony/twig-bundle": "^8.1",
+        "symfony/uid": "^8.1",
+        "symfony/validator": "^8.1"
+    },
+    "require-dev": {
+        "dama/doctrine-test-bundle": "^8.2",
+        "friendsofphp/php-cs-fixer": "^3.0",
+        "league/flysystem-memory": "^3.0",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^12.0",
+        "rector/rector": "^2.0",
+        "squizlabs/php_codesniffer": "^3.0",
+        "symfony/browser-kit": "^8.1",
+        "symfony/css-selector": "^8.1",
+        "symfony/phpunit-bridge": "^8.1",
+        "symfony/yaml": "^8.1"
+    },
+    "suggest": {
+        "ext-imagick": "Image driver of the presets (images.driver: imagick, default)",
+        "ext-gd": "Alternative image driver of the presets (images.driver: gd)"
+    },
+    "autoload": {
+        "psr-4": {
+            "Gingerminds\\MediaManagerBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gingerminds\\MediaManagerBundle\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": false,
+            "symfony/flex": false,
+            "symfony/runtime": false
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

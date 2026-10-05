@@ -1,0 +1,10 @@
+gingerminds_core:
+    resource: '@GingermindsCoreBundle/config/routes.php'
+
+gingerminds_media_manager:
+    resource: '@GingermindsMediaManagerBundle/config/routes.php'
+
+api_platform:
+    resource: .
+    type: api_platform
+    prefix: /api

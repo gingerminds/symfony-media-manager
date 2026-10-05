@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset name="Gingerminds Symfony bundle">
+    <description>PSR-12 safety net; formatting itself is owned by PHP-CS-Fixer (@Symfony).</description>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <!-- Line length is a warning only: it must not fail the CI job. -->
+    <config name="ignore_warnings_on_exit" value="1"/>
+
+    <file>src</file>
+    <file>config</file>
+
+    <exclude-pattern>src/Maker/skeleton/*</exclude-pattern>
+
+    <rule ref="PSR12"/>
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="180"/>
+            <property name="absoluteLineLimit" value="0"/>
+            <property name="ignoreComments" value="true"/>
+        </properties>
+    </rule>
+</ruleset>

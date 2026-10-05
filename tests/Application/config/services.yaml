@@ -1,0 +1,11 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    test.rate_limiter_storage:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+
+    # Keeps PHPUnit output clean.
+    logger:
+        class: Psr\Log\NullLogger

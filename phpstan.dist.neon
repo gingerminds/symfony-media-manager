@@ -1,0 +1,25 @@
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-symfony/rules.neon
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+    - vendor/phpstan/phpstan-doctrine/rules.neon
+
+parameters:
+    level: 8
+    paths:
+        - src/
+        - config/
+        - tests/Application/
+    excludePaths:
+        - src/Maker/skeleton/* (?)
+        - tests/Application/var/*
+        - tests/Application/assets/*
+        - tests/Application/public/*
+        - tests/Application/bin/*
+        - tests/Application/config/reference.php (?)
+    tmpDir: var/phpstan
+    treatPhpDocTypesAsCertain: false
+    doctrine:
+        # `?string $name = null` + #[Assert\NotBlank] on a NOT NULL column is the
+        # standard Symfony entity/form pattern (empty object bound to a form).
+        allowNullablePropertyForRequiredField: true

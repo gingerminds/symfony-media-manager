@@ -1,0 +1,118 @@
+stages:
+  - quality
+  - syntax
+  - test
+
+variables:
+  PHP_IMAGE: registry.gitlab.gingerminds.fr/gm/docker-images/php-8.5-fpm-node-22-composer-2
+
+# Évite les pipelines en doublon (Push de branche et Merge Request)
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+.rules-qa:
+  rules:
+    # 1. Toujours lancer sur les Merge Requests vers master, develop, release
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master" || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^release/)
+    # 2. Lancer sur push direct (branches master, develop, release), hors messages de merge auto
+    - if: $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^release/) && $CI_COMMIT_TITLE !~ /^Merge branch.*/
+      when: on_success
+
+.php-qa-base:
+  extends: .rules-qa
+  image: $PHP_IMAGE
+  cache:
+    key:
+      files:
+        - composer.json
+    paths:
+      - vendor/
+  before_script:
+    - composer update --prefer-dist --no-ansi --no-interaction --no-progress
+    - mkdir -p qa-reports
+
+sonarqube:
+  stage: quality
+  extends: .rules-qa
+  image:
+    name: sonarsource/sonar-scanner-cli:11
+    entrypoint: [ "" ]
+  cache:
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+    paths:
+      - "${SONAR_USER_HOME}/cache"
+      - sonar-scanner/
+  script:
+    - sonar-scanner
+
+phpstan:
+  stage: syntax
+  extends: .php-qa-base
+  script:
+    - echo "🔍 Running PHPStan analysis..."
+    - vendor/bin/phpstan analyse --memory-limit=1G --error-format=json > qa-reports/phpstan-report.json
+  artifacts:
+    paths:
+      - qa-reports/phpstan-report.json
+    expire_in: 1 week
+    when: always
+
+rector:
+  stage: syntax
+  extends: .php-qa-base
+  script:
+    - echo "🛠 Running Rector analysis..."
+    - vendor/bin/rector process --dry-run --memory-limit=1G --ansi --output-format=json > qa-reports/rector-report.json || (cat qa-reports/rector-report.json && exit 1)
+  artifacts:
+    paths:
+      - qa-reports/rector-report.json
+    expire_in: 1 week
+    when: always
+
+php-cs-fixer:
+  stage: syntax
+  extends: .php-qa-base
+  script:
+    - echo "🎨 Running PHP-CS-Fixer (Symfony coding standards)..."
+    - vendor/bin/php-cs-fixer fix --dry-run --diff --format=gitlab > qa-reports/php-cs-fixer-report.json || (vendor/bin/php-cs-fixer fix --dry-run --diff && exit 1)
+  artifacts:
+    reports:
+      codequality: qa-reports/php-cs-fixer-report.json
+    expire_in: 1 week
+    when: always
+
+phpcs:
+  stage: syntax
+  extends: .php-qa-base
+  script:
+    - echo "🔍 Running PHP_CodeSniffer..."
+    - |
+      vendor/bin/phpcs --report=json > qa-reports/phpcs-report.json || {
+        echo "❌ PHP_CodeSniffer found errors. Summary:"
+        vendor/bin/phpcs --report=summary
+        exit 1
+      }
+  artifacts:
+    paths:
+      - qa-reports/phpcs-report.json
+    expire_in: 1 week
+    when: always
+
+phpunit:
+  stage: test
+  extends: .php-qa-base
+  script:
+    - echo "🧪 Running PHPUnit..."
+    - php tests/Application/bin/console importmap:install
+    - php tests/Application/bin/console sass:build
+    - vendor/bin/phpunit --log-junit qa-reports/phpunit-report.xml
+  artifacts:
+    reports:
+      junit: qa-reports/phpunit-report.xml
+    expire_in: 1 week
+    when: always
