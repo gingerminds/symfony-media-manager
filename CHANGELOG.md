@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   usages; the move dialog shows the folder tree), merge of the duplicates. Folders stay listed
   whatever the filters; usages and duplicates are collapsible sections of the detail panel.
 - JSON endpoints of the library browser under `/{admin}/files` (`gingerminds_media_manager_file_*`
-  routes): `browse`, `directories` (GET, POST, DELETE; each directory tells whether it has
+  routes; reads in `FileLibraryController`, writes in the `FileLibraryActionController` service): `browse`, `directories` (GET, POST, DELETE; each directory tells whether it has
   subdirectories), `{id}` (GET, PATCH), `upload`, `move`,
   `delete`, `merge`. Writes need the `gm-file-library` CSRF token in the `X-CSRF-Token` header;
   library errors are 422 with a translated message.

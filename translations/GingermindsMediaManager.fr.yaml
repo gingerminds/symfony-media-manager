@@ -25,6 +25,8 @@ file:
     name_s: Fichier
     name_p: Bibliothèque de fichiers
     root: Bibliothèque
+    detail: Détail du fichier
+    location: Emplacement
     directories: Dossiers
     search: Rechercher un fichier…
     type:

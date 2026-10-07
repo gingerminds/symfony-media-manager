@@ -18,22 +18,24 @@ return static function (RoutingConfigurator $routes): void {
     $files = $routes->collection('gingerminds_media_manager_file_')
         ->prefix('/%gingerminds_core.admin_prefix%/files');
 
+    $reads = '%gingerminds_media_manager.resource.file.controller%';
+    $writes = 'gingerminds_media_manager.controller.admin.file_library_action';
     $actions = [
-        'browse' => ['/browse', 'browse', 'GET'],
-        'directories' => ['/directories', 'directories', 'GET'],
-        'directory_create' => ['/directories', 'createDirectory', 'POST'],
-        'directory_delete' => ['/directories', 'deleteDirectory', 'DELETE'],
-        'upload' => ['/upload', 'upload', 'POST'],
-        'move' => ['/move', 'move', 'POST'],
-        'delete' => ['/delete', 'delete', 'POST'],
-        'merge' => ['/merge', 'merge', 'POST'],
-        'show' => ['/{id}', 'show', 'GET'],
-        'rename' => ['/{id}', 'rename', 'PATCH'],
+        'browse' => ['/browse', $reads, 'browse', 'GET'],
+        'directories' => ['/directories', $reads, 'directories', 'GET'],
+        'show' => ['/{id}', $reads, 'show', 'GET'],
+        'directory_create' => ['/directories', $writes, 'createDirectory', 'POST'],
+        'directory_delete' => ['/directories', $writes, 'deleteDirectory', 'DELETE'],
+        'upload' => ['/upload', $writes, 'upload', 'POST'],
+        'move' => ['/move', $writes, 'move', 'POST'],
+        'delete' => ['/delete', $writes, 'delete', 'POST'],
+        'merge' => ['/merge', $writes, 'merge', 'POST'],
+        'rename' => ['/{id}', $writes, 'rename', 'PATCH'],
     ];
 
-    foreach ($actions as $name => [$path, $action, $method]) {
+    foreach ($actions as $name => [$path, $controller, $action, $method]) {
         $files->add($name, $path)
-            ->controller('%gingerminds_media_manager.resource.file.controller%::' . $action)
+            ->controller($controller . '::' . $action)
             ->methods([$method])
             ->requirements(['id' => Requirement::UUID]);
     }

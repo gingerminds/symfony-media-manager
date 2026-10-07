@@ -25,6 +25,8 @@ file:
     name_s: File
     name_p: File library
     root: Library
+    detail: File details
+    location: Location
     directories: Folders
     search: Search a file…
     type:

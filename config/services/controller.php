@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryActionController;
 use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
 use Gingerminds\MediaManagerBundle\Controller\File\ShowFileController;
 use Gingerminds\MediaManagerBundle\Controller\File\ShowFilePresetController;
@@ -41,12 +42,23 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_core.controller.context'),
             service('gingerminds_media_manager.file.library'),
             service(FileRepository::class),
-            service('gingerminds_media_manager.file.reference_registry'),
             service('gingerminds_media_manager.file.library_presenter'),
+            service('gingerminds_media_manager.file.reference_registry'),
             service(LibraryStartPathProviderInterface::class),
             param('gingerminds_media_manager.library.max_upload_size'),
             param('gingerminds_media_manager.library.allowed_mimes'),
         ])
         ->tag('controller.service_arguments');
     $services->alias(FileLibraryController::class, 'gingerminds_media_manager.controller.admin.file_library')->public();
+
+    // Decorate this service to change the write actions of the library.
+    $services->set('gingerminds_media_manager.controller.admin.file_library_action', FileLibraryActionController::class)
+        ->args([
+            service('gingerminds_core.controller.context'),
+            service('gingerminds_media_manager.file.library'),
+            service(FileRepository::class),
+            service('gingerminds_media_manager.file.library_presenter'),
+        ])
+        ->tag('controller.service_arguments')
+        ->public();
 };

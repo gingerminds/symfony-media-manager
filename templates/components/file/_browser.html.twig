@@ -66,15 +66,15 @@
                                 </div>
                                 <div class="col-12 d-flex flex-wrap gap-4">
                                     <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="gm-file-browser-recursive" data-gm-file-browser-target="recursive" data-action="gm-file-browser#filter">
+                                        <input class="form-check-input" type="checkbox" id="gm-file-browser-recursive" data-gm-file-browser-target="recursive" data-action="gm-file-browser#filter">
                                         <label class="form-check-label" for="gm-file-browser-recursive">{{ 'file.filter.recursive'|trans }}</label>
                                     </div>
                                     <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="gm-file-browser-orphans" data-gm-file-browser-target="orphans" data-action="gm-file-browser#filter">
+                                        <input class="form-check-input" type="checkbox" id="gm-file-browser-orphans" data-gm-file-browser-target="orphans" data-action="gm-file-browser#filter">
                                         <label class="form-check-label" for="gm-file-browser-orphans">{{ 'file.filter.orphans'|trans }}</label>
                                     </div>
                                     <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="gm-file-browser-duplicates" data-gm-file-browser-target="duplicates" data-action="gm-file-browser#filter">
+                                        <input class="form-check-input" type="checkbox" id="gm-file-browser-duplicates" data-gm-file-browser-target="duplicates" data-action="gm-file-browser#filter">
                                         <label class="form-check-label" for="gm-file-browser-duplicates">{{ 'file.filter.duplicates'|trans }}</label>
                                     </div>
                                 </div>
@@ -95,7 +95,7 @@
     <div class="card shadow-sm">
         <div class="card-header py-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                <nav aria-label="breadcrumb">
+                <nav aria-label="{{ 'file.location'|trans }}">
                     <ol class="breadcrumb gm-file-browser-path mb-0" data-gm-file-browser-target="breadcrumb"></ol>
                 </nav>
                 {% if browser.canEdit %}
@@ -118,9 +118,9 @@
 
         <div class="card-body p-0">
             <div class="row g-0">
-                <aside class="col-md-4 col-lg-3 col-xxl-2 border-end gm-file-browser-tree">
+                <aside class="col-md-4 col-lg-3 col-xxl-2 border-end gm-file-browser-tree" aria-labelledby="gm-file-browser-directories">
                     <div class="p-3">
-                        <div class="text-uppercase text-muted fs-11 fw-semibold mb-2">{{ 'file.directories'|trans }}</div>
+                        <div class="text-uppercase text-muted fs-11 fw-semibold mb-2" id="gm-file-browser-directories">{{ 'file.directories'|trans }}</div>
                         <ul class="list-unstyled mb-0 gm-file-tree" data-gm-file-browser-target="tree"></ul>
                     </div>
                 </aside>
@@ -148,11 +148,11 @@
                             {% endif %}
                         </div>
                         <div class="gm-file-grid" data-gm-file-browser-target="grid"></div>
-                        <nav class="d-flex justify-content-center mt-3" data-gm-file-browser-target="pagination"></nav>
+                        <nav class="d-flex justify-content-center mt-3" aria-label="{{ 'list.pagination'|trans({}, 'GingermindsCore') }}" data-gm-file-browser-target="pagination"></nav>
                     </div>
                 </div>
 
-                <aside class="col-md-4 col-xl-3 border-start gm-file-browser-detail d-none" data-gm-file-browser-target="detail"></aside>
+                <aside class="col-md-4 col-xl-3 border-start gm-file-browser-detail d-none" aria-label="{{ 'file.detail'|trans }}" data-gm-file-browser-target="detail"></aside>
             </div>
         </div>
     </div>
