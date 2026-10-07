@@ -34,15 +34,17 @@ final readonly class ResourceFileUsageResolver implements FileUsageResolverInter
             return new FileUsage(new \ReflectionClass($owner)->getShortName(), $title);
         }
 
-        $editUrl = null;
-
-        if (null !== $resource->controller && null !== $id) {
-            try {
-                $editUrl = $this->urlGenerator->generate($resource->route('edit'), ['id' => $id]);
-            } catch (RouteNotFoundException) {
-            }
-        }
+        $editUrl = null !== $resource->controller && null !== $id ? $this->editUrl($resource, $id) : null;
 
         return new FileUsage($this->translator->trans($resource->translationKey('name_s'), [], $resource->translationDomain), $title, $editUrl);
+    }
+
+    private function editUrl(ResourceDefinition $resource, int|string $id): ?string
+    {
+        try {
+            return $this->urlGenerator->generate($resource->route('edit'), ['id' => $id]);
+        } catch (RouteNotFoundException) {
+            return null;
+        }
     }
 }

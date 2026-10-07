@@ -96,11 +96,10 @@ class FileLibrary
 
         $directory = $this->existingDirectory($path);
 
-        foreach ($this->filesystem()->listContents($directory, false) as $ignored) {
-            throw LibraryException::directoryNotEmpty($path);
-        }
-
-        if ($this->files->hasFilesUnder($this->disks->defaultDisk(), $directory)) {
+        if (
+            [] !== $this->filesystem()->listContents($directory, false)->toArray()
+            || $this->files->hasFilesUnder($this->disks->defaultDisk(), $directory)
+        ) {
             throw LibraryException::directoryNotEmpty($path);
         }
 
