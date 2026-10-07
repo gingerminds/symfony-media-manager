@@ -54,6 +54,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Public `GET /api/media_categories/tree`: the root categories with their nested `children`
   (every level, ordered by position), not paginated, loaded by a single query.
 
+- `FileLibrary`, the file library under `library.root` (paths relative to it): `directories()`
+  (read on the disk), `files(LibraryQuery)` (read in `files`, paginated by `library.per_page`:
+  search, type, creation dates, orphans, duplicates, sort, recursive), `mkdir()`, `rmdir()`
+  (empty directories only), `upload()` (a content already in the library is not stored again: the
+  existing file is returned as a duplicate), `rename()` / `move()` (same id, the physical file
+  follows, presets purged, moved back when the save fails), `delete()` (used files are kept and
+  returned with their usages, `deleteFile()` throws `FileInUseException`), `mergeDuplicates()`.
+- File reference registry (`FileReferenceRegistry`): `usages()` of several files at once,
+  `isUsed()`, `usedIds()`, `replace()` (through the entities, so the API cache is invalidated).
+  Sources implement `FileReferenceSourceInterface` (autoconfigured): every Doctrine association
+  to a file is found in the mapping, `JsonFieldFileReferenceSource` covers ids stored in a JSON
+  field. Usages are resolved by `FileUsageResolverInterface` services (autoconfigured, by
+  priority), by default to the `gingerminds_core` resource of the owner and its edit URL.
+- `FileStorage::delete()` keeps the physical file while another row still points to it.
+
 ### Changed
 
 - `storage.default_disk` and `library.root` are checked at runtime, so they accept env

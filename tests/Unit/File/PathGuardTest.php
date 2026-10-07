@@ -67,6 +67,22 @@ final class PathGuardTest extends TestCase
         self::assertSame('readme', $guard->fileName('README'));
     }
 
+    public function testDirectoryName(): void
+    {
+        self::assertSame('actualites-2026', $this->guard()->directoryName('Actualités 2026'));
+
+        $this->expectException(InvalidPathException::class);
+        $this->guard()->directoryName('???');
+    }
+
+    public function testRelative(): void
+    {
+        self::assertSame('', $this->guard()->relative('library'));
+        self::assertSame('fr/news', $this->guard()->relative('library/fr/news'));
+        self::assertSame('library-old/a.txt', $this->guard()->relative('library-old/a.txt'));
+        self::assertSame('fr/a.txt', $this->guard('')->relative('fr/a.txt'));
+    }
+
     private function guard(string $root = 'library'): PathGuard
     {
         return new PathGuard($root, new AsciiSlugger());

@@ -37,7 +37,7 @@ final readonly class FileFactory
         return $this->text($originalName, '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>');
     }
 
-    private function upload(string $originalName, string $content): UploadedFile
+    public function upload(string $originalName = 'notes.txt', string $content = 'content'): UploadedFile
     {
         $path = (string) tempnam(sys_get_temp_dir(), 'gm-upload');
         file_put_contents($path, $content);

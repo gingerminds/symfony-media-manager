@@ -10,6 +10,8 @@ use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
+use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceSourceInterface;
+use Gingerminds\MediaManagerBundle\File\Reference\FileUsageResolverInterface;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -78,6 +80,9 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $container->import('../config/services.php');
+
+        $builder->registerForAutoconfiguration(FileReferenceSourceInterface::class)->addTag(FileReferenceSourceInterface::TAG);
+        $builder->registerForAutoconfiguration(FileUsageResolverInterface::class)->addTag(FileUsageResolverInterface::TAG);
 
         $parameters = $container->parameters();
         $parameters->set('gingerminds_media_manager.storage.default_disk', $config['storage']['default_disk']);

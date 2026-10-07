@@ -63,7 +63,7 @@ class FileStorage
 
         $disk ??= $this->disks->defaultDisk();
         $filesystem = $this->disks->get($disk);
-        $path = $this->availablePath($filesystem, $disk, $this->paths->inLibrary($directory), $this->paths->fileName($originalName));
+        $path = $this->availablePath($disk, $this->paths->inLibrary($directory), $this->paths->fileName($originalName));
 
         $this->write($filesystem, $path, $realPath, $originalName);
 
@@ -80,10 +80,16 @@ class FileStorage
         return $entity;
     }
 
+    /**
+     * The physical file is kept while another row still points to it.
+     */
     public function delete(FileInterface $file): void
     {
-        $this->images->clear($file);
-        $this->disks->get($file->getDisk())->delete($file->getPath());
+        if ($this->files->countByPath($file->getDisk(), $file->getPath()) <= 1) {
+            $this->images->clear($file);
+            $this->disks->get($file->getDisk())->delete($file->getPath());
+        }
+
         $this->files->remove($file);
     }
 
@@ -97,8 +103,14 @@ class FileStorage
         return $this->disks->get($file->getDisk())->readStream($file->getPath());
     }
 
-    private function availablePath(FilesystemOperator $filesystem, string $disk, string $directory, string $fileName): string
+    /**
+     * "name.ext", else "name-1.ext", "name-2.ext"... free on the disk and in `files`.
+     *
+     * @param string $directory on the disk
+     */
+    public function availablePath(string $disk, string $directory, string $fileName): string
     {
+        $filesystem = $this->disks->get($disk);
         $name = pathinfo($fileName, \PATHINFO_FILENAME);
         $extension = pathinfo($fileName, \PATHINFO_EXTENSION);
         $suffix = 0;

@@ -56,6 +56,34 @@ final readonly class PathGuard
     }
 
     /**
+     * "Actualités 2026" becomes "actualites-2026".
+     */
+    public function directoryName(string $name): string
+    {
+        $name = strtolower($this->slugger->slug($name)->toString());
+
+        if ('' === $name) {
+            throw InvalidPathException::forbiddenCharacters($name);
+        }
+
+        return $name;
+    }
+
+    /**
+     * The path relative to the library root of a path on the disk.
+     */
+    public function relative(string $path): string
+    {
+        $root = $this->root();
+
+        if ('' === $root || !str_starts_with($path . '/', $root . '/')) {
+            return $path;
+        }
+
+        return ltrim(substr($path, \strlen($root)), '/');
+    }
+
+    /**
      * "Mon Fichier été.PDF" becomes "mon-fichier-ete.pdf".
      */
     public function fileName(string $originalName): string

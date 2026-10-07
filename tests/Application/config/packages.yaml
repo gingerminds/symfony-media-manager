@@ -99,6 +99,12 @@ parameters:
     env(FILE_LIBRARY_MAX_UPLOAD_SIZE): '100'
 
 # Env placeholders on purpose: they are resolved at runtime only.
+gingerminds_core:
+    resources:
+        article:
+            entity: Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article
+            controller: Gingerminds\MediaManagerBundle\Tests\Application\Controller\ArticleController
+
 gingerminds_media_manager:
     storage:
         default_disk: '%env(FILE_LIBRARY_DISK)%'
