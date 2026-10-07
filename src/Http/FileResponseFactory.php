@@ -52,6 +52,7 @@ final readonly class FileResponseFactory
         $response->headers->set('Content-Length', (string) $filesystem->fileSize($path));
 
         if (null !== $name) {
+            $name = strtr($name, '/\\', '__');
             $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(
                 HeaderUtils::DISPOSITION_INLINE,
                 $name,
@@ -64,8 +65,8 @@ final readonly class FileResponseFactory
 
     private function asciiFallback(string $name): string
     {
-        $ascii = (string) preg_replace('/[^\x20-\x7E]|[%\/\\\\]/', '_', new UnicodeString($name)->ascii()->toString());
+        $ascii = (string) preg_replace('/[^\x20-\x7E]/', '_', strtr(new UnicodeString($name)->ascii()->toString(), '%', '_'));
 
-        return '' === trim($ascii, '_') ? 'file' : $ascii;
+        return 1 === preg_match('/[a-z0-9]/i', $ascii) ? $ascii : 'file';
     }
 }
