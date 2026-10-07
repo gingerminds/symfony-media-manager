@@ -7,6 +7,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
 use Gingerminds\MediaManagerBundle\Menu\MediaManagerAdminMenuProvider;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
+use Gingerminds\MediaManagerBundle\Security\Voter\FileVoter;
 use Gingerminds\MediaManagerBundle\Security\Voter\MediaCategoryVoter;
 
 /*
@@ -20,6 +21,9 @@ return static function (ContainerConfigurator $container): void {
         ->tag('gingerminds_core.admin_menu_provider');
 
     $services->set('gingerminds_media_manager.security.voter.media_category', MediaCategoryVoter::class)
+        ->tag('security.voter');
+
+    $services->set('gingerminds_media_manager.security.voter.file', FileVoter::class)
         ->tag('security.voter');
 
     $services->set('gingerminds_media_manager.form.type.media_category', MediaCategoryType::class)

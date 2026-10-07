@@ -12,7 +12,6 @@ use Gingerminds\CoreBundle\Model\CacheableResourceInterface;
 use Gingerminds\CoreBundle\Model\CacheCascadeInterface;
 use Gingerminds\CoreBundle\Model\SearchableInterface;
 use Gingerminds\CoreBundle\Model\SortableInterface;
-use Gingerminds\CoreBundle\Model\TimestampableInterface;
 use Gingerminds\CoreBundle\Model\Trait\CacheableResourceTrait;
 use Gingerminds\CoreBundle\Model\Trait\TimestampableTrait;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -23,7 +22,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\MappedSuperclass]
 #[UniqueEntity(fields: ['code'])]
-abstract class BaseMediaCategory implements MediaCategoryInterface, TimestampableInterface, SortableInterface, SearchableInterface, CacheableResourceInterface, CacheCascadeInterface
+abstract class BaseMediaCategory implements MediaCategoryInterface, SortableInterface, SearchableInterface, CacheableResourceInterface, CacheCascadeInterface
 {
     use CacheableResourceTrait;
     use TimestampableTrait;

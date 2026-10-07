@@ -1,0 +1,178 @@
+{#
+ # Library browser, driven by the Stimulus `gm-file-browser` controller.
+ # Vars: browser (FileLibraryController::browserParameters()), mode (manager|picker).
+ #}
+{% trans_default_domain 'GingermindsMediaManager' %}
+{% set label_keys = [
+    'root', 'directories',
+    'field.name', 'field.type', 'field.size', 'field.created_at', 'field.directory', 'field.usages', 'field.duplicates', 'field.directory_name', 'field.file_name',
+    'action.open', 'action.rename', 'action.move', 'action.move_here', 'action.delete', 'action.merge', 'action.show', 'action.new_directory', 'action.delete_directory',
+    'action.select_page', 'action.cancel', 'action.confirm', 'action.close', 'action.first', 'action.previous', 'action.next', 'action.last',
+    'message.loading', 'message.empty', 'message.selected', 'message.total', 'message.not_used', 'message.uploaded', 'message.duplicate',
+    'message.too_large', 'message.deleted', 'message.blocked', 'message.moved', 'message.merged', 'message.confirm_delete', 'message.confirm_delete_directory',
+    'message.confirm_merge', 'message.move_to',
+] %}
+{% set labels = {'error.generic': 'error.generic'|trans} %}
+{% for key in label_keys %}
+    {% set labels = labels|merge({(key): ('file.' ~ key)|trans}) %}
+{% endfor %}
+
+<div class="gm-file-browser" data-controller="gm-file-browser"
+     data-gm-file-browser-mode-value="{{ mode }}"
+     data-gm-file-browser-config-value="{{ browser|json_encode }}"
+     data-gm-file-browser-labels-value="{{ labels|json_encode }}"
+     data-action="dragenter->gm-file-browser#dragEnter dragover->gm-file-browser#dragOver dragleave->gm-file-browser#dragLeave drop->gm-file-browser#drop">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-0">
+            <div class="accordion accordion-flush">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#gm-file-browser-filters" aria-expanded="false" aria-controls="gm-file-browser-filters">
+                            <i class="bi bi-funnel me-2 text-primary"></i>
+                            {{ 'file.filter.more'|trans }}
+                        </button>
+                    </h2>
+                    <div id="gm-file-browser-filters" class="accordion-collapse collapse" data-gm-file-browser-target="filters">
+                        <div class="p-4 border-top">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label for="gm-file-browser-search" class="form-label">{{ 'file.filter.search'|trans }}</label>
+                                    <input type="search" id="gm-file-browser-search" class="form-control" placeholder="{{ 'file.search'|trans }}" data-gm-file-browser-target="search" data-action="input->gm-file-browser#search">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="gm-file-browser-type" class="form-label">{{ 'file.field.type'|trans }}</label>
+                                    <select id="gm-file-browser-type" class="form-select" data-gm-file-browser-target="type" data-action="gm-file-browser#filter">
+                                        <option value="">{{ 'file.type.all'|trans }}</option>
+                                        {% for type in browser.types %}
+                                            <option value="{{ type }}">{{ ('file.type.' ~ type)|trans }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="gm-file-browser-sort" class="form-label">{{ 'file.filter.sort'|trans }}</label>
+                                    <select id="gm-file-browser-sort" class="form-select" data-gm-file-browser-target="sort" data-action="gm-file-browser#filter">
+                                        {% for sort in ['name_asc', 'name_desc', 'date_desc', 'date_asc', 'size_desc', 'size_asc'] %}
+                                            <option value="{{ sort }}">{{ ('file.sort.' ~ sort)|trans }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="gm-file-browser-from" class="form-label">{{ 'file.filter.from'|trans }}</label>
+                                    <input type="date" id="gm-file-browser-from" class="form-control" data-gm-file-browser-target="from" data-action="gm-file-browser#filter">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="gm-file-browser-to" class="form-label">{{ 'file.filter.to'|trans }}</label>
+                                    <input type="date" id="gm-file-browser-to" class="form-control" data-gm-file-browser-target="to" data-action="gm-file-browser#filter">
+                                </div>
+                                <div class="col-12 d-flex flex-wrap gap-4">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="gm-file-browser-recursive" data-gm-file-browser-target="recursive" data-action="gm-file-browser#filter">
+                                        <label class="form-check-label" for="gm-file-browser-recursive">{{ 'file.filter.recursive'|trans }}</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="gm-file-browser-orphans" data-gm-file-browser-target="orphans" data-action="gm-file-browser#filter">
+                                        <label class="form-check-label" for="gm-file-browser-orphans">{{ 'file.filter.orphans'|trans }}</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="gm-file-browser-duplicates" data-gm-file-browser-target="duplicates" data-action="gm-file-browser#filter">
+                                        <label class="form-check-label" for="gm-file-browser-duplicates">{{ 'file.filter.duplicates'|trans }}</label>
+                                    </div>
+                                </div>
+                                {# Same place as the "clear filters" button of the core lists; the filters apply as they change. #}
+                                <div class="col-md-12 d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-light px-4" data-action="gm-file-browser#resetFilters">
+                                        {{- 'action.clear_filters'|trans({}, 'GingermindsCore') -}}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header py-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb gm-file-browser-path mb-0" data-gm-file-browser-target="breadcrumb"></ol>
+                </nav>
+                {% if browser.canEdit %}
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-danger d-none" data-gm-file-browser-target="deleteDirectoryButton" data-action="gm-file-browser#deleteDirectory">
+                            <i class="bi bi-folder-x me-1"></i> {{ 'file.action.delete_directory'|trans }}
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" data-action="gm-file-browser#createDirectory">
+                            <i class="bi bi-folder-plus me-1"></i> {{ 'file.action.new_directory'|trans }}
+                        </button>
+                        <label class="btn btn-success mb-0">
+                            <i class="bi bi-cloud-arrow-up me-1"></i> {{ 'file.action.upload'|trans }}
+                            <input type="file" class="d-none" multiple data-action="gm-file-browser#chooseFiles"
+                                   {% if browser.allowedMimes is not empty %}accept="{{ browser.allowedMimes|join(',') }}"{% endif %}>
+                        </label>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <aside class="col-md-4 col-lg-3 col-xxl-2 border-end gm-file-browser-tree">
+                    <div class="p-3">
+                        <div class="text-uppercase text-muted fs-11 fw-semibold mb-2">{{ 'file.directories'|trans }}</div>
+                        <ul class="list-unstyled mb-0 gm-file-tree" data-gm-file-browser-target="tree"></ul>
+                    </div>
+                </aside>
+
+                <div class="col position-relative gm-file-browser-main">
+                    <div class="gm-file-browser-dropzone" data-gm-file-browser-target="dropzone">
+                        <div><i class="bi bi-cloud-arrow-up d-block fs-1 mb-2"></i>{{ 'file.message.drop'|trans }}</div>
+                    </div>
+                    <div class="p-3">
+                        <div data-gm-file-browser-target="alerts"></div>
+                        <div data-gm-file-browser-target="uploads"></div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3 pb-3 border-bottom gm-file-browser-toolbar">
+                            <span class="text-muted fs-13 me-auto" data-gm-file-browser-target="total"></span>
+                            {% if browser.canEdit %}
+                                <div class="d-flex align-items-center gap-2 me-2">
+                                    <input class="form-check-input mt-0" type="checkbox" id="gm-file-browser-select-page" data-gm-file-browser-target="selectAll" data-action="gm-file-browser#togglePage">
+                                    <label class="form-check-label" for="gm-file-browser-select-page" data-gm-file-browser-target="selectionCount">{{ 'file.action.select_page'|trans }}</label>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-info" disabled data-gm-file-browser-target="selectionAction" data-action="gm-file-browser#moveSelection">
+                                    <i class="bi bi-folder-symlink me-1"></i> {{ 'file.action.move'|trans }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" disabled data-gm-file-browser-target="selectionAction" data-action="gm-file-browser#deleteSelection">
+                                    <i class="bi bi-trash me-1"></i> {{ 'file.action.delete'|trans }}
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="gm-file-grid" data-gm-file-browser-target="grid"></div>
+                        <nav class="d-flex justify-content-center mt-3" data-gm-file-browser-target="pagination"></nav>
+                    </div>
+                </div>
+
+                <aside class="col-md-4 col-xl-3 border-start gm-file-browser-detail d-none" data-gm-file-browser-target="detail"></aside>
+            </div>
+        </div>
+    </div>
+
+    {# Outside the card: the admin cards are transformed on hover, which would break a fixed modal. #}
+    <div class="modal fade" tabindex="-1" aria-hidden="true" data-gm-file-browser-target="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form data-action="gm-file-browser#confirmDialog:prevent">
+                    <div class="modal-header">
+                        <h5 class="modal-title" data-gm-file-browser-target="dialogTitle"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'file.action.close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body" data-gm-file-browser-target="dialogBody"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'file.action.cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-primary" data-gm-file-browser-target="dialogConfirm">{{ 'file.action.confirm'|trans }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

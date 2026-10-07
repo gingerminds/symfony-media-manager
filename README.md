@@ -5,7 +5,7 @@ built on [`gingerminds/symfony-core`](https://github.com/gingerminds/symfony-cor
 Symfony 8 counterpart of `gingerminds/laravel-media-manager`.
 
 Requires PHP 8.4, Symfony 8.1, Doctrine ORM 3, API Platform 4.4, `league/flysystem-bundle`,
-`league/glide` and `gingerminds/symfony-core` ^1.5.
+`league/glide` and `gingerminds/symfony-core` ^1.6.
 
 > Work in progress: the port of `gingerminds/laravel-media-manager` is done step by step,
 > see [CHANGELOG](CHANGELOG.md).

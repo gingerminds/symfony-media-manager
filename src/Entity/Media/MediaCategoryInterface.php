@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Entity\Media;
 
 use Gingerminds\CoreBundle\Model\ResourceInterface;
+use Gingerminds\CoreBundle\Model\TimestampableInterface;
 
-interface MediaCategoryInterface extends ResourceInterface, \Stringable
+interface MediaCategoryInterface extends ResourceInterface, TimestampableInterface, \Stringable
 {
     public function getId(): ?int;
 

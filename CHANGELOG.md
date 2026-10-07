@@ -69,7 +69,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   priority), by default to the `gingerminds_core` resource of the owner and its edit URL.
 - `FileStorage::delete()` keeps the physical file while another row still points to it.
 
+- "File library" admin page (`/{admin}/files`, `file` core resource without CRUD routes, its
+  controller set by `resources.file.controller`): folder tree, search and filters (type, sort,
+  subfolders, unused, duplicates, creation dates), paginated grid with usage counts (`thumbnail`
+  preset), detail panel (`card` preset preview, usages with their edit links, duplicates),
+  uploads by button or drag & drop with progress (an existing content is reported, not stored
+  again), new / delete folder, rename, move and delete (used files are kept and listed with their
+  usages; the move dialog shows the folder tree), merge of the duplicates. Folders stay listed
+  whatever the filters; usages and duplicates are collapsible sections of the detail panel.
+- JSON endpoints of the library browser under `/{admin}/files` (`gingerminds_media_manager_file_*`
+  routes): `browse`, `directories` (GET, POST, DELETE; each directory tells whether it has
+  subdirectories), `{id}` (GET, PATCH), `upload`, `move`,
+  `delete`, `merge`. Writes need the `gm-file-library` CSRF token in the `X-CSRF-Token` header;
+  library errors are 422 with a translated message.
+- `view files`: browse and pick files; `edit files`: every other action, deletions included
+  (`delete files` is created by `gingerminds:permissions:sync` but not used).
+- `LibraryStartPathProviderInterface`: folder the browser opens on (root by default), replaced by
+  aliasing the interface.
+- Admin assets through the core `admin_includes.head` slot: `gingerminds-media-manager` asset
+  mapper path, `assets/styles/media-manager.scss` added to the sass-bundle roots (project theme
+  and Bootstrap variables available), `gm-file-browser` Stimulus controller registered on the
+  core app. Nothing to add to the project importmap: `RelativeImportCompiler` rewrites the relative
+  imports of the bundle scripts (`gingerminds-media-manager/*.js`) to their versioned paths.
+- `MediaCategoryInterface` extends `TimestampableInterface`.
+- Library exceptions are translatable (`TranslatableExceptionInterface`, `error.*` keys).
+
 ### Changed
 
+- Requires `gingerminds/symfony-core` ^1.6 (`admin_includes.head`).
 - `storage.default_disk` and `library.root` are checked at runtime, so they accept env
   placeholders (`%env(FILE_LIBRARY_DISK)%`, `%env(FILE_LIBRARY_ROOT)%`).

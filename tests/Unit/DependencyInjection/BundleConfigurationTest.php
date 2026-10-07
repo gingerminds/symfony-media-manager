@@ -49,6 +49,28 @@ final class BundleConfigurationTest extends TestCase
         self::assertSame('App\\Controller\\CategoryController', $resource['controller']);
     }
 
+    public function testTheFilesAreACoreResourceWithoutCrudRoutes(): void
+    {
+        $container = $this->prepend([['resources' => ['file' => ['controller' => 'App\\Controller\\LibraryController']]]]);
+        $resource = $this->merged($container, 'gingerminds_core')['resources']['file'];
+
+        self::assertNull($resource['controller']);
+        self::assertSame('files', $resource['permission']);
+        self::assertSame('gingerminds_media_manager_file', $resource['route_prefix']);
+
+        new GingermindsMediaManagerBundle()->getContainerExtension()?->load([['resources' => ['file' => ['controller' => 'App\\Controller\\LibraryController']]]], $container);
+        self::assertSame('App\\Controller\\LibraryController', $container->getParameter('gingerminds_media_manager.resource.file.controller'));
+    }
+
+    public function testTheAdminAssetsArePrepended(): void
+    {
+        $container = $this->prepend([]);
+        $bundleDir = new GingermindsMediaManagerBundle()->getPath();
+
+        self::assertSame(['head' => ['@GingermindsMediaManager/admin/_head.html.twig']], $this->merged($container, 'gingerminds_core')['admin_includes']);
+        self::assertSame([$bundleDir . '/assets' => 'gingerminds-media-manager'], $this->merged($container, 'framework')['asset_mapper']['paths']);
+    }
+
     public function testAProjectEntityOverridesTheBundleOne(): void
     {
         $configs = [['resources' => ['file' => ['entity' => ProjectFile::class]]]];

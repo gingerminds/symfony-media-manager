@@ -20,3 +20,96 @@ media_category:
         no_items: No media category
     error:
         has_children: This category has subcategories, delete or move them first.
+
+file:
+    name_s: File
+    name_p: File library
+    root: Library
+    directories: Folders
+    search: Search a file…
+    type:
+        all: All types
+        image: Images
+        video: Videos
+        audio: Audio
+        pdf: PDF
+        document: Documents
+        archive: Archives
+    sort:
+        name_asc: Name (A → Z)
+        name_desc: Name (Z → A)
+        date_desc: Newest
+        date_asc: Oldest
+        size_desc: Largest
+        size_asc: Smallest
+    filter:
+        sort: Sort by
+        search: Search
+        more: Filters
+        recursive: Include the files of the subfolders
+        orphans: Unused
+        duplicates: Duplicates
+        from: Added from
+        to: "Added until"
+    field:
+        name: Name
+        type: Type
+        size: Size
+        created_at: Added on
+        directory: Folder
+        sort: Sort
+        usages: Usages
+        duplicates: Duplicates
+        directory_name: Folder name
+        file_name: File name
+    action:
+        upload: Upload
+        new_directory: New folder
+        delete_directory: Delete the folder
+        open: Open
+        rename: Rename
+        move: Move
+        move_here: Move here
+        delete: Delete
+        merge: Keep this file and merge its duplicates
+        show: Show
+        clear_selection: Clear the selection
+        select_page: Select all
+        first: First page
+        previous: Previous
+        next: Next
+        last: Last page
+        cancel: Cancel
+        confirm: Confirm
+        close: Close
+    message:
+        loading: Loading…
+        empty: No file
+        drop: Drop your files to upload them into this folder
+        selected: '%count% selected'
+        total: '%count% file(s)'
+        not_used: This file is not used anywhere.
+        uploaded: '"%name%" has been uploaded.'
+        duplicate: '"%name%" is already in the library: "%existing%".'
+        too_large: '"%name%" exceeds the maximum size (%max%).'
+        deleted: '%count% file(s) deleted.'
+        blocked: 'These files are used, they have not been deleted:'
+        moved: '%count% file(s) moved.'
+        merged: Duplicates merged, %count% reference(s) updated.
+        confirm_delete: Delete %count% file(s)? The used files will be kept.
+        confirm_delete_directory: Delete the folder "%name%"? It must be empty.
+        confirm_merge: The %count% duplicate(s) will be replaced by this file wherever they are used, then deleted.
+        move_to: Move %count% file(s) to "%path%"
+
+error:
+    generic: An error occurred, please try again.
+    upload_failed: The file could not be sent.
+    directory_not_found: The folder "%path%" does not exist.
+    directory_exists: The folder "%path%" already exists.
+    directory_not_empty: The folder "%path%" is not empty.
+    root_directory: The library root cannot be deleted.
+    invalid_path: This path is not valid.
+    mime_not_allowed: The file type "%mime%" is not allowed.
+    too_large: The file is too large (%size% KB, %max% KB allowed).
+    could_not_store: The file "%name%" could not be stored.
+    not_duplicates: These files are not duplicates.

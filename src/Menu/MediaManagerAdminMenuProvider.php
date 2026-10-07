@@ -18,6 +18,7 @@ final readonly class MediaManagerAdminMenuProvider implements AdminMenuProviderI
     public const string SECTION = 'media_manager';
 
     private const array ENTRIES = [
+        'file' => ['bi-folder2-open', 10],
         'media_category' => ['bi-diagram-3', 30],
     ];
 

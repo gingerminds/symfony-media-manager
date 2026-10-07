@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle;
 
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
+use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
@@ -45,9 +46,17 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
     ];
 
     /**
-     * Admin resources, registered as `gingerminds_core` resources.
+     * Admin resources, registered as `gingerminds_core` resources. Without `crud`, the controller
+     * has its own routes (config/routes.php) instead of the core CRUD ones.
      */
     public const array ADMIN_RESOURCES = [
+        'file' => [
+            'controller' => FileLibraryController::class,
+            'form' => null,
+            'path' => 'files',
+            'permission' => 'files',
+            'crud' => false,
+        ],
         'media_category' => [
             'controller' => MediaCategoryController::class,
             'form' => MediaCategoryType::class,
@@ -111,7 +120,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
             }
         }
 
-        // Extra admin routes (reorder) target the configured controller.
+        // The bundle routes (reorder, library) target the configured controller.
         foreach (array_keys(self::ADMIN_RESOURCES) as $name) {
             $parameters->set('gingerminds_media_manager.resource.' . $name . '.controller', $this->resourceValue($config, $name, 'controller'));
         }
@@ -141,7 +150,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         foreach (self::ADMIN_RESOURCES as $name => $resource) {
             $resources[$name] = [
                 'entity' => $this->resourceValue($config, $name, 'entity'),
-                'controller' => $this->resourceValue($config, $name, 'controller'),
+                'controller' => ($resource['crud'] ?? true) ? $this->resourceValue($config, $name, 'controller') : null,
                 'form' => $this->resourceValue($config, $name, 'form'),
                 'path' => $resource['path'],
                 'permission' => $resource['permission'],
@@ -153,15 +162,28 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         }
 
         // Prepended: the project configuration still overrides any key.
-        $builder->prependExtensionConfig('gingerminds_core', ['resources' => $resources]);
+        $builder->prependExtensionConfig('gingerminds_core', [
+            'resources' => $resources,
+            'admin_includes' => ['head' => ['@GingermindsMediaManager/admin/_head.html.twig']],
+        ]);
 
         $builder->prependExtensionConfig('framework', [
+            'asset_mapper' => [
+                'paths' => [$this->getPath() . '/assets' => 'gingerminds-media-manager'],
+            ],
             'rate_limiter' => [
                 self::FILES_RATE_LIMITER => 0 === $config['files_rate_limit']
                     ? ['policy' => 'no_limit']
                     : ['policy' => 'fixed_window', 'limit' => $config['files_rate_limit'], 'interval' => '1 minute'],
             ],
         ]);
+
+        // Compiled with the core admin stylesheet, its load paths (project theme, Bootstrap) included.
+        if ($builder->hasExtension('symfonycasts_sass')) {
+            $builder->prependExtensionConfig('symfonycasts_sass', [
+                'root_sass' => [$this->getPath() . '/assets/styles/media-manager.scss'],
+            ]);
+        }
 
         // A project storage with the same name replaces this one entirely.
         $builder->prependExtensionConfig('flysystem', [
@@ -174,7 +196,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
     /**
      * @param array<string, mixed> $config
      */
-    private function resourceValue(array $config, string $name, string $key): string
+    private function resourceValue(array $config, string $name, string $key): ?string
     {
         return $config['resources'][$name][$key] ?? self::RESOURCES[$name][$key] ?? self::ADMIN_RESOURCES[$name][$key];
     }

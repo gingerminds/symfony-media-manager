@@ -55,6 +55,17 @@ class FileLibrary
         return array_values($directories);
     }
 
+    public function hasDirectories(string $path): bool
+    {
+        foreach ($this->filesystem()->listContents($this->existingDirectory($path), false) as $item) {
+            if ($item->isDir() && !str_starts_with(basename($item->path()), '.')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @return Paginator<FileInterface>
      */

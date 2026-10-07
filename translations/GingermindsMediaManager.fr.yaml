@@ -20,3 +20,96 @@ media_category:
         no_items: Aucune catégorie de média
     error:
         has_children: Cette catégorie contient des sous-catégories, supprimez-les ou déplacez-les d'abord.
+
+file:
+    name_s: Fichier
+    name_p: Bibliothèque de fichiers
+    root: Bibliothèque
+    directories: Dossiers
+    search: Rechercher un fichier…
+    type:
+        all: Tous les types
+        image: Images
+        video: Vidéos
+        audio: Audio
+        pdf: PDF
+        document: Documents
+        archive: Archives
+    sort:
+        name_asc: Nom (A → Z)
+        name_desc: Nom (Z → A)
+        date_desc: Plus récents
+        date_asc: Plus anciens
+        size_desc: Plus lourds
+        size_asc: Plus légers
+    filter:
+        sort: Trier par
+        search: Rechercher
+        more: Filtres
+        recursive: Inclure les fichiers des sous-dossiers
+        orphans: Non utilisés
+        duplicates: Doublons
+        from: Ajouté à partir du
+        to: "Ajouté jusqu'au"
+    field:
+        name: Nom
+        type: Type
+        size: Taille
+        created_at: Ajouté le
+        directory: Dossier
+        sort: Tri
+        usages: Utilisations
+        duplicates: Doublons
+        directory_name: Nom du dossier
+        file_name: Nom du fichier
+    action:
+        upload: Téléverser
+        new_directory: Nouveau dossier
+        delete_directory: Supprimer le dossier
+        open: Ouvrir
+        rename: Renommer
+        move: Déplacer
+        move_here: Déplacer ici
+        delete: Supprimer
+        merge: Garder ce fichier et fusionner ses doublons
+        show: Afficher
+        clear_selection: Désélectionner
+        select_page: Tout sélectionner
+        first: Première page
+        previous: Précédent
+        next: Suivant
+        last: Dernière page
+        cancel: Annuler
+        confirm: Confirmer
+        close: Fermer
+    message:
+        loading: Chargement…
+        empty: Aucun fichier
+        drop: Déposez vos fichiers pour les téléverser dans ce dossier
+        selected: '%count% sélectionné(s)'
+        total: '%count% fichier(s)'
+        not_used: Ce fichier n'est utilisé nulle part.
+        uploaded: « %name% » a été téléversé.
+        duplicate: '« %name% » existe déjà dans la bibliothèque : « %existing% ».'
+        too_large: « %name% » dépasse la taille maximale (%max%).
+        deleted: '%count% fichier(s) supprimé(s).'
+        blocked: 'Ces fichiers sont utilisés, ils n''ont pas été supprimés :'
+        moved: '%count% fichier(s) déplacé(s).'
+        merged: Doublons fusionnés, %count% référence(s) mise(s) à jour.
+        confirm_delete: Supprimer %count% fichier(s) ? Les fichiers utilisés seront conservés.
+        confirm_delete_directory: Supprimer le dossier « %name% » ? Il doit être vide.
+        confirm_merge: Les %count% doublon(s) seront remplacés par ce fichier partout où ils sont utilisés, puis supprimés.
+        move_to: Déplacer %count% fichier(s) vers « %path% »
+
+error:
+    generic: Une erreur est survenue, réessayez.
+    upload_failed: Le fichier n'a pas pu être envoyé.
+    directory_not_found: Le dossier « %path% » n'existe pas.
+    directory_exists: Le dossier « %path% » existe déjà.
+    directory_not_empty: Le dossier « %path% » n'est pas vide.
+    root_directory: La racine de la bibliothèque ne peut pas être supprimée.
+    invalid_path: Ce chemin n'est pas valide.
+    mime_not_allowed: Le type de fichier « %mime% » n'est pas autorisé.
+    too_large: Le fichier est trop lourd (%size% Ko, %max% Ko autorisés).
+    could_not_store: Le fichier « %name% » n'a pas pu être enregistré.
+    not_duplicates: Ces fichiers ne sont pas des doublons.
