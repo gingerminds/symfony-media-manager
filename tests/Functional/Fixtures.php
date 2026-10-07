@@ -10,6 +10,7 @@ use Gingerminds\CoreBundle\Entity\Role\Role;
 use Gingerminds\CoreBundle\Entity\Security\ApiToken;
 use Gingerminds\CoreBundle\Entity\User\Contributor;
 use Gingerminds\CoreBundle\Entity\User\User;
+use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final readonly class Fixtures
@@ -88,5 +89,18 @@ final readonly class Fixtures
         $this->entityManager->flush();
 
         return $plain;
+    }
+
+    public function mediaCategory(string $code, ?MediaCategory $parent = null, int $position = 0): MediaCategory
+    {
+        $category = new MediaCategory();
+        $category->setCode($code);
+        $category->setName(ucfirst($code));
+        $category->setParent($parent);
+        $category->setPosition($position);
+        $this->entityManager->persist($category);
+        $this->entityManager->flush();
+
+        return $category;
     }
 }

@@ -1,0 +1,22 @@
+menu:
+    media_manager: Media library
+
+media_category:
+    name_s: Media category
+    name_p: Media categories
+    manage: Manage media categories
+    title_new: Add a media category
+    title_edit: Edit a media category
+    field:
+        code: Code
+        name: Name
+        parent: Parent category
+    placeholder:
+        parent: — None —
+    action:
+        add_child: Add a child
+        move: Move
+    message:
+        no_items: No media category
+    error:
+        has_children: This category has subcategories, delete or move them first.

@@ -6,6 +6,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Gingerminds\MediaManagerBundle\Controller\File\ShowFileController;
 use Gingerminds\MediaManagerBundle\Controller\File\ShowFilePresetController;
+use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 
 /*
@@ -27,4 +28,9 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->tag('controller.service_arguments')
         ->public();
+
+    $services->set('gingerminds_media_manager.controller.admin.media_category', MediaCategoryController::class)
+        ->args([service('gingerminds_core.controller.context')])
+        ->tag('controller.service_arguments');
+    $services->alias(MediaCategoryController::class, 'gingerminds_media_manager.controller.admin.media_category')->public();
 };

@@ -37,6 +37,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `{preset}` documented in OpenAPI as the list of the configured presets.
 - `gm_file_url(file, preset = null, absolute = false)` Twig function.
 - `gingerminds:media:cache:clear [--file=<id>]... [--force]` command (`media-manager:cache:clear`).
+- `MediaCategory` entity (overridable `BaseMediaCategory`, `resources.media_category`),
+  `media_categories` table with the Laravel schema (`code`, `name`, `parent_id` set to null when
+  the parent is deleted, `position`) plus a unique `code`. A category cannot be placed in itself
+  or one of its descendants.
+- Media categories admin (`media-categories`, `view|edit|delete media_categories` permissions):
+  drag & drop tree ordered by position, "add a child" (`new?parent_id=`), parent select indented
+  by depth. A new or moved category goes to the end of its level. A category with children cannot
+  be deleted.
+- `POST /{admin}/media-categories/reorder` (`gingerminds_media_manager_media_category_reorder`,
+  CSRF): orders one level, the ids of other levels are ignored.
+- "Media library" admin menu section.
+- Public `GET /api/media_categories` (200 per page, 500 max, ordered by position) and
+  `GET /api/media_categories/{id}` (with `children`), with `parent_id`, cached
+  (`media_category`, invalidates `media`).
+- Public `GET /api/media_categories/tree`: the root categories with their nested `children`
+  (every level, ordered by position), not paginated, loaded by a single query.
 
 ### Changed
 

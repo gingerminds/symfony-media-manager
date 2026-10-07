@@ -1,0 +1,31 @@
+{% trans_default_domain 'GingermindsMediaManager' %}
+{% import '@GingermindsCore/components/macros.html.twig' as gm %}
+<div class="sortable-level{{ depth > 0 ? ' ms-4 ps-3 border-start' }}" data-parent-id="{{ parent_id ?? '' }}">
+    {% for item in tree_items %}
+        <div class="sortable-item" data-item-id="{{ item.id }}">
+            <div class="tree-item-row d-flex align-items-center justify-content-between py-2 px-3">
+                <div class="d-flex align-items-center gap-2">
+                    {% if tree_reorder_url %}
+                        <i class="bi bi-grip-vertical drag-handle text-muted" title="{{ 'media_category.action.move'|trans }}"></i>
+                    {% endif %}
+                    {% if depth > 0 %}
+                        <i class="bi bi-arrow-return-right tree-connector"></i>
+                    {% endif %}
+                    <span class="fw-medium">{{ item.name }}</span>
+                    <span class="text-muted small">{{ item.code }}</span>
+                </div>
+                <div class="d-flex gap-1">
+                    {% if is_granted('CREATE', resource.name) %}
+                        <a href="{{ path(resource.route('new'), {parent_id: item.id}) }}" class="btn btn-sm btn-outline-success fs-12">
+                            <i class="bi bi-plus-lg me-1"></i> {{ 'media_category.action.add_child'|trans }}
+                        </a>
+                    {% endif %}
+                    {{ gm.row_actions(item, resource, {}, item ~ '') }}
+                </div>
+            </div>
+            {% if item.hasChildren %}
+                {% include '@GingermindsMediaManager/pages/media_category/_tree.html.twig' with {tree_items: item.children, parent_id: item.id, depth: depth + 1} %}
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>

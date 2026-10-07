@@ -7,6 +7,9 @@ namespace Gingerminds\MediaManagerBundle\Tests\Unit\DependencyInjection;
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
+use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
+use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
 use Gingerminds\MediaManagerBundle\Tests\Application\Override\File as ProjectFile;
 use PHPUnit\Framework\TestCase;
@@ -21,14 +24,29 @@ final class BundleConfigurationTest extends TestCase
         $container = $this->prepend([]);
 
         $doctrine = $this->merged($container, 'doctrine')['orm'];
-        self::assertSame([FileInterface::class => File::class], $doctrine['resolve_target_entities']);
-        self::assertSame(['GingermindsMediaManagerFile'], array_keys($doctrine['mappings']));
+        self::assertSame([FileInterface::class => File::class, MediaCategoryInterface::class => MediaCategory::class], $doctrine['resolve_target_entities']);
+        self::assertSame(['GingermindsMediaManagerFile', 'GingermindsMediaManagerMedia'], array_keys($doctrine['mappings']));
         self::assertSame('Gingerminds\MediaManagerBundle\Entity\File', $doctrine['mappings']['GingermindsMediaManagerFile']['prefix']);
 
         self::assertSame(
             ['local' => ['directory' => '%kernel.project_dir%/var/storage/media']],
             $this->merged($container, 'flysystem')['storages'][GingermindsMediaManagerBundle::DEFAULT_STORAGE],
         );
+    }
+
+    public function testTheMediaCategoriesAreACoreResource(): void
+    {
+        $resource = $this->merged($this->prepend([]), 'gingerminds_core')['resources']['media_category'];
+
+        self::assertSame(MediaCategory::class, $resource['entity']);
+        self::assertSame(MediaCategoryType::class, $resource['form']);
+        self::assertSame('media-categories', $resource['path']);
+        self::assertSame('media_categories', $resource['permission']);
+        self::assertSame('gingerminds_media_manager_media_category', $resource['route_prefix']);
+        self::assertSame('@GingermindsMediaManager/pages/media_category', $resource['template_prefix']);
+
+        $resource = $this->merged($this->prepend([['resources' => ['media_category' => ['controller' => 'App\\Controller\\CategoryController']]]]), 'gingerminds_core')['resources']['media_category'];
+        self::assertSame('App\\Controller\\CategoryController', $resource['controller']);
     }
 
     public function testAProjectEntityOverridesTheBundleOne(): void

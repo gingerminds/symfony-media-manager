@@ -1,0 +1,22 @@
+menu:
+    media_manager: Médiathèque
+
+media_category:
+    name_s: Catégorie de média
+    name_p: Catégories de média
+    manage: Gestion des catégories de média
+    title_new: Ajouter une catégorie de média
+    title_edit: Modifier une catégorie de média
+    field:
+        code: Code
+        name: Nom
+        parent: Catégorie parente
+    placeholder:
+        parent: — Aucune —
+    action:
+        add_child: Ajouter un enfant
+        move: Déplacer
+    message:
+        no_items: Aucune catégorie de média
+    error:
+        has_children: Cette catégorie contient des sous-catégories, supprimez-les ou déplacez-les d'abord.

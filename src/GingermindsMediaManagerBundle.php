@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle;
 
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
+use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
+use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
+use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\Config\Definition\Processor;
@@ -31,6 +35,22 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         'file' => [
             'entity' => File::class,
             'interface' => FileInterface::class,
+        ],
+        'media_category' => [
+            'entity' => MediaCategory::class,
+            'interface' => MediaCategoryInterface::class,
+        ],
+    ];
+
+    /**
+     * Admin resources, registered as `gingerminds_core` resources.
+     */
+    public const array ADMIN_RESOURCES = [
+        'media_category' => [
+            'controller' => MediaCategoryController::class,
+            'form' => MediaCategoryType::class,
+            'path' => 'media-categories',
+            'permission' => 'media_categories',
         ],
     ];
 
@@ -85,6 +105,11 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
                 OverriddenEntityPass::registerOverriddenEntity($builder, $resource['entity']);
             }
         }
+
+        // Extra admin routes (reorder) target the configured controller.
+        foreach (array_keys(self::ADMIN_RESOURCES) as $name) {
+            $parameters->set('gingerminds_media_manager.resource.' . $name . '.controller', $this->resourceValue($config, $name, 'controller'));
+        }
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
@@ -101,9 +126,29 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
                 'resolve_target_entities' => $resolveTargetEntities,
                 'mappings' => [
                     'GingermindsMediaManagerFile' => $this->mapping('File'),
+                    'GingermindsMediaManagerMedia' => $this->mapping('Media'),
                 ],
             ],
         ]);
+
+        $resources = [];
+
+        foreach (self::ADMIN_RESOURCES as $name => $resource) {
+            $resources[$name] = [
+                'entity' => $this->resourceValue($config, $name, 'entity'),
+                'controller' => $this->resourceValue($config, $name, 'controller'),
+                'form' => $this->resourceValue($config, $name, 'form'),
+                'path' => $resource['path'],
+                'permission' => $resource['permission'],
+                'route_prefix' => 'gingerminds_media_manager_' . $name,
+                'translation_prefix' => $name,
+                'translation_domain' => self::TRANSLATION_DOMAIN,
+                'template_prefix' => '@GingermindsMediaManager/pages/' . $name,
+            ];
+        }
+
+        // Prepended: the project configuration still overrides any key.
+        $builder->prependExtensionConfig('gingerminds_core', ['resources' => $resources]);
 
         $builder->prependExtensionConfig('framework', [
             'rate_limiter' => [
@@ -126,7 +171,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
      */
     private function resourceValue(array $config, string $name, string $key): string
     {
-        return $config['resources'][$name][$key] ?? self::RESOURCES[$name][$key];
+        return $config['resources'][$name][$key] ?? self::RESOURCES[$name][$key] ?? self::ADMIN_RESOURCES[$name][$key];
     }
 
     /**

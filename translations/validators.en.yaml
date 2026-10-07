@@ -1,0 +1,3 @@
+gingerminds_media_manager:
+    media_category:
+        parent_cycle: A category cannot be placed in itself or in one of its subcategories.
