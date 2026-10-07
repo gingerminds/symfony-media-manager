@@ -77,10 +77,15 @@ export default {
             } else if (response.data.duplicate) {
                 const existing = response.data.file;
                 this.alert('info', `${this.esc(this.label('message.duplicate', { name: file.name, existing: existing.directory ? `${existing.directory}/${existing.name}` : existing.name }))}
-                    <button type="button" class="btn btn-sm btn-link p-0 align-baseline" data-action="gm-file-browser#showExisting"
-                            data-gm-file-browser-id-param="${existing.id}" data-gm-file-browser-path-param="${this.esc(existing.directory)}">${this.esc(this.label('action.show'))}</button>`);
+                    <button type="button" class="btn btn-sm btn-link p-0 align-baseline" data-action="gm-file-browser#${this.isPicker() ? 'pickExisting' : 'showExisting'}"
+                            data-gm-file-browser-id-param="${existing.id}" data-gm-file-browser-path-param="${this.esc(existing.directory)}">${this.esc(this.label(this.isPicker() ? 'picker.use' : 'action.show'))}</button>`);
             } else {
                 uploaded = true;
+
+                if (this.isPicker()) {
+                    this.pick(response.data.file);
+                }
+
                 this.alert('success', this.esc(this.label('message.uploaded', { name: file.name })), true);
             }
         }

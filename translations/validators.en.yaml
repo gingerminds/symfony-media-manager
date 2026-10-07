@@ -1,3 +1,7 @@
 gingerminds_media_manager:
     media_category:
         parent_cycle: A category cannot be placed in itself or in one of its subcategories.
+    file_picker:
+        invalid: This file is not valid.
+        not_found: This file is no longer in the library.
+        mime_type: 'The file "{{ name }}" is not of an accepted type ({{ types }}).'

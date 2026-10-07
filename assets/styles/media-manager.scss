@@ -289,3 +289,98 @@ $gm-file-tile-size: 150px !default;
     max-height: 320px;
     overflow-y: auto;
 }
+
+// FilePickerType widget: the picked files as cards, as in the library grid.
+.gm-file-picker-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 9rem);
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.gm-file-picker-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+    font-size: $font-size-sm;
+}
+
+.gm-file-picker-thumb {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-secondary-color);
+
+    img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .bi {
+        font-size: 2rem;
+    }
+}
+
+.gm-file-picker-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: .35rem .5rem;
+}
+
+.gm-file-picker-remove,
+.gm-file-picker-handle {
+    position: absolute;
+    top: .35rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: var(--bs-box-shadow-sm);
+}
+
+.gm-file-picker-remove {
+    right: .35rem;
+    color: var(--bs-danger);
+}
+
+.gm-file-picker-handle {
+    left: .35rem;
+    background: var(--bs-body-bg);
+    color: var(--bs-secondary-color);
+    cursor: grab;
+}
+
+// Library modal of the picker: wide enough for the tree, the grid and the detail.
+.gm-file-picker-dialog {
+    @include media-breakpoint-up(lg) {
+        max-width: min(1400px, 96vw);
+    }
+
+    .gm-file-browser .card {
+        margin-bottom: 0;
+    }
+
+    // "Select" always in view while the library scrolls.
+    .gm-file-browser .card-footer {
+        position: sticky;
+        bottom: calc(-1 * var(--bs-modal-padding));
+        z-index: 2;
+        background: var(--bs-body-bg);
+        box-shadow: 0 -.25rem .75rem rgba(var(--bs-body-color-rgb), .08);
+    }
+}

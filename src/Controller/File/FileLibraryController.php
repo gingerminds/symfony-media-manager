@@ -11,6 +11,7 @@ use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
 use Gingerminds\MediaManagerBundle\File\LibraryQuery;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
+use Gingerminds\MediaManagerBundle\File\MimeTypePatterns;
 use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceRegistry;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -49,6 +50,18 @@ class FileLibraryController extends AbstractFileLibraryController
 
         return $this->render('@GingermindsMediaManager/pages/file/index.html.twig', [
             'resource' => $this->context->resources->get(self::RESOURCE),
+            'browser' => $this->browserParameters(),
+        ]);
+    }
+
+    /**
+     * The library browser in a modal, to pick files for the FilePickerType fields of a form.
+     */
+    public function picker(): Response
+    {
+        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, self::RESOURCE);
+
+        return $this->render('@GingermindsMediaManager/components/file/_picker_modal.html.twig', [
             'browser' => $this->browserParameters(),
         ]);
     }
@@ -133,6 +146,7 @@ class FileLibraryController extends AbstractFileLibraryController
             sortBy: isset(LibraryQuery::SORTS[$sort]) ? $sort : 'name',
             sort: 'desc' === $query->getString('direction') ? 'desc' : 'asc',
             page: max(1, $query->getInt('page', 1)),
+            accept: MimeTypePatterns::normalize($query->all('accept')),
         );
     }
 

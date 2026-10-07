@@ -92,6 +92,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   core app. Nothing to add to the project importmap: `RelativeImportCompiler` rewrites the relative
   imports of the bundle scripts (`gingerminds-media-manager/*.js`) to their versioned paths.
 - `MediaCategoryInterface` extends `TimestampableInterface`.
+- `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
+  with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime
+  types, exact or `type/*`: library filter, upload input and server side check), `preview_preset`,
+  `start_path`. Widget (form theme prepended): the picked files as cards, removed one by one,
+  reordered by drag & drop when several; `gm-file-picker:change` event.
+- Library picker modal (`GET /{admin}/files/picker`, `view files`), loaded once per page and shared
+  by the fields: the library browser in picker mode (only the accepted types, uploads and new
+  folders allowed, the other actions stay on the library page). A click picks a file, "Select"
+  confirms; an uploaded file is picked, an already known content offers "Use this one".
+- `browse` filters by mime types with `accept[]` (`MimeTypePatterns`).
 - Library exceptions are translatable (`TranslatableExceptionInterface`, `error.*` keys).
 
 ### Changed

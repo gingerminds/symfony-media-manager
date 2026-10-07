@@ -5,6 +5,7 @@ import detail from '../file_browser/detail.js';
 import dialog from '../file_browser/dialog.js';
 import helpers from '../file_browser/helpers.js';
 import listing from '../file_browser/listing.js';
+import picker from '../file_browser/picker.js';
 import selection from '../file_browser/selection.js';
 import tree from '../file_browser/tree.js';
 import uploads from '../file_browser/uploads.js';
@@ -22,7 +23,7 @@ export default class FileBrowserController extends Controller {
         'breadcrumb', 'tree', 'grid', 'pagination', 'total', 'detail', 'alerts', 'uploads', 'dropzone',
         'selectAll', 'selectionCount', 'selectionAction', 'deleteDirectoryButton', 'filters',
         'search', 'type', 'sort', 'recursive', 'orphans', 'duplicates', 'from', 'to',
-        'dialog', 'dialogTitle', 'dialogBody', 'dialogConfirm',
+        'dialog', 'dialogTitle', 'dialogBody', 'dialogConfirm', 'uploadInput', 'pickSummary', 'pickConfirm',
     ];
 
     static values = {
@@ -39,7 +40,12 @@ export default class FileBrowserController extends Controller {
         this.nodes = new Map([['', { children: null }]]);
         this.expanded = { tree: new Set(['']), chooser: new Set(['']) };
         this.dragDepth = 0;
-        this.load().then(() => this.ensureTree(this.path));
+        this.picked = new Map();
+
+        // The picker loads when a field opens it (startPicking).
+        if (!this.isPicker()) {
+            this.load().then(() => this.ensureTree(this.path));
+        }
     }
 
     disconnect() {
@@ -48,4 +54,4 @@ export default class FileBrowserController extends Controller {
     }
 }
 
-Object.assign(FileBrowserController.prototype, helpers, listing, tree, selection, detail, actions, uploads, dialog);
+Object.assign(FileBrowserController.prototype, helpers, listing, tree, selection, detail, actions, uploads, dialog, picker);

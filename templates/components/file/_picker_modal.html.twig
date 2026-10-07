@@ -1,0 +1,15 @@
+{# Library browser in picker mode (FileLibraryController::picker), loaded once per page by `gm-file-picker`. #}
+{% trans_default_domain 'GingermindsMediaManager' %}
+<div class="modal fade gm-file-picker-modal" id="gm-file-picker-modal" tabindex="-1" aria-labelledby="gm-file-picker-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-lg-down gm-file-picker-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gm-file-picker-modal-title">{{ 'file.picker.title'|trans }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'file.action.close'|trans }}"></button>
+            </div>
+            <div class="modal-body">
+                {% include '@GingermindsMediaManager/components/file/_browser.html.twig' with {browser: browser, mode: 'picker'} only %}
+            </div>
+        </div>
+    </div>
+</div>

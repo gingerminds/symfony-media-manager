@@ -102,6 +102,20 @@ file:
         confirm_delete_directory: Supprimer le dossier « %name% » ? Il doit être vide.
         confirm_merge: Les %count% doublon(s) seront remplacés par ce fichier partout où ils sont utilisés, puis supprimés.
         move_to: Déplacer %count% fichier(s) vers « %path% »
+    picker:
+        title: Bibliothèque de fichiers
+        choose: Choisir un fichier
+        replace: Remplacer
+        add: Ajouter des fichiers
+        remove: Retirer
+        reorder: Glisser pour réordonner
+        empty: Aucun fichier
+        accept: 'Types acceptés : %types%'
+        forbidden: Vous n'avez pas accès à la bibliothèque de fichiers.
+        select: Sélectionner
+        none: Aucun fichier sélectionné
+        selected: '%count% fichier(s) sélectionné(s)'
+        use: Utiliser celui-ci
 
 error:
     generic: Une erreur est survenue, réessayez.

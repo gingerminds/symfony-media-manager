@@ -37,7 +37,7 @@ export default {
             <ul class="list-unstyled small mb-3">${file.duplicates.map((duplicate) => `
                 <li class="mb-1"><a href="#" data-action="gm-file-browser#showFile:prevent" data-gm-file-browser-id-param="${duplicate.id}">${this.esc(duplicate.name)}</a>
                     <span class="text-muted">— ${this.esc(duplicate.directory || this.label('root'))}</span></li>`).join('')}</ul>
-            ${this.configValue.canEdit ? `<button type="button" class="btn btn-sm btn-outline-warning w-100" data-action="gm-file-browser#merge" data-gm-file-browser-id-param="${file.id}">
+            ${this.canManage() ? `<button type="button" class="btn btn-sm btn-outline-warning w-100" data-action="gm-file-browser#merge" data-gm-file-browser-id-param="${file.id}">
                 <i class="bi bi-intersect me-1"></i> ${this.esc(this.label('action.merge'))}</button>` : ''}` : null;
         const section = (key, title, count, badge, body) => `
             <div class="accordion-item">
@@ -60,7 +60,7 @@ export default {
                     data-action="gm-file-browser#${name}" data-gm-file-browser-id-param="${file.id}"><i class="bi ${icon}"></i></button>`;
         const actions = `
             <div class="d-flex gap-1 mb-3 gm-file-detail-actions">
-                ${this.configValue.canEdit ? [
+                ${this.canManage() ? [
                     action('rename', 'bi-pencil', 'action.rename', 'outline-primary'),
                     action('moveFile', 'bi-folder-symlink', 'action.move', 'outline-info'),
                     action('deleteFile', 'bi-trash', 'action.delete', 'outline-danger ms-auto'),

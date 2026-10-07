@@ -36,6 +36,7 @@ final class FileLibraryAdminTest extends ApiTestCase
         $crawler = $this->client->request('GET', '/admin/login');
 
         self::assertStringContainsString("app.register('gm-file-browser'", $crawler->filter('head script[type="module"]')->last()->text());
+        self::assertStringContainsString("app.register('gm-file-picker'", $crawler->filter('head script[type="module"]')->last()->text());
         self::assertStringContainsString('/assets/gingerminds-media-manager/controllers/file_browser_controller-', $crawler->filter('head script[type="module"]')->last()->text());
         self::assertCount(1, $crawler->filter('head link[rel="stylesheet"][href*="gingerminds-media-manager/styles/media-manager"]'));
     }
@@ -117,6 +118,35 @@ final class FileLibraryAdminTest extends ApiTestCase
         self::assertSame(['report.txt', 'archive.txt'], array_column($search['files'], 'name'));
 
         self::assertSame([['name' => 'old', 'path' => 'docs/old', 'hasChildren' => false]], $this->json('GET', '/admin/files/directories?path=docs'));
+    }
+
+    public function testThePickerOnlyListsTheAcceptedTypes(): void
+    {
+        $this->files->png('photo.png');
+        $this->files->svg('logo.svg');
+        $this->files->text('notes.txt', 'notes');
+        $this->login();
+
+        $images = $this->json('GET', '/admin/files/browse?accept[]=image/*&accept[]=invalid');
+        self::assertSame(['logo.svg', 'photo.png'], array_column($images['files'], 'name'));
+
+        self::assertSame(['notes.txt'], array_column($this->json('GET', '/admin/files/browse?accept[]=text/plain')['files'], 'name'));
+    }
+
+    public function testThePickerModal(): void
+    {
+        $this->client->loginUser($this->fixtures->user('picker@example.com', ['view files']), 'admin');
+
+        $crawler = $this->client->request('GET', '/admin/files/picker');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('#gm-file-picker-modal [data-controller="gm-file-browser"][data-gm-file-browser-mode-value="picker"]'));
+        self::assertCount(1, $crawler->filter('[data-gm-file-browser-target="pickConfirm"]'));
+        self::assertCount(0, $crawler->filter('[data-gm-file-browser-target="deleteDirectoryButton"], [data-gm-file-browser-target="selectAll"]'));
+
+        $this->client->loginUser($this->fixtures->user('nobody@example.com', ['view media_categories']), 'admin');
+        $this->client->request('GET', '/admin/files/picker');
+        self::assertResponseStatusCodeSame(403);
     }
 
     public function testErrorsAreTranslated(): void

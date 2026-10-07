@@ -21,7 +21,7 @@ export default {
 
     renderSelection() {
         this.gridTarget.querySelectorAll('[data-file-id]').forEach((card) => {
-            const selected = this.selection.has(card.dataset.fileId);
+            const selected = (this.isPicker() ? this.picked : this.selection).has(card.dataset.fileId);
             card.classList.toggle('is-selected', selected);
             const check = card.querySelector('.gm-file-card-check');
 

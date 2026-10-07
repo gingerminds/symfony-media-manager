@@ -29,8 +29,9 @@ final readonly class LibraryQuery
     public const array SORTS = ['name' => 'originalName', 'date' => 'createdAt', 'size' => 'size'];
 
     /**
-     * @param string $directory relative to the library root
-     * @param bool   $recursive the subdirectories too (search across the library)
+     * @param string       $directory relative to the library root
+     * @param bool         $recursive the subdirectories too (search across the library)
+     * @param list<string> $accept    mime types of a file field (MimeTypePatterns), none: every type
      */
     public function __construct(
         public string $directory = '',
@@ -45,6 +46,7 @@ final readonly class LibraryQuery
         public string $sort = 'asc',
         public int $page = 1,
         public ?int $itemsPerPage = null,
+        public array $accept = [],
     ) {
     }
 }

@@ -6,6 +6,8 @@
 <script type="module">
     import { app } from 'gingerminds-core-admin';
     import FileBrowserController from '{{ asset('gingerminds-media-manager/controllers/file_browser_controller.js') }}';
+    import FilePickerController from '{{ asset('gingerminds-media-manager/controllers/file_picker_controller.js') }}';
 
     app.register('gm-file-browser', FileBrowserController);
+    app.register('gm-file-picker', FilePickerController);
 </script>

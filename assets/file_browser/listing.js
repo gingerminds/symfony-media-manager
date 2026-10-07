@@ -21,6 +21,9 @@ export default {
             }
         }
 
+        // Picker: the mime types accepted by the field.
+        (this.accept ?? []).forEach((pattern) => params.append('accept[]', pattern));
+
         // Only the latest listing is rendered: a slower previous one is aborted, or ignored when it lands.
         this.listingRequest?.abort();
         const request = new AbortController();
@@ -84,7 +87,7 @@ export default {
 
     fileTile(file) {
         const selected = this.selection.has(file.id);
-        const check = this.configValue.canEdit ? `
+        const check = this.configValue.canEdit && !this.isPicker() ? `
             <input type="checkbox" class="form-check-input gm-file-card-check" ${selected ? 'checked' : ''} aria-label="${this.esc(file.name)}"
                    data-action="gm-file-browser#toggleSelection" data-gm-file-browser-id-param="${file.id}">` : '';
         const usages = file.usages > 0
@@ -95,7 +98,7 @@ export default {
             <div class="gm-file-card${selected ? ' is-selected' : ''}${this.detailId === file.id ? ' is-active' : ''}" data-file-id="${file.id}">
                 ${check}
                 <button type="button" class="gm-file-card-preview" title="${this.esc(file.name)}"
-                        data-action="gm-file-browser#showFile" data-gm-file-browser-id-param="${file.id}">
+                        data-action="gm-file-browser#${this.isPicker() ? 'pickFile' : 'showFile'}" data-gm-file-browser-id-param="${file.id}">
                     ${this.preview(file)}
                 </button>
                 <span class="gm-file-card-body">
@@ -187,6 +190,12 @@ export default {
     },
 
     resetFilters() {
+        this.clearFilters();
+        window.bootstrap.Collapse.getOrCreateInstance(this.filtersTarget, { toggle: false }).hide();
+        this.filter();
+    },
+
+    clearFilters() {
         this.searchTarget.value = '';
         this.typeTarget.value = '';
         this.fromTarget.value = '';
@@ -195,7 +204,5 @@ export default {
         this.duplicatesTarget.checked = false;
         this.recursiveTarget.checked = false;
         this.sortTarget.selectedIndex = 0;
-        window.bootstrap.Collapse.getOrCreateInstance(this.filtersTarget, { toggle: false }).hide();
-        this.filter();
     },
 };

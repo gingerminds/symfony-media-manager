@@ -23,6 +23,7 @@ return static function (RoutingConfigurator $routes): void {
     $actions = [
         'browse' => ['/browse', $reads, 'browse', 'GET'],
         'directories' => ['/directories', $reads, 'directories', 'GET'],
+        'picker' => ['/picker', $reads, 'picker', 'GET'],
         'show' => ['/{id}', $reads, 'show', 'GET'],
         'directory_create' => ['/directories', $writes, 'createDirectory', 'POST'],
         'directory_delete' => ['/directories', $writes, 'deleteDirectory', 'DELETE'],

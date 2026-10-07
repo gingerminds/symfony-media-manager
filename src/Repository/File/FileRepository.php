@@ -10,6 +10,7 @@ use Gingerminds\CoreBundle\Pagination\Paginator;
 use Gingerminds\CoreBundle\Repository\AbstractRepository;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\File\LibraryQuery;
+use Gingerminds\MediaManagerBundle\File\MimeTypePatterns;
 
 /**
  * @extends AbstractRepository<FileInterface>
@@ -97,6 +98,17 @@ class FileRepository extends AbstractRepository
             foreach (LibraryQuery::TYPES[$query->type] as $index => $pattern) {
                 $conditions[] = 'f.mimeType LIKE :type' . $index;
                 $qb->setParameter('type' . $index, $pattern);
+            }
+
+            $qb->andWhere(implode(' OR ', $conditions));
+        }
+
+        if ([] !== $query->accept) {
+            $conditions = [];
+
+            foreach ($query->accept as $index => $pattern) {
+                $conditions[] = 'f.mimeType LIKE :accept' . $index;
+                $qb->setParameter('accept' . $index, MimeTypePatterns::toLike($pattern));
             }
 
             $qb->andWhere(implode(' OR ', $conditions));

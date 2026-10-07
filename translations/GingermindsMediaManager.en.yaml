@@ -102,6 +102,20 @@ file:
         confirm_delete_directory: Delete the folder "%name%"? It must be empty.
         confirm_merge: The %count% duplicate(s) will be replaced by this file wherever they are used, then deleted.
         move_to: Move %count% file(s) to "%path%"
+    picker:
+        title: File library
+        choose: Choose a file
+        replace: Replace
+        add: Add files
+        remove: Remove
+        reorder: Drag to reorder
+        empty: No file
+        accept: 'Accepted types: %types%'
+        forbidden: You have no access to the file library.
+        select: Select
+        none: No file selected
+        selected: '%count% file(s) selected'
+        use: Use this one
 
 error:
     generic: An error occurred, please try again.
