@@ -26,6 +26,8 @@ framework:
     rate_limiter:
         gingerminds_core_api:
             storage_service: test.rate_limiter_storage
+        gingerminds_media_manager_files:
+            storage_service: test.rate_limiter_storage
 
 doctrine:
     dbal:
@@ -103,7 +105,12 @@ gingerminds_media_manager:
     library:
         root: '%env(FILE_LIBRARY_ROOT)%'
         max_upload_size: '%env(int:FILE_LIBRARY_MAX_UPLOAD_SIZE)%'
-        allowed_mimes: ['text/plain', 'image/png', 'application/zip', 'application/docx']
+        allowed_mimes: ['text/plain', 'image/png', 'image/svg+xml', 'application/zip', 'application/docx']
+    images:
+        presets:
+            thumbnail: { w: 50, h: 40, fit: crop }
+            card: { w: 20, fm: png }
+    files_rate_limit: 5
 
 # In-memory files: nothing is written on disk by the tests.
 flysystem:

@@ -7,6 +7,7 @@ namespace Gingerminds\MediaManagerBundle\File;
 use Gingerminds\MediaManagerBundle\Entity\File\BaseFile;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Exception\FileUploadException;
+use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\FilesystemException;
@@ -27,6 +28,7 @@ class FileStorage
         private readonly PathGuard $paths,
         private readonly MimeTypeNormalizer $mimeTypes,
         private readonly FileRepository $files,
+        private readonly ImageProcessor $images,
         private readonly string $fileClass,
         private readonly int $maxUploadSize,
         private readonly array $allowedMimes,
@@ -80,6 +82,7 @@ class FileStorage
 
     public function delete(FileInterface $file): void
     {
+        $this->images->clear($file);
         $this->disks->get($file->getDisk())->delete($file->getPath());
         $this->files->remove($file);
     }

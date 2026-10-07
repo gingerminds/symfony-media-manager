@@ -25,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   confined to `library.root`.
 - `MimeTypeNormalizer` (Office types become `application/<extension>`, OOXML guesses checked
   against their zip content), as a service.
+- `GET /api/files/{id}` (original file, inline with its original name) and
+  `GET /api/files/{id}/{preset}` (Glide preset, `ImageProcessor`), public, same URLs as
+  `gingerminds/laravel-media-manager`: streamed from the disk of the file, one day browser cache
+  revalidated with ETag (same value as Laravel) / Last-Modified (304), 404 for an unknown file or
+  preset, 400 for a non image. An SVG is returned as is by the presets (500 under Laravel).
+- Presets rendered and cached on the disk of each file (`images.driver`, `images.cache_prefix`,
+  per preset `fm` over `images.default_format`), purged when the file is deleted.
+- `gingerminds_media_manager_files` rate limiter (`files_rate_limit` requests per minute, 0: no
+  limit) on the file endpoints, through the core API rate limiting.
+- `{preset}` documented in OpenAPI as the list of the configured presets.
+- `gm_file_url(file, preset = null, absolute = false)` Twig function.
+- `gingerminds:media:cache:clear [--file=<id>]... [--force]` command (`media-manager:cache:clear`).
 
 ### Changed
 

@@ -14,3 +14,7 @@ services:
     test.file_storage:
         alias: gingerminds_media_manager.file.storage
         public: true
+
+    test.storage.default:
+        alias: gingerminds_media_manager.storage.default
+        public: true

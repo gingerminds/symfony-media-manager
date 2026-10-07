@@ -32,6 +32,7 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.path_guard'),
             service('gingerminds_media_manager.file.mime_type_normalizer'),
             service(FileRepository::class),
+            service('gingerminds_media_manager.image.processor'),
             param('gingerminds_media_manager.resource.file.entity'),
             param('gingerminds_media_manager.library.max_upload_size'),
             param('gingerminds_media_manager.library.allowed_mimes'),

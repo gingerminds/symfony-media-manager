@@ -38,6 +38,8 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
 
     public const string DEFAULT_STORAGE = 'gingerminds_media_manager.storage.default';
 
+    public const string FILES_RATE_LIMITER = 'gingerminds_media_manager_files';
+
     protected string $extensionAlias = 'gingerminds_media_manager';
 
     public function getPath(): string
@@ -103,6 +105,14 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
             ],
         ]);
 
+        $builder->prependExtensionConfig('framework', [
+            'rate_limiter' => [
+                self::FILES_RATE_LIMITER => 0 === $config['files_rate_limit']
+                    ? ['policy' => 'no_limit']
+                    : ['policy' => 'fixed_window', 'limit' => $config['files_rate_limit'], 'interval' => '1 minute'],
+            ],
+        ]);
+
         // A project storage with the same name replaces this one entirely.
         $builder->prependExtensionConfig('flysystem', [
             'storages' => [
@@ -120,7 +130,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
     }
 
     /**
-     * The bundle configuration, `resources` only: the other keys may hold env placeholders.
+     * The bundle configuration needed while prepending: the other keys may hold env placeholders.
      *
      * @return array<string, mixed>
      */
@@ -134,7 +144,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         }
 
         $configs = array_map(
-            static fn (array $config): array => array_intersect_key($config, ['resources' => true]),
+            static fn (array $config): array => array_intersect_key($config, ['resources' => true, 'files_rate_limit' => true]),
             $builder->getExtensionConfig($this->extensionAlias),
         );
 
