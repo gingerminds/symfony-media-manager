@@ -1,6 +1,6 @@
 # Reste à faire — portage de `gingerminds/laravel-media-manager`
 
-Point au 8 octobre 2026 (étapes 5c et 6 commitées). Branche `build`.
+Point au 8 octobre 2026 (étapes 5c, 6 et 7 commitées). Branche `build`.
 
 ## Où on en est
 
@@ -15,7 +15,7 @@ Point au 8 octobre 2026 (étapes 5c et 6 commitées). Branche `build`.
 | 5b | `FilePickerType` et modale de sélection | ✅ commité |
 | 5c | Sélection, déplacement, renommage et suppression de dossiers | ✅ commité |
 | 6 | Media | ✅ commité |
-| 7 | Sélection de medias (`media-select`) | à faire |
+| 7 | Sélection de medias (`media-select`) | ✅ commité |
 | 8 | Panier (basket) | à faire |
 | 9 | Commandes de maintenance | à faire |
 | 10 | Documentation | à faire |
@@ -63,11 +63,18 @@ Point au 8 octobre 2026 (étapes 5c et 6 commitées). Branche `build`.
   - fusion de doublons.
 - Le groupe `basket:read` sur les champs du media est reporté à l'étape 8.
 
-## Étape 7 — Sélection de medias (`media-select`)
+## Étape 7 — Sélection de medias (commitée)
 
-- Équivalent du composant Laravel `media-select` (`resources/js/components/media-select/`) : choisir des **medias** (pas des fichiers) dans un formulaire, par exemple un `MediaSelectType`.
-- Équivalent de `MediaCollectionSyncer` : synchronisation d'une relation many-to-many de medias par « collection » (colonne de collection dans la table pivot, enum ou chaîne).
-- Réutiliser au maximum le widget et la modale de la 5b, ou une liste de medias filtrable par catégorie : à concevoir.
+- `MediaSelectType` :
+  - options `multiple`, `as_id`, `categories` (codes, sous-catégories comprises ; un seul code verrouille le filtre), `per_page`, `collection` + `link_factory` ;
+  - le widget reprend les cartes du sélecteur de fichiers.
+- Modale partagée `GET /admin/medias/picker`, alimentée par `GET /admin/medias/search` (endpoint admin, pas l'API publique).
+- Collections ordonnées :
+  - `AbstractMediaLink` (`media` en RESTRICT, `collection`, `position`), étendu par le projet ;
+  - `MediaCollectionSyncer` (chaîne ou enum).
+- Suppression d'un media utilisé refusée (`MediaUsageCounter`, qui compte les associations Doctrine vers `MediaInterface`).
+- Pas d'indication de langue (propre aux projets Laravel) : ajouter un point d'extension si un projet en a besoin.
+- Testée dans le skeleton avec un formulaire de démonstration temporaire sur le dashboard (retiré depuis).
 
 ## Étape 8 — Panier (basket)
 
@@ -114,6 +121,11 @@ Pages à écrire : configuration, services, composants (types de formulaire, wid
 - Déplacer ou renommer un dossier : un `start_path` ou un `LibraryStartPathProviderInterface` qui vise ce dossier par son nom ne le suit pas. Au-delà de `library.max_directory_move`, passer par la commande.
 - Assets : rien à ajouter dans le projet. Le slot `admin_includes.head` du core charge la CSS et les contrôleurs, et `RelativeImportCompiler` rend les imports relatifs du bundle compatibles avec l'importmap.
 - `FilePickerType` : options, exemples (`accept`, `multiple`, `as_id` pour les champs JSON), événement `gm-file-picker:change`.
+- `MediaSelectType` et collections de medias :
+  - exemple d'entité de lien (`AbstractMediaLink`, relation propriétaire en `CASCADE`, `cascade: ['persist']` et `orphanRemoval` côté entité) ;
+  - options `collection` et `link_factory` ;
+  - une relation directe vers `MediaInterface` doit être en `RESTRICT`.
+- Étape 8 : `MediaUsageCounter` accepte une liste de classes ignorées, pour que les paniers ne bloquent pas la suppression d'un media.
 - `README.md` à jour (dépendances, installation, migrations).
 
 ## Plus tard

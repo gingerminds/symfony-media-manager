@@ -1,0 +1,47 @@
+{# Media picker (MediaController::picker), loaded once per page by `gm-media-select` and shared by the fields. #}
+{% trans_default_domain 'GingermindsMediaManager' %}
+{% set labels = {} %}
+{% for key in ['empty', 'error', 'none', 'selected', 'loading'] %}
+    {% set labels = labels|merge({(key): ('media_select.' ~ key)|trans}) %}
+{% endfor %}
+<div class="modal fade gm-media-picker-modal" id="gm-media-picker-modal" tabindex="-1" aria-labelledby="gm-media-picker-modal-title" aria-hidden="true"
+     data-controller="gm-media-picker"
+     data-gm-media-picker-search-url-value="{{ path('gingerminds_media_manager_media_search') }}"
+     data-gm-media-picker-labels-value="{{ labels|json_encode }}">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl modal-fullscreen-lg-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gm-media-picker-modal-title">{{ 'media_select.title'|trans }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'file.action.close'|trans }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3">
+                    <div class="col" data-gm-media-picker-target="searchColumn">
+                        <input type="search" class="form-control" placeholder="{{ 'media_select.search'|trans }}" autocomplete="off"
+                               data-gm-media-picker-target="search" data-action="input->gm-media-picker#search">
+                    </div>
+                    <div class="col-md-4" data-gm-media-picker-target="categoryColumn">
+                        <select class="form-select" aria-label="{{ 'media.field.category'|trans }}" data-gm-media-picker-target="category" data-action="gm-media-picker#reload">
+                            <option value="">{{ 'media_select.all_categories'|trans }}</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" data-ancestors="{{ category.ancestors|join(' ') }}">{{ category.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="gm-file-grid" data-gm-media-picker-target="results"></div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary d-none" data-gm-media-picker-target="more" data-action="gm-media-picker#more">
+                        {{ 'media_select.load_more'|trans }}
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="text-muted small me-auto" data-gm-media-picker-target="summary"></span>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ 'file.action.cancel'|trans }}</button>
+                <button type="button" class="btn btn-primary" disabled data-gm-media-picker-target="confirm" data-action="gm-media-picker#confirm">{{ 'media_select.select'|trans }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -3,6 +3,10 @@ gingerminds_media_manager:
         parent_cycle: Une catégorie ne peut pas être rangée dans elle-même ni dans une de ses sous-catégories.
     media:
         thumbnail_not_image: La vignette doit être une image.
+    media_select:
+        invalid: Ce média n'est pas valide.
+        not_found: Ce média n'existe plus.
+        category: Le média « {{ name }} » n'est pas dans une catégorie autorisée.
     file_picker:
         invalid: Ce fichier n'est pas valide.
         not_found: Ce fichier n'existe plus dans la bibliothèque.

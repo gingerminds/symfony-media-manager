@@ -102,6 +102,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   existing folder. `PATCH` / `DELETE /{admin}/files/directories` take `paths[]`. Up to
   `library.max_directory_move` files per move (1000 by default, 0: no limit), above that
   `gingerminds:media:directory:move <path> [<parent>] [--name=]` moves a folder without limit.
+- `MediaSelectType`: one media (`MediaInterface`), several (`multiple`, a collection) or their ids
+  (`as_id`), picked in the media picker; `categories` (codes) restricts the medias to these
+  categories and their subcategories, one code locks the category filter; `per_page`. Widget: the
+  picked medias as cards, removed one by one, reordered when several; `gm-media-select:change`
+  event. Server side check of the existence and of the category of each media.
+- Media picker modal (`GET /{admin}/medias/picker`, `view medias`), loaded once per page and shared
+  by the fields: search (code, name), category tree (subcategories included), "Load more", "Select".
+  Medias from `GET /{admin}/medias/search` (admin endpoint, the public API may be scoped by a
+  project; overridable with `resources.media.controller`).
+- Ordered collections of medias (port of `MediaCollectionSyncer`): `AbstractMediaLink` mapped
+  superclass (`media` RESTRICT, `collection`, `position`) extended by a project link entity,
+  `MediaCollectionSyncer::sync()` / `medias()` (string or backed enum collections), and the
+  `collection` + `link_factory` options of `MediaSelectType` to edit one collection of the links.
+- A media used through a Doctrine association (a link, a project relation) cannot be deleted
+  (`MediaUsageCounter`).
 - `MediaCategoryInterface` extends `TimestampableInterface`.
 - `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
   with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime

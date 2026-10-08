@@ -7,10 +7,12 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\Form\File\FilePickerType;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
+use Gingerminds\MediaManagerBundle\Form\Media\MediaSelectType;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaType;
 use Gingerminds\MediaManagerBundle\Menu\MediaManagerAdminMenuProvider;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
+use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
 use Gingerminds\MediaManagerBundle\Security\Voter\FileVoter;
 use Gingerminds\MediaManagerBundle\Security\Voter\MediaCategoryVoter;
 use Gingerminds\MediaManagerBundle\Security\Voter\MediaVoter;
@@ -53,4 +55,15 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->tag('form.type');
     $services->alias(FilePickerType::class, 'gingerminds_media_manager.form.type.file_picker');
+
+    $services->set('gingerminds_media_manager.form.type.media_select', MediaSelectType::class)
+        ->args([
+            service(MediaRepository::class),
+            service(MediaCategoryRepository::class),
+            service('gingerminds_media_manager.media.presenter'),
+            service('router'),
+            service('security.authorization_checker'),
+        ])
+        ->tag('form.type');
+    $services->alias(MediaSelectType::class, 'gingerminds_media_manager.form.type.media_select');
 };

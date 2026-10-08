@@ -194,7 +194,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         ]);
 
         $builder->prependExtensionConfig('twig', [
-            'form_themes' => ['@GingermindsMediaManager/form/file_picker_theme.html.twig'],
+            'form_themes' => ['@GingermindsMediaManager/form/file_picker_theme.html.twig', '@GingermindsMediaManager/form/media_select_theme.html.twig'],
         ]);
 
         // Compiled with the core admin stylesheet, its load paths (project theme, Bootstrap) included.

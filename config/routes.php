@@ -11,6 +11,12 @@ return static function (RoutingConfigurator $routes): void {
         ->controller('%gingerminds_media_manager.resource.media_category.controller%::reorder')
         ->methods(['POST']);
 
+    foreach (['picker', 'search'] as $action) {
+        $routes->add('gingerminds_media_manager_media_' . $action, '/%gingerminds_core.admin_prefix%/medias/' . $action)
+            ->controller('%gingerminds_media_manager.resource.media.controller%::' . $action)
+            ->methods(['GET']);
+    }
+
     $routes->add('gingerminds_media_manager_file_index', '/%gingerminds_core.admin_prefix%/files')
         ->controller('%gingerminds_media_manager.resource.file.controller%::index')
         ->methods(['GET']);

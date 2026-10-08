@@ -22,6 +22,26 @@ media:
         category: — Aucune —
     message:
         no_items: Aucun média
+    error:
+        used: Ce média est utilisé %count% fois, retirez-le d'abord des contenus qui l'utilisent.
+
+media_select:
+    title: Médiathèque
+    choose: Choisir un média
+    replace: Remplacer
+    add: Ajouter des médias
+    remove: Retirer
+    reorder: Glisser pour réordonner
+    search: Rechercher un média (code, nom)…
+    all_categories: Toutes les catégories
+    load_more: Charger plus
+    select: Sélectionner
+    none: Aucun média sélectionné
+    selected: '%count% média(s) sélectionné(s)'
+    empty: Aucun média
+    loading: Chargement…
+    error: Les médias n'ont pas pu être chargés.
+    forbidden: Vous n'avez pas accès à la médiathèque.
 
 media_category:
     name_s: Catégorie de média

@@ -6,6 +6,8 @@ namespace Gingerminds\MediaManagerBundle\Tests\Functional\Admin;
 
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\Media\Media;
+use Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article;
+use Gingerminds\MediaManagerBundle\Tests\Application\Entity\ArticleMedia;
 use Gingerminds\MediaManagerBundle\Tests\Functional\ApiTestCase;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
 use Symfony\Component\DomCrawler\Crawler;
@@ -156,6 +158,26 @@ final class MediaAdminTest extends ApiTestCase
         self::assertSame(0, $this->entityManager()->getRepository(Media::class)->count());
         self::assertNotNull($this->entityManager()->find(File::class, $file->getId()));
         self::assertNotNull($this->entityManager()->find(File::class, $thumbnail->getId()));
+    }
+
+    public function testAUsedMediaCannotBeDeleted(): void
+    {
+        $media = $this->fixtures->media($this->files->png('tractor.png'), 'Tractor');
+        $article = new Article('Tractor');
+        $article->media = $media;
+        $article->mediaLinks->add(new ArticleMedia($article, $media, 'visual'));
+        $this->entityManager()->persist($article);
+        $this->entityManager()->flush();
+        $this->client->loginUser($this->fixtures->user('deleter@example.com', ['view medias', 'delete medias']), 'admin');
+
+        $button = $this->client->request('GET', '/admin/medias')
+            ->filter('[data-gm-delete-url="/admin/medias/' . $media->getId() . '/delete"]');
+        $this->client->request('POST', (string) $button->attr('data-gm-delete-url'), ['_token' => $button->attr('data-gm-delete-token')]);
+
+        self::assertResponseRedirects('/admin/medias');
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.alert-danger', 'used 2 time(s)');
+        self::assertSame(1, $this->entityManager()->getRepository(Media::class)->count());
     }
 
     public function testTheMediasNeedThePermission(): void

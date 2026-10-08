@@ -22,6 +22,26 @@ media:
         category: — None —
     message:
         no_items: No media
+    error:
+        used: This media is used %count% time(s), remove it from the contents using it first.
+
+media_select:
+    title: Media library
+    choose: Choose a media
+    replace: Replace
+    add: Add medias
+    remove: Remove
+    reorder: Drag to reorder
+    search: Search a media (code, name)…
+    all_categories: All categories
+    load_more: Load more
+    select: Select
+    none: No media selected
+    selected: '%count% media(s) selected'
+    empty: No media
+    loading: Loading…
+    error: The medias could not be loaded.
+    forbidden: You have no access to the media library.
 
 media_category:
     name_s: Media category

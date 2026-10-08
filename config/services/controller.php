@@ -12,6 +12,7 @@ use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaController;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
+use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
 
 /*
  * Controllers.
@@ -39,7 +40,12 @@ return static function (ContainerConfigurator $container): void {
     $services->alias(MediaCategoryController::class, 'gingerminds_media_manager.controller.admin.media_category')->public();
 
     $services->set('gingerminds_media_manager.controller.admin.media', MediaController::class)
-        ->args([service('gingerminds_core.controller.context')])
+        ->args([
+            service('gingerminds_core.controller.context'),
+            service(MediaCategoryRepository::class),
+            service('gingerminds_media_manager.media.presenter'),
+            service('gingerminds_media_manager.media.usage_counter'),
+        ])
         ->tag('controller.service_arguments');
     $services->alias(MediaController::class, 'gingerminds_media_manager.controller.admin.media')->public();
 

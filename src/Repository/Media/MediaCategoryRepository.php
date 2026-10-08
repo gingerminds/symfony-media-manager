@@ -66,6 +66,48 @@ class MediaCategoryRepository extends AbstractRepository
     }
 
     /**
+     * These categories and all their descendants.
+     *
+     * @param list<int> $ids
+     *
+     * @return list<int>
+     */
+    public function findIdsWithDescendants(array $ids): array
+    {
+        $children = [];
+        $existing = [];
+
+        foreach ($this->createQueryBuilder('c')->select('c.id', 'IDENTITY(c.parent) AS parent')->getQuery()->getArrayResult() as $row) {
+            $children[(int) $row['parent']][] = (int) $row['id'];
+            $existing[] = (int) $row['id'];
+        }
+
+        $result = [];
+        $pending = array_values(array_intersect($ids, $existing));
+
+        while ([] !== $pending) {
+            $id = array_pop($pending);
+
+            if (!isset($result[$id])) {
+                $result[$id] = true;
+                array_push($pending, ...($children[$id] ?? []));
+            }
+        }
+
+        return array_keys($result);
+    }
+
+    /**
+     * @param list<string> $codes
+     *
+     * @return list<MediaCategoryInterface>
+     */
+    public function findByCodes(array $codes): array
+    {
+        return [] === $codes ? [] : array_values($this->findBy(['code' => $codes]));
+    }
+
+    /**
      * Applies the order of one level of the tree: ids of other levels are ignored.
      *
      * @param list<int> $ids
