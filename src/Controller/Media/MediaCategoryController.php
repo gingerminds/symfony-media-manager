@@ -9,6 +9,7 @@ use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
+use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -81,8 +82,18 @@ class MediaCategoryController extends AbstractCrudController
 
     protected function getDeleteError(object $entity): ?string
     {
-        return $entity instanceof MediaCategoryInterface && $entity->hasChildren()
-            ? $this->trans('media_category.error.has_children', [], GingermindsMediaManagerBundle::TRANSLATION_DOMAIN)
+        if (!$entity instanceof MediaCategoryInterface) {
+            return null;
+        }
+
+        if ($entity->hasChildren()) {
+            return $this->trans('media_category.error.has_children', [], GingermindsMediaManagerBundle::TRANSLATION_DOMAIN);
+        }
+
+        $medias = $this->context->doctrine->getRepository($this->context->resources->getEntityClass('media'));
+
+        return $medias instanceof MediaRepository && $medias->countByCategory($entity) > 0
+            ? $this->trans('media_category.error.has_medias', [], GingermindsMediaManagerBundle::TRANSLATION_DOMAIN)
             : null;
     }
 

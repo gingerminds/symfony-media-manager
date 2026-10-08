@@ -49,6 +49,23 @@ class MediaCategoryRepository extends AbstractRepository
     }
 
     /**
+     * The whole tree, depth-first, each category with its depth.
+     *
+     * @return list<array{MediaCategoryInterface, int}>
+     */
+    public function findFlatTree(): array
+    {
+        $flatten = static function (array $categories, int $depth) use (&$flatten): iterable {
+            foreach ($categories as $category) {
+                yield [$category, $depth];
+                yield from $flatten($category->getChildren(), $depth + 1);
+            }
+        };
+
+        return iterator_to_array($flatten($this->findTree(), 0), false);
+    }
+
+    /**
      * Applies the order of one level of the tree: ids of other levels are ignored.
      *
      * @param list<int> $ids

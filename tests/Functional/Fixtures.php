@@ -10,6 +10,8 @@ use Gingerminds\CoreBundle\Entity\Role\Role;
 use Gingerminds\CoreBundle\Entity\Security\ApiToken;
 use Gingerminds\CoreBundle\Entity\User\Contributor;
 use Gingerminds\CoreBundle\Entity\User\User;
+use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\Media;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -102,5 +104,19 @@ final readonly class Fixtures
         $this->entityManager->flush();
 
         return $category;
+    }
+
+    public function media(FileInterface $file, ?string $name = null, ?MediaCategory $category = null, ?FileInterface $thumbnail = null, ?string $code = null): Media
+    {
+        $media = new Media();
+        $media->setCode($code ?? 'media-' . $file->getId());
+        $media->setFile($file);
+        $media->setName($name);
+        $media->setCategory($category);
+        $media->setThumbnail($thumbnail);
+        $this->entityManager->persist($media);
+        $this->entityManager->flush();
+
+        return $media;
     }
 }

@@ -7,13 +7,17 @@ namespace Gingerminds\MediaManagerBundle;
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
 use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
+use Gingerminds\MediaManagerBundle\Controller\Media\MediaController;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\Media;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\MediaInterface;
 use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceSourceInterface;
 use Gingerminds\MediaManagerBundle\File\Reference\FileUsageResolverInterface;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
+use Gingerminds\MediaManagerBundle\Form\Media\MediaType;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\Config\Definition\Processor;
@@ -43,6 +47,10 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
             'entity' => MediaCategory::class,
             'interface' => MediaCategoryInterface::class,
         ],
+        'media' => [
+            'entity' => Media::class,
+            'interface' => MediaInterface::class,
+        ],
     ];
 
     /**
@@ -62,6 +70,12 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
             'form' => MediaCategoryType::class,
             'path' => 'media-categories',
             'permission' => 'media_categories',
+        ],
+        'media' => [
+            'controller' => MediaController::class,
+            'form' => MediaType::class,
+            'path' => 'medias',
+            'permission' => 'medias',
         ],
     ];
 

@@ -384,3 +384,14 @@ $gm-file-tile-size: 150px !default;
         box-shadow: 0 -.25rem .75rem rgba(var(--bs-body-color-rgb), .08);
     }
 }
+
+// Media list.
+.gm-media-preview {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+}
+
+.gm-media-file-name {
+    max-width: 240px;
+}

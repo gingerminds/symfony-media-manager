@@ -7,6 +7,7 @@ namespace Gingerminds\MediaManagerBundle\Tests\Functional\File;
 use Doctrine\ORM\EntityManagerInterface;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\Media;
 use Gingerminds\MediaManagerBundle\Exception\FileInUseException;
 use Gingerminds\MediaManagerBundle\Exception\InvalidPathException;
 use Gingerminds\MediaManagerBundle\Exception\LibraryException;
@@ -240,6 +241,31 @@ final class FileLibraryTest extends KernelTestCase
             self::assertSame($used, $exception->usedFile);
             self::assertSame('/admin/articles/' . $article->getId() . '/edit', $exception->usages[0]->editUrl);
         }
+    }
+
+    public function testTheFilesOfAMediaAreKeptAndMerged(): void
+    {
+        $file = $this->files->text('brochure.txt', 'brochure');
+        $thumbnail = $this->files->png('cover.png');
+        $copy = $this->files->png('cover-copy.png');
+        $media = new Media();
+        $media->setCode('media');
+        $media->setName('Brochure');
+        $media->setFile($file);
+        $media->setThumbnail($copy);
+        $this->entityManager->persist($media);
+        $this->entityManager->flush();
+
+        $result = $this->library->delete([$file, $copy]);
+
+        self::assertSame([], $result->deleted);
+        self::assertSame('Brochure', $result->blocked[0]['usages'][0]->title);
+        self::assertSame('Média', $result->blocked[0]['usages'][0]->label);
+        self::assertSame('/admin/medias/' . $media->getId() . '/edit', $result->blocked[1]['usages'][0]->editUrl);
+
+        self::assertSame(1, $this->library->mergeDuplicates($thumbnail, [$copy]));
+        self::assertSame($thumbnail, $media->getThumbnail());
+        self::assertNull($this->entityManager->find(File::class, $copy->getId()));
     }
 
     public function testMergeDuplicates(): void

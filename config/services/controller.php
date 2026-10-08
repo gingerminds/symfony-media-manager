@@ -9,6 +9,7 @@ use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
 use Gingerminds\MediaManagerBundle\Controller\File\ShowFileController;
 use Gingerminds\MediaManagerBundle\Controller\File\ShowFilePresetController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
+use Gingerminds\MediaManagerBundle\Controller\Media\MediaController;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 
@@ -36,6 +37,11 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('gingerminds_core.controller.context')])
         ->tag('controller.service_arguments');
     $services->alias(MediaCategoryController::class, 'gingerminds_media_manager.controller.admin.media_category')->public();
+
+    $services->set('gingerminds_media_manager.controller.admin.media', MediaController::class)
+        ->args([service('gingerminds_core.controller.context')])
+        ->tag('controller.service_arguments');
+    $services->alias(MediaController::class, 'gingerminds_media_manager.controller.admin.media')->public();
 
     $services->set('gingerminds_media_manager.controller.admin.file_library', FileLibraryController::class)
         ->args([

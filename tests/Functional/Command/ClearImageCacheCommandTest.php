@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Tests\Functional\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\Media;
 use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
 use League\Flysystem\FilesystemOperator;
@@ -39,6 +41,31 @@ final class ClearImageCacheCommandTest extends KernelTestCase
         self::assertStringContainsString('not found, skipped', $tester->getDisplay());
         self::assertTrue($this->storage->fileExists($keptPath));
         self::assertFalse($this->storage->fileExists($clearedPath));
+    }
+
+    public function testClearTheFilesOfAMedia(): void
+    {
+        $kept = $this->files->png('kept.png');
+        $file = $this->files->png('photo.png', 20, 20);
+        $thumbnail = $this->files->png('cover.png', 30, 30);
+        $media = new Media();
+        $media->setCode('media');
+        $media->setFile($file);
+        $media->setThumbnail($thumbnail);
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->persist($media);
+        $entityManager->flush();
+        $keptPath = $this->images->process($kept, 'thumbnail');
+        $paths = [$this->images->process($file, 'thumbnail'), $this->images->process($thumbnail, 'card')];
+
+        $tester = $this->command();
+        $tester->execute(['--media' => [(string) $media->getId(), '999999']]);
+
+        $tester->assertCommandIsSuccessful();
+        self::assertStringContainsString('Media "999999" not found, skipped', $tester->getDisplay());
+        self::assertTrue($this->storage->fileExists($keptPath));
+        self::assertFalse($this->storage->fileExists($paths[0]));
+        self::assertFalse($this->storage->fileExists($paths[1]));
     }
 
     public function testClearEverythingAfterConfirmation(): void

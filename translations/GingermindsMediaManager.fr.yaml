@@ -1,6 +1,28 @@
 menu:
     media_manager: Médiathèque
 
+media:
+    name_s: Média
+    name_p: Médias
+    manage: Gestion des médias
+    title_new: Ajouter un média
+    title_edit: Modifier un média
+    field:
+        code: Code
+        preview: Aperçu
+        name: Nom
+        file: Fichier
+        thumbnail: Vignette
+        category: Catégorie
+        created_at: Ajouté le
+    help:
+        name: Par défaut, le nom du fichier.
+        thumbnail: Image affichée à la place d'un fichier qui n'en est pas une.
+    placeholder:
+        category: — Aucune —
+    message:
+        no_items: Aucun média
+
 media_category:
     name_s: Catégorie de média
     name_p: Catégories de média
@@ -20,6 +42,7 @@ media_category:
         no_items: Aucune catégorie de média
     error:
         has_children: Cette catégorie contient des sous-catégories, supprimez-les ou déplacez-les d'abord.
+        has_medias: Cette catégorie contient des médias, déplacez-les d'abord.
 
 file:
     name_s: Fichier

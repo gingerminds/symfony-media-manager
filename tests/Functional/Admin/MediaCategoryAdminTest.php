@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Tests\Functional\Admin;
 
+use Gingerminds\MediaManagerBundle\Entity\Media\Media;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
 use Gingerminds\MediaManagerBundle\Tests\Functional\ApiTestCase;
+use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -158,6 +160,25 @@ final class MediaCategoryAdminTest extends ApiTestCase
         self::assertSame(['Photos', 'Landscapes'], $this->names($crawler));
 
         $this->delete($landscapes);
+        $this->delete($photos);
+        self::assertSame([], $this->names($this->client->followRedirect()));
+    }
+
+    public function testACategoryWithMediasCannotBeDeleted(): void
+    {
+        $photos = $this->fixtures->mediaCategory('photos');
+        $file = new FileFactory(self::getContainer()->get('test.file_storage'))->png();
+        $media = $this->fixtures->media($file, 'Tractor', $photos);
+        $this->client->disableReboot();
+        $this->client->loginUser($this->fixtures->user('deleter@example.com', superAdmin: true), 'admin');
+
+        $this->delete($photos);
+        $crawler = $this->client->followRedirect();
+        self::assertSelectorTextContains('.alert-danger', 'medias');
+        self::assertSame(['Photos'], $this->names($crawler));
+
+        $this->entityManager()->find(Media::class, $media->getId())?->setCategory(null);
+        $this->entityManager()->flush();
         $this->delete($photos);
         self::assertSame([], $this->names($this->client->followRedirect()));
     }

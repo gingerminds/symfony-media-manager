@@ -1,6 +1,6 @@
 # Reste à faire — portage de `gingerminds/laravel-media-manager`
 
-Point au 7 octobre 2026. Branche `build`.
+Point au 8 octobre 2026 (étape 6 commitée). Branche `build`.
 
 ## Où on en est
 
@@ -12,8 +12,9 @@ Point au 7 octobre 2026. Branche `build`.
 | 3 | `MediaCategory` : arbre, CRUD admin avec réordonnancement, API (`/tree` compris) | ✅ commité |
 | 4 | `FileLibrary` et registre des références (`FileReferenceRegistry`) | ✅ commité |
 | 5a | Page « Bibliothèque de fichiers », endpoints JSON, assets admin (slot `head` du core 1.6) | ✅ commité |
-| 5b | `FilePickerType` et modale de sélection | ⏳ fait, **à commiter** |
-| 6 | Media | à faire |
+| 5b | `FilePickerType` et modale de sélection | ✅ commité |
+| 5c | Déplacer et renommer un dossier | à faire |
+| 6 | Media | ✅ commité |
 | 7 | Sélection de medias (`media-select`) | à faire |
 | 8 | Panier (basket) | à faire |
 | 9 | Commandes de maintenance | à faire |
@@ -21,46 +22,42 @@ Point au 7 octobre 2026. Branche `build`.
 
 ---
 
-## Étape 5b — à commiter
+## Étape 5c — Déplacer et renommer un dossier
 
-- Fait :
-  - `FilePickerType` (options `accept`, `multiple`, `as_id`, `preview_preset`, `start_path`) ;
-  - widget en cartes, réordonnables en multiple ;
-  - modale `GET /admin/files/picker` ;
-  - filtre `accept[]` de `browse` et `MimeTypePatterns`.
-- Testé en fonctionnel avec l'`Article` de l'application de test, et dans le skeleton avec des widgets injectés à la main.
-- Le test dans un vrai formulaire du skeleton se fera à l'étape 6, avec le formulaire Media.
+- `FileLibrary::moveDirectory($path, $parent, $name)` couvre le renommage (même parent) et le déplacement :
+  - chaque fichier passe par `relocate()` (fichier physique, `path`, purge Glide, remise en place si l'enregistrement échoue) ;
+  - les sous-dossiers vides sont recréés et l'ancien dossier est supprimé ;
+  - les références ne bougent pas : elles pointent vers l'UUID, jamais vers le chemin.
+- Règles :
+  - refus d'un déplacement dans le dossier lui-même ou dans un de ses descendants ;
+  - refus si la cible existe déjà (pas de fusion) ;
+  - la racine ne se déplace pas ;
+  - disque par défaut seulement (les dossiers n'existent que là).
+- Volume : plafond configurable du nombre de fichiers par requête (par exemple 1 000). Au-delà, renvoyer vers une commande console.
+- Admin : « Renommer » et « Déplacer » sur le dossier courant, à côté de « Supprimer le dossier ». Le déplacement réutilise la boîte de dialogue avec l'arbre. Droit `edit files`, rien dans la modale du sélecteur.
+- Points de doc : un `start_path` ou un `LibraryStartPathProviderInterface` qui vise un dossier par son nom ne le suit pas. Penser plus tard aux dossiers par site (multisite).
+- Tests : renommage, déplacement, cycles, conflit, retour arrière, plafond.
 
-## Étape 6 — Media
+## Étape 6 — Media (commitée)
 
-À concevoir puis valider avant de coder. Ce que contient le package Laravel :
-
-- **Entité `Media`** (table `medias`), sur le modèle `Interface` + `BaseMedia` (MappedSuperclass) + `Media`, surchargeable via `resources.media` :
-  - `name`, `created_at` / `updated_at` ;
-  - `file` (vers `files`, obligatoire) ;
-  - `thumbnail` (vers `files`, optionnel, image) ;
-  - `category` (vers `media_categories`) ;
-  - les colonnes historiques `file_name`, `mime_type` et `size` : à reprendre ou à dériver du `File` (à décider, en pensant à l'import Laravel).
-- **Clés étrangères vers `files` en `RESTRICT`** (plan YANMAR). Le Laravel a un `thumbnail_id … cascadeOnDelete()`, à ne pas reproduire.
-- **Admin CRUD** (`medias`, permissions `view|edit|delete medias`, entrée dans le menu Médiathèque) :
-  - formulaire avec `FilePickerType` pour `file` et pour `thumbnail` (`accept: ['image/*']`) ;
-  - liste avec filtres (catégorie, recherche).
-- **Suppression d'un media** : on supprime la ligne, jamais le fichier (YANMAR 1.5). Le fichier reste dans la bibliothèque, éventuellement orphelin.
-- **API** :
-  - `GetCollection` et `Get`, avec les groupes `media:list` / `media:read` (et `basket:read`) ;
-  - propriétés `file_reference` et `file_size` ;
-  - provider dédié (`MediaProvider`) ;
-  - `file` renvoie l'UUID quel que soit le type, jamais le `path` brut (YANMAR 1.5) ;
-  - cache : `CacheCascade` depuis `MediaCategory` (déjà déclaré côté catégorie : `['media']`).
-- **`gingerminds:media:cache:clear`** : ajouter l'option `--media`.
-- **Registre des références** : vérifier que `Media.file` et `Media.thumbnail` sont bien vus par la source Doctrine. Le registre doit alors bloquer la suppression d'un fichier utilisé, et le lien d'édition doit pointer vers le media.
-- **Bug Laravel à ne pas reproduire** : `MediaController::create()` ne transmet pas `$mediaCategory` à la vue.
-- **Tests** : CRUD, API, cache, blocage de suppression du fichier.
-- **Dans le skeleton** :
-  - migration ;
+- Contenu :
+  - entité `Media`, avec `code` obligatoire et unique (ajouté par rapport au Laravel) ;
+  - CRUD admin ;
+  - API `/api/media` ;
+  - `--media` sur `cache:clear` ;
+  - refus de supprimer une catégorie qui contient des medias.
+- Choix :
+  - la catégorie est optionnelle ;
+  - aucune colonne historique (`file_name`, `mime_type` et `size` ont déjà été supprimées par le Laravel) ;
+  - `file` vaut toujours l'UUID.
+- Corrigé en même temps :
+  - la recherche de la bibliothèque ne porte que sur le nom des fichiers, et pas les dossiers ;
+  - le filtre de type de la modale est limité aux types de `accept`.
+- À vérifier dans le skeleton (migration `Version20261007150534`) :
   - vrai formulaire avec le sélecteur ;
   - suppression bloquée d'un fichier utilisé ;
-  - fusion de doublons avec mise à jour des références.
+  - fusion de doublons.
+- Le groupe `basket:read` sur les champs du media est reporté à l'étape 8.
 
 ## Étape 7 — Sélection de medias (`media-select`)
 
@@ -103,6 +100,8 @@ Pages à écrire : configuration, services, composants (types de formulaire, wid
 - `files_rate_limit` n'accepte pas de placeholder d'environnement. `%env()%` fonctionne pour `storage.default_disk`, `library.root` et `library.max_upload_size`.
 - `images.driver: gd` nécessite le support WebP de GD (`default_format: webp`).
 - Une base Laravel avec des codes de catégorie en double doit être nettoyée avant import (`code` est unique).
+- Les medias Laravel sans `file_id` doivent être supprimés ou complétés avant import (`file_id` est obligatoire).
+- Les medias Laravel n'ont pas de `code` (obligatoire et unique) : en générer un à l'import (par exemple `media-{id}`).
 - Ne jamais mettre `onDelete: CASCADE` sur une relation vers `files`.
 - Les références stockées en JSON n'ont pas d'intégrité en base. Leur recherche par `LIKE` ne fonctionne pas sur un `jsonb` Postgres.
 - Le droit `delete files` est créé par `gingerminds:permissions:sync` mais n'est pas utilisé : toutes les actions d'écriture relèvent de `edit files`.

@@ -7,7 +7,9 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Gingerminds\CoreBundle\ApiPlatform\State\ResourceProvider;
 use Gingerminds\MediaManagerBundle\ApiPlatform\OpenApi\FilePresetOpenApiFactory;
 use Gingerminds\MediaManagerBundle\ApiPlatform\State\MediaCategoryTreeProvider;
+use Gingerminds\MediaManagerBundle\ApiPlatform\State\MediaProvider;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
+use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
 
 /*
  * API Platform: state providers and OpenAPI documentation of the file endpoints.
@@ -21,6 +23,10 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('gingerminds_media_manager.api.provider.media_category_tree', MediaCategoryTreeProvider::class)
         ->args([service(MediaCategoryRepository::class)])
+        ->tag('api_platform.state_provider');
+
+    $services->set('gingerminds_media_manager.api.provider.media', MediaProvider::class)
+        ->args([service(MediaRepository::class), service('request_stack')])
         ->tag('api_platform.state_provider');
 
     $services->set('gingerminds_media_manager.api.openapi.file_preset', FilePresetOpenApiFactory::class)

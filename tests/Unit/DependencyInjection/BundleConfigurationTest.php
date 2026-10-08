@@ -7,9 +7,12 @@ namespace Gingerminds\MediaManagerBundle\Tests\Unit\DependencyInjection;
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\Media;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategory;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
+use Gingerminds\MediaManagerBundle\Entity\Media\MediaInterface;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
+use Gingerminds\MediaManagerBundle\Form\Media\MediaType;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
 use Gingerminds\MediaManagerBundle\Tests\Application\Override\File as ProjectFile;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +27,7 @@ final class BundleConfigurationTest extends TestCase
         $container = $this->prepend([]);
 
         $doctrine = $this->merged($container, 'doctrine')['orm'];
-        self::assertSame([FileInterface::class => File::class, MediaCategoryInterface::class => MediaCategory::class], $doctrine['resolve_target_entities']);
+        self::assertSame([FileInterface::class => File::class, MediaCategoryInterface::class => MediaCategory::class, MediaInterface::class => Media::class], $doctrine['resolve_target_entities']);
         self::assertSame(['GingermindsMediaManagerFile', 'GingermindsMediaManagerMedia'], array_keys($doctrine['mappings']));
         self::assertSame('Gingerminds\MediaManagerBundle\Entity\File', $doctrine['mappings']['GingermindsMediaManagerFile']['prefix']);
 
@@ -47,6 +50,17 @@ final class BundleConfigurationTest extends TestCase
 
         $resource = $this->merged($this->prepend([['resources' => ['media_category' => ['controller' => 'App\\Controller\\CategoryController']]]]), 'gingerminds_core')['resources']['media_category'];
         self::assertSame('App\\Controller\\CategoryController', $resource['controller']);
+    }
+
+    public function testTheMediasAreACoreResource(): void
+    {
+        $resource = $this->merged($this->prepend([]), 'gingerminds_core')['resources']['media'];
+
+        self::assertSame(Media::class, $resource['entity']);
+        self::assertSame(MediaType::class, $resource['form']);
+        self::assertSame('medias', $resource['path']);
+        self::assertSame('medias', $resource['permission']);
+        self::assertSame('gingerminds_media_manager_media', $resource['route_prefix']);
     }
 
     public function testTheFilesAreACoreResourceWithoutCrudRoutes(): void

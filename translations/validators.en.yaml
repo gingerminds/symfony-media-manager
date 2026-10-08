@@ -1,6 +1,8 @@
 gingerminds_media_manager:
     media_category:
         parent_cycle: A category cannot be placed in itself or in one of its subcategories.
+    media:
+        thumbnail_not_image: The thumbnail must be an image.
     file_picker:
         invalid: This file is not valid.
         not_found: This file is no longer in the library.

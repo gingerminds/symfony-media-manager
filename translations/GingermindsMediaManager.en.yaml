@@ -1,6 +1,28 @@
 menu:
     media_manager: Media library
 
+media:
+    name_s: Media
+    name_p: Medias
+    manage: Manage medias
+    title_new: Add a media
+    title_edit: Edit a media
+    field:
+        code: Code
+        preview: Preview
+        name: Name
+        file: File
+        thumbnail: Thumbnail
+        category: Category
+        created_at: Added on
+    help:
+        name: The file name by default.
+        thumbnail: Image shown instead of a file that is not one.
+    placeholder:
+        category: — None —
+    message:
+        no_items: No media
+
 media_category:
     name_s: Media category
     name_p: Media categories
@@ -20,6 +42,7 @@ media_category:
         no_items: No media category
     error:
         has_children: This category has subcategories, delete or move them first.
+        has_medias: This category has medias, move them first.
 
 file:
     name_s: File

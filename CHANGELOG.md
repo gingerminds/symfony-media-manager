@@ -105,9 +105,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   confirms; an uploaded file is picked, an already known content offers "Use this one".
 - `browse` filters by mime types with `accept[]` (`MimeTypePatterns`).
 - Library exceptions are translatable (`TranslatableExceptionInterface`, `error.*` keys).
+- `Media` entity (overridable `BaseMedia` mapped superclass, `resources.media.entity`), `medias`
+  table with the Laravel columns plus a required, unique and searchable `code`: `name` (nullable,
+  the file name when left empty), `file_id`
+  (required) and `thumbnail_id` (an image) as `RESTRICT` foreign keys to `files`,
+  `media_category_id` (`SET NULL`). The legacy `file_name` / `mime_type` / `size` columns are not
+  kept: they come from the file.
+- Media admin CRUD (`/{admin}/medias`, `view|edit|delete medias`, "Medias" entry of the media
+  library menu): list with preview (the file when it is an image, else the thumbnail), category
+  filter and search; form with `FilePickerType` for the file and the thumbnail and the category
+  tree; `?category_id=` preselects the category. Deleting a media keeps its files in the library.
+- `GET /api/media` and `/api/media/{id}` (public, `MediaProvider`): `id`, `code`, `name`, `file` (always
+  the file id, never its path), `file_reference`, `file_size`, `file_type`,
+  `thumbnail_reference`, `thumbnail_size`, `media_category_id`; filtered by
+  `filters[category]` or by the Laravel name `filters[media_category_id]`. Cached as `media`,
+  invalidated by the media categories.
+- `gingerminds:media:cache:clear --media=ID`: clears the presets of the file and the thumbnail of
+  these medias.
+- The files of a media are reported as used by the library (delete blocked, "Media" usage linked to
+  its edit page) and follow a duplicates merge.
 
 ### Changed
 
 - Requires `gingerminds/symfony-core` ^1.6 (`admin_includes.head`).
 - `storage.default_disk` and `library.root` are checked at runtime, so they accept env
   placeholders (`%env(FILE_LIBRARY_DISK)%`, `%env(FILE_LIBRARY_ROOT)%`).
+- A media category that still has medias cannot be deleted (Laravel set them to no category).
