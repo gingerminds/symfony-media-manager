@@ -41,24 +41,26 @@ final class IndexFilesCommand extends Command
             return Command::FAILURE;
         }
 
-        if ([] === $missing) {
-            $io->success('Every file is indexed.');
-
-            return Command::SUCCESS;
-        }
-
-        if ($input->getOption('dry-run')) {
-            $io->listing($missing);
-            $io->note(\sprintf('%d file(s) to index (dry run).', \count($missing)));
-
-            return Command::SUCCESS;
-        }
-
-        $io->progressStart(\count($missing));
-        $this->indexer->index($missing, static fn () => $io->progressAdvance());
-        $io->progressFinish();
-        $io->success(\sprintf('%d file(s) indexed.', \count($missing)));
+        $this->report($io, $missing, (bool) $input->getOption('dry-run'));
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @param list<string> $missing
+     */
+    private function report(SymfonyStyle $io, array $missing, bool $dryRun): void
+    {
+        if ([] === $missing) {
+            $io->success('Every file is indexed.');
+        } elseif ($dryRun) {
+            $io->listing($missing);
+            $io->note(\sprintf('%d file(s) to index (dry run).', \count($missing)));
+        } else {
+            $io->progressStart(\count($missing));
+            $this->indexer->index($missing, static fn () => $io->progressAdvance());
+            $io->progressFinish();
+            $io->success(\sprintf('%d file(s) indexed.', \count($missing)));
+        }
     }
 }

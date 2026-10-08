@@ -42,11 +42,20 @@ final class OrphanFilesCommand extends Command
         }
 
         $files = $this->orphans->find(null === $olderThan ? null : (int) $olderThan);
+        $this->report($io, $files, (bool) $input->getOption('delete'));
 
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @param list<FileInterface> $files
+     */
+    private function report(SymfonyStyle $io, array $files, bool $delete): void
+    {
         if ([] === $files) {
             $io->success('No unused file.');
 
-            return Command::SUCCESS;
+            return;
         }
 
         $io->table(['File', 'Size', 'Created'], array_map(static fn (FileInterface $file): array => [
@@ -55,15 +64,11 @@ final class OrphanFilesCommand extends Command
             $file instanceof TimestampableInterface ? $file->getCreatedAt()?->format('Y-m-d') : null,
         ], $files));
 
-        if (!$input->getOption('delete')) {
+        if ($delete) {
+            $result = $this->orphans->delete($files);
+            $io->success(\sprintf('%d file(s) deleted, %d kept (used in the meantime).', \count($result->deleted), \count($result->blocked)));
+        } else {
             $io->note(\sprintf('%d unused file(s), --delete deletes them.', \count($files)));
-
-            return Command::SUCCESS;
         }
-
-        $result = $this->orphans->delete($files);
-        $io->success(\sprintf('%d file(s) deleted, %d kept (used in the meantime).', \count($result->deleted), \count($result->blocked)));
-
-        return Command::SUCCESS;
     }
 }
