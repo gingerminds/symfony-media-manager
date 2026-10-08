@@ -34,10 +34,7 @@ final readonly class FilePickerTransformer implements DataTransformerInterface
     {
         $values = is_iterable($value) ? [...$value] : [$value];
 
-        return implode(',', array_filter(array_map(
-            static fn (mixed $file): ?string => $file instanceof FileInterface ? $file->getId() : (\is_string($file) ? $file : null),
-            $values,
-        )));
+        return implode(',', array_filter(array_map($this->id(...), $values)));
     }
 
     public function reverseTransform(mixed $value): mixed
@@ -108,5 +105,14 @@ final readonly class FilePickerTransformer implements DataTransformerInterface
     private function failure(string $message, array $parameters): TransformationFailedException
     {
         return new TransformationFailedException($message, 0, null, $message, $parameters);
+    }
+
+    private function id(mixed $file): ?string
+    {
+        if ($file instanceof FileInterface) {
+            return $file->getId();
+        }
+
+        return \is_string($file) ? $file : null;
     }
 }

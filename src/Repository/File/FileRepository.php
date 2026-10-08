@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Repository\File;
 
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Gingerminds\CoreBundle\Pagination\Paginator;
@@ -113,25 +114,11 @@ class FileRepository extends AbstractRepository
         }
 
         if (null !== $query->type && isset(LibraryQuery::TYPES[$query->type])) {
-            $conditions = [];
-
-            foreach (LibraryQuery::TYPES[$query->type] as $index => $pattern) {
-                $conditions[] = 'f.mimeType LIKE :type' . $index;
-                $qb->setParameter('type' . $index, $pattern);
-            }
-
-            $qb->andWhere(implode(' OR ', $conditions));
+            $this->andWhereMimeTypeLike($qb, 'type', LibraryQuery::TYPES[$query->type]);
         }
 
         if ([] !== $query->accept) {
-            $conditions = [];
-
-            foreach ($query->accept as $index => $pattern) {
-                $conditions[] = 'f.mimeType LIKE :accept' . $index;
-                $qb->setParameter('accept' . $index, MimeTypePatterns::toLike($pattern));
-            }
-
-            $qb->andWhere(implode(' OR ', $conditions));
+            $this->andWhereMimeTypeLike($qb, 'accept', array_map(MimeTypePatterns::toLike(...), $query->accept));
         }
 
         if ($query->createdFrom instanceof \DateTimeImmutable) {
@@ -147,14 +134,47 @@ class FileRepository extends AbstractRepository
         }
 
         if ($query->duplicates) {
-            $duplicates = $this->createQueryBuilder('d')
-                ->select('d.hash')
-                ->where('d.hash IS NOT NULL')
-                ->groupBy('d.hash')
-                ->having('COUNT(d.id) > 1');
-            $qb->andWhere($qb->expr()->in('f.hash', $duplicates->getDQL()));
+            $this->andWhereDuplicated($qb);
         }
 
+        $this->orderLibrary($qb, $query);
+        $qb->setFirstResult((max(1, $query->page) - 1) * $itemsPerPage)
+            ->setMaxResults($itemsPerPage);
+
+        $paginator = new DoctrinePaginator($qb, fetchJoinCollection: false);
+        /** @var list<FileInterface> $items */
+        $items = iterator_to_array($paginator->getIterator(), false);
+
+        return new Paginator($items, \count($paginator), max(1, $query->page), $itemsPerPage);
+    }
+
+    /**
+     * @param list<string> $patterns SQL LIKE patterns, one of them must match
+     */
+    private function andWhereMimeTypeLike(QueryBuilder $qb, string $parameter, array $patterns): void
+    {
+        $conditions = [];
+
+        foreach ($patterns as $index => $pattern) {
+            $conditions[] = 'f.mimeType LIKE :' . $parameter . $index;
+            $qb->setParameter($parameter . $index, $pattern);
+        }
+
+        $qb->andWhere(implode(' OR ', $conditions));
+    }
+
+    private function andWhereDuplicated(QueryBuilder $qb): void
+    {
+        $duplicates = $this->createQueryBuilder('d')
+            ->select('d.hash')
+            ->where('d.hash IS NOT NULL')
+            ->groupBy('d.hash')
+            ->having('COUNT(d.id) > 1');
+        $qb->andWhere($qb->expr()->in('f.hash', $duplicates->getDQL()));
+    }
+
+    private function orderLibrary(QueryBuilder $qb, LibraryQuery $query): void
+    {
         $direction = 'desc' === strtolower($query->sort) ? 'DESC' : 'ASC';
         $sort = LibraryQuery::SORTS[$query->sortBy] ?? 'originalName';
 
@@ -165,15 +185,7 @@ class FileRepository extends AbstractRepository
             $qb->orderBy('f.' . $sort, $direction);
         }
 
-        $qb->addOrderBy('f.id', $direction)
-            ->setFirstResult((max(1, $query->page) - 1) * $itemsPerPage)
-            ->setMaxResults($itemsPerPage);
-
-        $paginator = new DoctrinePaginator($qb, fetchJoinCollection: false);
-        /** @var list<FileInterface> $items */
-        $items = iterator_to_array($paginator->getIterator(), false);
-
-        return new Paginator($items, \count($paginator), max(1, $query->page), $itemsPerPage);
+        $qb->addOrderBy('f.id', $direction);
     }
 
     /**
