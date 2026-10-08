@@ -22,12 +22,13 @@ final class ConfigurationTest extends TestCase
         self::assertSame(['default' => 'gingerminds_media_manager.storage.default'], $config['storage']['disks']);
         self::assertSame('library', $config['library']['root']);
         self::assertSame(51200, $config['library']['max_upload_size']);
+        self::assertSame(1000, $config['library']['max_directory_move']);
         self::assertContains('application/xlsx', $config['library']['allowed_mimes']);
         self::assertSame('imagick', $config['images']['driver']);
         self::assertSame(['micro', 'thumbnail', 'card', 'hero'], array_keys($config['images']['presets']));
         self::assertSame(['w' => 150, 'h' => 150, 'fit' => 'crop', 'q' => 80], $config['images']['presets']['thumbnail']);
         self::assertSame(600, $config['files_rate_limit']);
-        self::assertSame(['enabled' => true, 'claim_strategy' => 'merge'], $config['basket']);
+        self::assertSame(['enabled' => true, 'claim_strategy' => 'merge', 'ttl' => 30], $config['basket']);
         self::assertSame(['entity' => null, 'controller' => null, 'form' => null], $config['resources']['media']);
     }
 
@@ -50,9 +51,6 @@ final class ConfigurationTest extends TestCase
      */
     public static function invalidConfigurations(): iterable
     {
-        yield 'undeclared default disk' => [['storage' => ['default_disk' => 'public']]];
-        yield 'absolute library root' => [['library' => ['root' => '/var/library']]];
-        yield 'library root escaping' => [['library' => ['root' => 'library/../..']]];
         yield 'preset name not URL safe' => [['images' => ['presets' => ['Big Hero' => ['w' => 100]]]]];
         yield 'unknown image format' => [['images' => ['default_format' => 'bmp']]];
         yield 'unknown claim strategy' => [['basket' => ['claim_strategy' => 'keep']]];

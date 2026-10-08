@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`gingerminds/symfony-media-manager`: a Symfony 8.1 bundle (PHP 8.4, Doctrine ORM 3, API Platform 4.4, Flysystem, Glide) that adds a media library, file library and image presets to admin panels built on `gingerminds/symfony-core` (^1.5). It is a step-by-step port of `gingerminds/laravel-media-manager`. Each step is recorded in `CHANGELOG.md` under `[Unreleased]`, so update it with every functional change.
+`gingerminds/symfony-media-manager`: a Symfony 8.1 bundle (PHP 8.4, Doctrine ORM 3, API Platform 4.4, Flysystem, Glide) that adds a media library, file library and image presets to admin panels built on `gingerminds/symfony-core` (^1.6). It is a step-by-step port of `gingerminds/laravel-media-manager`. Each step is recorded in `CHANGELOG.md` under `[Unreleased]`, so update it with every functional change.
 
 ## Project overview
 

@@ -1,0 +1,30 @@
+{% trans_default_domain 'GingermindsMediaManager' %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-collection me-1 text-primary"></i> {{ 'media.name_s'|trans }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {{ form_row(form.code) }}
+                    {{ form_row(form.name) }}
+                    {{ form_row(form.file) }}
+                    {{ form_row(form.thumbnail) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h5 class="card-title mb-0"><i class="bi bi-diagram-3 me-1 text-primary"></i> {{ 'media.field.category'|trans }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {{ form_row(form.category, {label: false}) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

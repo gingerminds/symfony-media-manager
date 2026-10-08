@@ -1,0 +1,18 @@
+{% extends '@GingermindsCore/crud/list_tree.html.twig' %}
+{% trans_default_domain 'GingermindsMediaManager' %}
+
+{% set tree_reorder_url = is_granted('EDIT', resource.name) ? path('gingerminds_media_manager_media_category_reorder') : null %}
+{% set tree_csrf_token_id = reorder_csrf_token_id %}
+
+{% block list_filters %}{% endblock %}
+
+{% block tree %}
+    {% if roots is empty %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-diagram-3 fs-1 d-block mb-2 opacity-25"></i>
+            {{ 'media_category.message.no_items'|trans }}
+        </div>
+    {% else %}
+        {% include '@GingermindsMediaManager/pages/media_category/_tree.html.twig' with {tree_items: roots, parent_id: null, depth: 0} %}
+    {% endif %}
+{% endblock %}

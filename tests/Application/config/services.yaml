@@ -9,3 +9,33 @@ services:
     # Keeps PHPUnit output clean.
     logger:
         class: Psr\Log\NullLogger
+
+    # Bundle services fetched by the tests.
+    test.file_storage:
+        alias: gingerminds_media_manager.file.storage
+        public: true
+
+    test.storage.default:
+        alias: gingerminds_media_manager.storage.default
+        public: true
+
+    test.file_library:
+        alias: gingerminds_media_manager.file.library
+        public: true
+
+    test.file_reference_registry:
+        alias: gingerminds_media_manager.file.reference_registry
+        public: true
+
+    # Project declarations: a JSON field source and a usage resolver (autoconfigured).
+    test.page_content_references:
+        class: Gingerminds\MediaManagerBundle\File\Reference\JsonFieldFileReferenceSource
+        arguments:
+            $entityClass: Gingerminds\MediaManagerBundle\Tests\Application\Entity\Page
+            $field: content
+
+    Gingerminds\MediaManagerBundle\Tests\Application\Reference\PageUsageResolver: ~
+
+    Gingerminds\MediaManagerBundle\Tests\Application\Controller\ArticleController:
+        arguments: ['@gingerminds_core.controller.context']
+        tags: [controller.service_arguments]

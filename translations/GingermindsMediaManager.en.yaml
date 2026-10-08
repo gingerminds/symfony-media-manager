@@ -1,0 +1,181 @@
+menu:
+    media_manager: Media library
+
+media:
+    name_s: Media
+    name_p: Medias
+    manage: Manage medias
+    title_new: Add a media
+    title_edit: Edit a media
+    field:
+        code: Code
+        preview: Preview
+        name: Name
+        file: File
+        thumbnail: Thumbnail
+        category: Category
+        created_at: Added on
+    help:
+        name: The file name by default.
+        thumbnail: Image shown instead of a file that is not one.
+    placeholder:
+        category: — None —
+    message:
+        no_items: No media
+    error:
+        used: This media is used %count% time(s), remove it from the contents using it first.
+
+media_select:
+    title: Media library
+    choose: Choose a media
+    replace: Replace
+    add: Add medias
+    remove: Remove
+    reorder: Drag to reorder
+    search: Search a media (code, name)…
+    all_categories: All categories
+    load_more: Load more
+    select: Select
+    none: No media selected
+    selected: '%count% media(s) selected'
+    empty: No media
+    loading: Loading…
+    error: The medias could not be loaded.
+    forbidden: You have no access to the media library.
+
+media_category:
+    name_s: Media category
+    name_p: Media categories
+    manage: Manage media categories
+    title_new: Add a media category
+    title_edit: Edit a media category
+    field:
+        code: Code
+        name: Name
+        parent: Parent category
+    placeholder:
+        parent: — None —
+    action:
+        add_child: Add a child
+        move: Move
+    message:
+        no_items: No media category
+    error:
+        has_children: This category has subcategories, delete or move them first.
+        has_medias: This category has medias, move them first.
+
+file:
+    name_s: File
+    name_p: File library
+    root: Library
+    detail: File details
+    location: Location
+    directories: Folders
+    search: Search a file…
+    type:
+        all: All types
+        image: Images
+        video: Videos
+        audio: Audio
+        pdf: PDF
+        document: Documents
+        archive: Archives
+    sort:
+        name_asc: Name (A → Z)
+        name_desc: Name (Z → A)
+        date_desc: Newest
+        date_asc: Oldest
+        size_desc: Largest
+        size_asc: Smallest
+    filter:
+        sort: Sort by
+        search: Search
+        more: Filters
+        recursive: Include the files of the subfolders
+        orphans: Unused
+        duplicates: Duplicates
+        from: Added from
+        to: "Added until"
+    field:
+        name: Name
+        type: Type
+        size: Size
+        created_at: Added on
+        directory: Folder
+        sort: Sort
+        usages: Usages
+        duplicates: Duplicates
+        directory_name: Folder name
+        file_name: File name
+    action:
+        upload: Upload
+        new_directory: New folder
+        open: Open
+        rename: Rename
+        move: Move
+        move_here: Move here
+        delete: Delete
+        merge: Keep this file and merge its duplicates
+        show: Show
+        clear_selection: Clear the selection
+        select_page: Select all
+        first: First page
+        previous: Previous
+        next: Next
+        last: Last page
+        cancel: Cancel
+        confirm: Confirm
+        close: Close
+    message:
+        loading: Loading…
+        empty: No file
+        drop: Drop your files to upload them into this folder
+        selected: '%count% selected'
+        total: '%count% file(s)'
+        not_used: This file is not used anywhere.
+        uploaded: '"%name%" has been uploaded.'
+        duplicate: '"%name%" is already in the library: "%existing%".'
+        too_large: '"%name%" exceeds the maximum size (%max%).'
+        deleted: '%count% file(s) deleted.'
+        blocked: 'These files are used, they have not been deleted:'
+        moved: '%count% file(s) moved.'
+        merged: Duplicates merged, %count% reference(s) updated.
+        confirm_delete: Delete %count% file(s)? The used files will be kept.
+        confirm_merge: The %count% duplicate(s) will be replaced by this file wherever they are used, then deleted.
+        move_to: Move %count% file(s) to "%path%"
+        confirm_delete_directories: Delete %count% folder(s)? Only the empty folders will be deleted.
+        directories_deleted: '%count% folder(s) deleted.'
+        directories_kept: 'These folders are not empty, they have not been deleted:'
+        directories_moved: '%count% folder(s) moved to "%path%".'
+        directory_renamed: The folder is now named "%name%".
+        move_directories_to: Move %count% folder(s) to "%path%"
+    picker:
+        title: File library
+        choose: Choose a file
+        replace: Replace
+        add: Add files
+        remove: Remove
+        reorder: Drag to reorder
+        empty: No file
+        accept: 'Accepted types: %types%'
+        forbidden: You have no access to the file library.
+        select: Select
+        none: No file selected
+        selected: '%count% file(s) selected'
+        use: Use this one
+
+error:
+    generic: An error occurred, please try again.
+    upload_failed: The file could not be sent.
+    directory_not_found: The folder "%path%" does not exist.
+    directory_exists: The folder "%path%" already exists.
+    directory_not_empty: The folder "%path%" is not empty.
+    root_directory: The library root cannot be deleted.
+    root_directory_moved: The library root cannot be moved nor renamed.
+    directory_into_itself: The folder "%path%" cannot be moved into itself or one of its subfolders.
+    directory_too_large: '"%path%" holds %count% files, above the limit of %max%: use the "%command%" command.'
+    invalid_path: This path is not valid.
+    mime_not_allowed: The file type "%mime%" is not allowed.
+    too_large: The file is too large (%size% KB, %max% KB allowed).
+    could_not_store: The file "%name%" could not be stored.
+    not_duplicates: These files are not duplicates.

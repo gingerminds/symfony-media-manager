@@ -1,0 +1,48 @@
+{% extends '@GingermindsCore/crud/list.html.twig' %}
+{% trans_default_domain 'GingermindsMediaManager' %}
+
+{% set columns = [
+    {label: 'media.field.preview', align: 'center'},
+    {label: 'media.field.name', property: 'name', sortable: true},
+    {label: 'media.field.category', property: 'category.name', sortable: true},
+    {label: 'media.field.file'},
+    {label: 'media.field.created_at', property: 'createdAt', sortable: true},
+    {label: 'common.actions', align: 'end'},
+] %}
+
+{% block list_icon %}bi-collection{% endblock %}
+{% block table_empty_icon %}bi-collection{% endblock %}
+
+{% block table_row %}
+    {% set preview = item.preview %}
+    <td class="text-center">
+        {% if preview %}
+            <img src="{{ gm_file_url(preview, 'thumbnail') }}" alt="" class="gm-media-preview rounded border" loading="lazy" width="48" height="48">
+        {% else %}
+            <i class="bi bi-file-earmark fs-3 text-muted"></i>
+        {% endif %}
+    </td>
+    <td>
+        {% if is_granted('EDIT', item) %}
+            <a href="{{ path(resource.route('edit'), {id: item.id}) }}" class="text-body fw-medium">{{ item }}</a>
+        {% else %}
+            <span class="fw-medium">{{ item }}</span>
+        {% endif %}
+        {% if item.code %}<div class="text-muted small fs-12">{{ item.code }}</div>{% endif %}
+    </td>
+    <td>
+        {% if item.category %}
+            <span class="badge bg-primary-subtle text-primary fs-11">{{ item.category.name }}</span>
+        {% else %}
+            <span class="text-muted small fs-12">{{ 'common.none'|trans({}, 'GingermindsCore') }}</span>
+        {% endif %}
+    </td>
+    <td class="text-muted small fs-12">
+        {% if item.file %}
+            <div class="gm-media-file-name text-truncate" title="{{ item.file.path }}">{{ item.file.originalName }}</div>
+            <div>{{ item.file.mimeType }}</div>
+        {% endif %}
+    </td>
+    <td class="text-muted small fs-12">{{ item.createdAt ? item.createdAt|date('d/m/Y H:i') }}</td>
+    <td class="text-end">{{ block('row_actions') }}</td>
+{% endblock %}

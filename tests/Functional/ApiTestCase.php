@@ -51,6 +51,11 @@ abstract class ApiTestCase extends WebTestCase
         return '' === $content ? [] : json_decode($content, true, flags: \JSON_THROW_ON_ERROR);
     }
 
+    protected function entityManager(): EntityManagerInterface
+    {
+        return static::getContainer()->get(EntityManagerInterface::class);
+    }
+
     protected function assertStatus(int $expected): void
     {
         self::assertSame($expected, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
