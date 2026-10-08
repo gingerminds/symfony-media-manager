@@ -1,6 +1,6 @@
 # Reste à faire — portage de `gingerminds/laravel-media-manager`
 
-Point au 8 octobre 2026 (étapes 5c à 8 commitées). Branche `build`.
+Point au 8 octobre 2026 (étapes 5c à 9 commitées). Branche `build`.
 
 ## Où on en est
 
@@ -17,7 +17,7 @@ Point au 8 octobre 2026 (étapes 5c à 8 commitées). Branche `build`.
 | 6 | Media | ✅ commité |
 | 7 | Sélection de medias (`media-select`) | ✅ commité |
 | 8 | Panier (basket) | ✅ commité |
-| 9 | Commandes de maintenance | à faire |
+| 9 | Commandes de maintenance | ✅ commité |
 | 10 | Documentation | à faire |
 
 ---
@@ -87,17 +87,12 @@ Point au 8 octobre 2026 (étapes 5c à 8 commitées). Branche `build`.
   - le téléchargement supprime le panier.
 - `basket.enabled: false` vérifié par un test dans un environnement dédié (`test_no_basket`).
 
-## Étape 9 — Commandes de maintenance (plan YANMAR 1.8)
+## Étape 9 — Commandes de maintenance (commitée)
 
-| Commande | Rôle |
-|---|---|
-| `files:hash [--force]` | Calcule le `hash` des lignes qui n'en ont pas. |
-| `files:index [--path=]` | Crée les lignes `files` manquantes pour les fichiers présents sur le disque, sous la racine. |
-| `files:deduplicate [--dry-run]` | Regroupe par `hash`, garde le plus ancien, appelle `FileLibrary::mergeDuplicates()`. Ne supprime le fichier physique que si plus aucune ligne ne partage son `path`. Affiche un rapport en tableau. |
-| `files:relocate [--dry-run]` | Déplace les fichiers situés hors racine vers le premier niveau de `library.root`, ajoute un suffixe en cas de conflit, met à jour `path` et purge Glide. |
-| `files:orphans [--delete] [--older-than=]` | Liste les fichiers sans usage, et les supprime en option. |
-
-Le filtre « Doublons » de la bibliothèque ne sert qu'aux bases importées : un upload ne crée jamais de doublon. Il sera utile après `files:hash` sur une base Laravel migrée.
+- Commandes `gingerminds:media:files:hash`, `index`, `deduplicate`, `relocate` et `orphans` ; leur logique est dans `src/File/Maintenance`.
+- `index` indexe tous les fichiers, quel que soit leur type.
+- `relocate` traite tous les disques.
+- Le filtre « Doublons » de la bibliothèque devient utile après `files:hash` sur une base importée.
 
 ## Étape 10 — Documentation
 
@@ -129,6 +124,10 @@ Pages à écrire : configuration, services, composants (types de formulaire, wid
   - import Laravel : `owner_type` de l'utilisateur vers `owner_id`, les autres propriétaires ignorés ;
   - `basket.enabled: false`.
 - `README.md` à jour (dépendances, installation, migrations).
+- Import d'une base Laravel, dans l'ordre :
+  1. déclarer les disques Laravel ;
+  2. nettoyer les codes de catégorie en double et les medias sans fichier, donner un `code` aux medias ;
+  3. lancer `files:relocate`, `files:hash`, `files:deduplicate`, puis `files:orphans`.
 
 ## Plus tard
 

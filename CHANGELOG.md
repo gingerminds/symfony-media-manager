@@ -133,6 +133,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `basket.enabled: false` removes the baskets entirely: no Doctrine mapping (no tables), no API
   resource, no voter nor login enrichment.
 - A media in a basket can still be deleted (`MediaUsageCounter` ignores the baskets).
+- Maintenance commands, for imported databases and files copied by hand (`src/File/Maintenance`):
+  - `gingerminds:media:files:hash [--force]`: sha256 of the files without one, read on their disk;
+  - `gingerminds:media:files:index [--path=] [--dry-run]`: rows for the files of the library disk
+    missing from `files`, whatever their type (hidden directories excluded);
+  - `gingerminds:media:files:deduplicate [--dry-run]`: the files with the same hash merged into the
+    oldest one (references updated), report table;
+  - `gingerminds:media:files:relocate [--dry-run]`: the files outside `library.root` (every disk)
+    moved to its first level, "name-1.ext" when taken, presets purged, rows sharing a file together;
+  - `gingerminds:media:files:orphans [--delete] [--older-than=DAYS]`: the files used nowhere.
 - `MediaCategoryInterface` extends `TimestampableInterface`.
 - `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
   with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime

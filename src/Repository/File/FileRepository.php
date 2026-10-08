@@ -35,6 +35,106 @@ class FileRepository extends AbstractRepository
     }
 
     /**
+     * The next rows by id, to walk the table in batches (the entity manager can be cleared between them).
+     *
+     * @param array<string, mixed>|null $criteria
+     *
+     * @return list<FileInterface>
+     */
+    public function findBatchAfter(string $lastId, int $size, ?array $criteria = null): array
+    {
+        $qb = $this->createQueryBuilder('f')
+            ->where('f.id > :last')
+            ->setParameter('last', $lastId)
+            ->orderBy('f.id')
+            ->setMaxResults($size);
+
+        foreach ($criteria ?? [] as $field => $value) {
+            null === $value
+                ? $qb->andWhere(\sprintf('f.%s IS NULL', $field))
+                : $qb->andWhere(\sprintf('f.%1$s = :%1$s', $field))->setParameter($field, $value);
+        }
+
+        /** @var list<FileInterface> */
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Paths of the rows under a directory of a disk, as keys.
+     *
+     * @param string $directory on the disk
+     *
+     * @return array<string, true>
+     */
+    public function findPathsUnder(string $disk, string $directory): array
+    {
+        $paths = $this->createQueryBuilder('f')
+            ->select('f.path')
+            ->where('f.disk = :disk')
+            ->andWhere("f.path LIKE :prefix ESCAPE '!'")
+            ->setParameter('disk', $disk)
+            ->setParameter('prefix', $this->likePrefix($directory))
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return array_fill_keys(array_map(strval(...), $paths), true);
+    }
+
+    /**
+     * Rows of a disk outside a directory (e.g. "uploads/..." of a Laravel database), by path.
+     *
+     * @param string $directory on the disk
+     *
+     * @return list<FileInterface>
+     */
+    public function findOutside(string $disk, string $directory): array
+    {
+        /** @var list<FileInterface> */
+        return $this->createQueryBuilder('f')
+            ->where('f.disk = :disk')
+            ->andWhere("f.path NOT LIKE :prefix ESCAPE '!'")
+            ->setParameter('disk', $disk)
+            ->setParameter('prefix', $this->likePrefix($directory))
+            ->orderBy('f.path')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Hashes shared by several rows.
+     *
+     * @return list<string>
+     */
+    public function findDuplicatedHashes(): array
+    {
+        return array_values(array_map(strval(...), $this->createQueryBuilder('f')
+            ->select('f.hash')
+            ->where('f.hash IS NOT NULL')
+            ->groupBy('f.hash')
+            ->having('COUNT(f.id) > 1')
+            ->orderBy('f.hash')
+            ->getQuery()
+            ->getSingleColumnResult()));
+    }
+
+    /**
+     * Oldest first: the one kept by a deduplication.
+     *
+     * @return list<FileInterface>
+     */
+    public function findByHashOldestFirst(string $hash): array
+    {
+        /** @var list<FileInterface> */
+        return $this->createQueryBuilder('f')
+            ->where('f.hash = :hash')
+            ->setParameter('hash', $hash)
+            ->orderBy('f.createdAt')
+            ->addOrderBy('f.id')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Disks holding at least one file.
      *
      * @return list<string>
