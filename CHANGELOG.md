@@ -142,6 +142,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `gingerminds:media:files:relocate [--dry-run]`: the files outside `library.root` (every disk)
     moved to its first level, "name-1.ext" when taken, presets purged, rows sharing a file together;
   - `gingerminds:media:files:orphans [--delete] [--older-than=DAYS]`: the files used nowhere.
+- Documentation: `README.md` and `docs/` (installation, configuration, file library, medias, forms,
+  images, API, baskets, commands, coming from Laravel with the import of a Laravel database).
 - `MediaCategoryInterface` extends `TimestampableInterface`.
 - `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
   with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime
