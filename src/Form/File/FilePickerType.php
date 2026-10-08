@@ -7,6 +7,7 @@ namespace Gingerminds\MediaManagerBundle\Form\File;
 use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
 use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
+use Gingerminds\MediaManagerBundle\File\LibraryQuery;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\File\MimeTypePatterns;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
@@ -60,6 +61,7 @@ final class FilePickerType extends AbstractType
         $view->vars['files'] = array_values(array_filter(array_map(static fn (string $id): ?array => $files[$id] ?? null, $ids)));
         $view->vars['multiple'] = $options['multiple'];
         $view->vars['accept'] = $options['accept'];
+        $view->vars['types'] = LibraryQuery::typesFor($options['accept']);
         $view->vars['start_path'] = $options['start_path'] ?? $this->startPathProvider->getStartPath();
         $view->vars['can_pick'] = $this->authorizationChecker->isGranted(AbstractResourceVoter::VIEW, 'file');
         $view->vars['picker_url'] = $this->urlGenerator->generate('gingerminds_media_manager_file_picker');

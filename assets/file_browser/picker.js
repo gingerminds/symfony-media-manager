@@ -14,8 +14,9 @@ export default {
     },
 
     // Called each time a field opens the modal.
-    startPicking({ accept = [], multiple = false, startPath = '' } = {}) {
+    startPicking({ accept = [], types = null, multiple = false, startPath = '' } = {}) {
         this.accept = accept;
+        this.restrictTypes(types);
         this.multiplePick = multiple;
         this.picked = new Map();
 
@@ -27,6 +28,15 @@ export default {
         this.clearFilters();
         this.navigate(startPath || this.configValue.startPath || '');
         this.renderPicked();
+    },
+
+    // Only the types of the type filter that the field accepts (null: all of them).
+    restrictTypes(types) {
+        this.typeOptions ??= [...this.typeTarget.options].filter((option) => option.value !== '');
+        this.typeOptions.forEach((option) => option.remove());
+        this.typeOptions
+            .filter((option) => types === null || types.includes(option.value))
+            .forEach((option) => this.typeTarget.add(option));
     },
 
     pickFile({ params: { id } }) {

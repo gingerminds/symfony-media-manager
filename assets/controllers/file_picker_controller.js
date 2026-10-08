@@ -20,6 +20,7 @@ export default class FilePickerController extends Controller {
         url: String,
         multiple: Boolean,
         accept: Array,
+        types: Array,
         startPath: String,
         files: Array,
         previewUrl: String,
@@ -54,7 +55,7 @@ export default class FilePickerController extends Controller {
         try {
             const { element, browser } = await this.loadModal();
             modal.field = this;
-            browser.startPicking({ accept: this.acceptValue, multiple: this.multipleValue, startPath: this.startPathValue });
+            browser.startPicking({ accept: this.acceptValue, types: this.typesValue, multiple: this.multipleValue, startPath: this.startPathValue });
             window.bootstrap.Modal.getOrCreateInstance(element).show();
         } finally {
             this.buttonTarget.disabled = false;

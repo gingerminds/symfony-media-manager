@@ -95,7 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `MediaCategoryInterface` extends `TimestampableInterface`.
 - `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
   with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime
-  types, exact or `type/*`: library filter, upload input and server side check), `preview_preset`,
+  types, exact or `type/*`: library filter, upload input, type filter of the modal limited to
+  the matching types, server side check), `preview_preset`,
   `start_path`. Widget (form theme prepended): the picked files as cards, removed one by one,
   reordered by drag & drop when several; `gm-file-picker:change` event.
 - Library picker modal (`GET /{admin}/files/picker`, `view files`), loaded once per page and shared

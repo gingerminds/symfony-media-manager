@@ -97,6 +97,7 @@ final class FilePickerTypeTest extends KernelTestCase
         self::assertSame($photo->getId(), $cover['value']);
         self::assertSame([$photo->getId()], array_column($cover['files'], 'id'));
         self::assertSame(['image/*'], $cover['accept']);
+        self::assertSame(['image'], $cover['types'], 'Only the image type in the filter of the modal.');
         self::assertSame('/admin/files/picker', $cover['picker_url']);
         self::assertStringEndsWith('/card', (string) $cover['preview_url']);
         self::assertFalse($cover['can_pick'], 'No user: no access to the library.');

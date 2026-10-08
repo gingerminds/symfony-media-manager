@@ -49,4 +49,30 @@ final readonly class LibraryQuery
         public array $accept = [],
     ) {
     }
+
+    /**
+     * Types of the type filter that can hold an accepted mime type.
+     *
+     * @param list<string> $accept MimeTypePatterns, none: every type
+     *
+     * @return list<string>
+     */
+    public static function typesFor(array $accept): array
+    {
+        if ([] === $accept) {
+            return array_keys(self::TYPES);
+        }
+
+        $overlaps = static function (string $a, string $b): bool {
+            [$a, $aIsPrefix] = str_ends_with($a, '%') ? [substr($a, 0, -1), true] : [$a, false];
+            [$b, $bIsPrefix] = str_ends_with($b, '%') ? [substr($b, 0, -1), true] : [$b, false];
+
+            return ($aIsPrefix && str_starts_with($b, $a)) || ($bIsPrefix && str_starts_with($a, $b)) || $a === $b;
+        };
+
+        return array_keys(array_filter(self::TYPES, static fn (array $patterns): bool => array_any(
+            $patterns,
+            static fn (string $pattern): bool => array_any($accept, static fn (string $accepted): bool => $overlaps(MimeTypePatterns::toLike($accepted), $pattern)),
+        )));
+    }
 }
