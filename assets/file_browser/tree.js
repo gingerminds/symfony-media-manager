@@ -90,6 +90,16 @@ export default {
     },
 
     treeItem(path, name, scope, current, action) {
+        if (this.isExcluded(path, scope)) {
+            return `
+                <li>
+                    <div class="gm-file-tree-item d-flex align-items-center text-muted opacity-50">
+                        <span class="gm-file-tree-caret"></span>
+                        <span class="flex-grow-1 text-truncate" title="${this.esc(name)}"><i class="bi bi-folder me-1"></i>${this.esc(name)}</span>
+                    </div>
+                </li>`;
+        }
+
         const node = this.node(path);
         const expanded = this.expanded[scope].has(path);
         const hasChildren = node.children === null || node.children.length > 0;

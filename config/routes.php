@@ -27,6 +27,7 @@ return static function (RoutingConfigurator $routes): void {
         'show' => ['/{id}', $reads, 'show', 'GET'],
         'directory_create' => ['/directories', $writes, 'createDirectory', 'POST'],
         'directory_delete' => ['/directories', $writes, 'deleteDirectory', 'DELETE'],
+        'directory_move' => ['/directories', $writes, 'moveDirectory', 'PATCH'],
         'upload' => ['/upload', $writes, 'upload', 'POST'],
         'move' => ['/move', $writes, 'move', 'POST'],
         'delete' => ['/delete', $writes, 'delete', 'POST'],

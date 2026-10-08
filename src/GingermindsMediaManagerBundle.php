@@ -114,6 +114,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         $parameters->set('gingerminds_media_manager.library.max_upload_size', $config['library']['max_upload_size']);
         $parameters->set('gingerminds_media_manager.library.allowed_mimes', $config['library']['allowed_mimes']);
         $parameters->set('gingerminds_media_manager.library.per_page', $config['library']['per_page']);
+        $parameters->set('gingerminds_media_manager.library.max_directory_move', $config['library']['max_directory_move']);
         $parameters->set('gingerminds_media_manager.images.driver', $config['images']['driver']);
         $parameters->set('gingerminds_media_manager.images.default_format', $config['images']['default_format']);
         $parameters->set('gingerminds_media_manager.images.cache_prefix', $config['images']['cache_prefix']);

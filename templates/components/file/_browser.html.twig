@@ -7,11 +7,12 @@
 {% set label_keys = [
     'root', 'directories',
     'field.name', 'field.type', 'field.size', 'field.created_at', 'field.directory', 'field.usages', 'field.duplicates', 'field.directory_name', 'field.file_name',
-    'action.open', 'action.rename', 'action.move', 'action.move_here', 'action.delete', 'action.merge', 'action.show', 'action.new_directory', 'action.delete_directory',
+    'action.open', 'action.rename', 'action.move', 'action.move_here', 'action.delete', 'action.merge', 'action.show', 'action.new_directory',
     'action.select_page', 'action.cancel', 'action.confirm', 'action.close', 'action.first', 'action.previous', 'action.next', 'action.last',
     'message.loading', 'message.empty', 'message.selected', 'message.total', 'message.not_used', 'message.uploaded', 'message.duplicate',
-    'message.too_large', 'message.deleted', 'message.blocked', 'message.moved', 'message.merged', 'message.confirm_delete', 'message.confirm_delete_directory',
-    'message.confirm_merge', 'message.move_to', 'picker.none', 'picker.selected', 'picker.use',
+    'message.too_large', 'message.deleted', 'message.blocked', 'message.moved', 'message.merged', 'message.confirm_delete', 'message.confirm_delete_directories',
+    'message.confirm_merge', 'message.move_to', 'message.move_directories_to', 'message.directories_moved', 'message.directory_renamed',
+    'message.directories_deleted', 'message.directories_kept', 'picker.none', 'picker.selected', 'picker.use',
 ] %}
 {% set labels = {'error.generic': 'error.generic'|trans} %}
 {% for key in label_keys %}
@@ -101,11 +102,6 @@
                 </nav>
                 {% if browser.canEdit %}
                     <div class="d-flex flex-wrap align-items-center gap-2">
-                        {% if not picker %}
-                            <button type="button" class="btn btn-outline-danger d-none" data-gm-file-browser-target="deleteDirectoryButton" data-action="gm-file-browser#deleteDirectory">
-                                <i class="bi bi-folder-x me-1"></i> {{ 'file.action.delete_directory'|trans }}
-                            </button>
-                        {% endif %}
                         <button type="button" class="btn btn-outline-primary" data-action="gm-file-browser#createDirectory">
                             <i class="bi bi-folder-plus me-1"></i> {{ 'file.action.new_directory'|trans }}
                         </button>
@@ -142,12 +138,25 @@
                                     <input class="form-check-input mt-0" type="checkbox" id="gm-file-browser-select-page" data-gm-file-browser-target="selectAll" data-action="gm-file-browser#togglePage">
                                     <label class="form-check-label" for="gm-file-browser-select-page" data-gm-file-browser-target="selectionCount">{{ 'file.action.select_page'|trans }}</label>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-info" disabled data-gm-file-browser-target="selectionAction" data-action="gm-file-browser#moveSelection">
-                                    <i class="bi bi-folder-symlink me-1"></i> {{ 'file.action.move'|trans }}
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" disabled data-gm-file-browser-target="selectionAction" data-action="gm-file-browser#deleteSelection">
-                                    <i class="bi bi-trash me-1"></i> {{ 'file.action.delete'|trans }}
-                                </button>
+                                <div class="d-flex gap-2" data-gm-file-browser-target="fileActions">
+                                    <button type="button" class="btn btn-sm btn-outline-info" disabled data-gm-file-browser-target="selectionAction" data-action="gm-file-browser#moveSelection">
+                                        <i class="bi bi-folder-symlink me-1"></i> {{ 'file.action.move'|trans }}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" disabled data-gm-file-browser-target="selectionAction" data-action="gm-file-browser#deleteSelection">
+                                        <i class="bi bi-trash me-1"></i> {{ 'file.action.delete'|trans }}
+                                    </button>
+                                </div>
+                                <div class="d-flex gap-2 d-none" data-gm-file-browser-target="directoryActions">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-gm-file-browser-target="renameDirectoryButton" data-action="gm-file-browser#renameDirectory">
+                                        <i class="bi bi-pencil me-1"></i> {{ 'file.action.rename'|trans }}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" data-action="gm-file-browser#moveDirectories">
+                                        <i class="bi bi-folder-symlink me-1"></i> {{ 'file.action.move'|trans }}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-action="gm-file-browser#deleteDirectories">
+                                        <i class="bi bi-trash me-1"></i> {{ 'file.action.delete'|trans }}
+                                    </button>
+                                </div>
                             {% endif %}
                         </div>
                         <div class="gm-file-grid" data-gm-file-browser-target="grid"></div>

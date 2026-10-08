@@ -112,6 +112,7 @@ gingerminds_media_manager:
         root: '%env(FILE_LIBRARY_ROOT)%'
         max_upload_size: '%env(int:FILE_LIBRARY_MAX_UPLOAD_SIZE)%'
         allowed_mimes: ['text/plain', 'image/png', 'image/svg+xml', 'application/zip', 'application/docx']
+        max_directory_move: 3
     images:
         presets:
             thumbnail: { w: 50, h: 40, fit: crop }

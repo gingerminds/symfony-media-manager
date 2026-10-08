@@ -3,6 +3,7 @@ import { Controller } from '@hotwired/stimulus';
 import actions from '../file_browser/actions.js';
 import detail from '../file_browser/detail.js';
 import dialog from '../file_browser/dialog.js';
+import directories from '../file_browser/directories.js';
 import helpers from '../file_browser/helpers.js';
 import listing from '../file_browser/listing.js';
 import picker from '../file_browser/picker.js';
@@ -21,7 +22,7 @@ import uploads from '../file_browser/uploads.js';
 export default class FileBrowserController extends Controller {
     static targets = [
         'breadcrumb', 'tree', 'grid', 'pagination', 'total', 'detail', 'alerts', 'uploads', 'dropzone',
-        'selectAll', 'selectionCount', 'selectionAction', 'deleteDirectoryButton', 'filters',
+        'selectAll', 'selectionCount', 'selectionAction', 'fileActions', 'directoryActions', 'renameDirectoryButton', 'filters',
         'search', 'type', 'sort', 'recursive', 'orphans', 'duplicates', 'from', 'to',
         'dialog', 'dialogTitle', 'dialogBody', 'dialogConfirm', 'uploadInput', 'pickSummary', 'pickConfirm',
     ];
@@ -37,6 +38,7 @@ export default class FileBrowserController extends Controller {
         this.page = 1;
         this.files = new Map();
         this.selection = new Set();
+        this.directorySelection = new Set();
         this.nodes = new Map([['', { children: null }]]);
         this.expanded = { tree: new Set(['']), chooser: new Set(['']) };
         this.dragDepth = 0;
@@ -54,4 +56,4 @@ export default class FileBrowserController extends Controller {
     }
 }
 
-Object.assign(FileBrowserController.prototype, helpers, listing, tree, selection, detail, actions, uploads, dialog, picker);
+Object.assign(FileBrowserController.prototype, helpers, listing, tree, selection, detail, actions, directories, uploads, dialog, picker);

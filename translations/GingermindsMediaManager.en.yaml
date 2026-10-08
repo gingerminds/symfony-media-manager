@@ -90,7 +90,6 @@ file:
     action:
         upload: Upload
         new_directory: New folder
-        delete_directory: Delete the folder
         open: Open
         rename: Rename
         move: Move
@@ -122,9 +121,14 @@ file:
         moved: '%count% file(s) moved.'
         merged: Duplicates merged, %count% reference(s) updated.
         confirm_delete: Delete %count% file(s)? The used files will be kept.
-        confirm_delete_directory: Delete the folder "%name%"? It must be empty.
         confirm_merge: The %count% duplicate(s) will be replaced by this file wherever they are used, then deleted.
         move_to: Move %count% file(s) to "%path%"
+        confirm_delete_directories: Delete %count% folder(s)? Only the empty folders will be deleted.
+        directories_deleted: '%count% folder(s) deleted.'
+        directories_kept: 'These folders are not empty, they have not been deleted:'
+        directories_moved: '%count% folder(s) moved to "%path%".'
+        directory_renamed: The folder is now named "%name%".
+        move_directories_to: Move %count% folder(s) to "%path%"
     picker:
         title: File library
         choose: Choose a file
@@ -147,6 +151,9 @@ error:
     directory_exists: The folder "%path%" already exists.
     directory_not_empty: The folder "%path%" is not empty.
     root_directory: The library root cannot be deleted.
+    root_directory_moved: The library root cannot be moved nor renamed.
+    directory_into_itself: The folder "%path%" cannot be moved into itself or one of its subfolders.
+    directory_too_large: '"%path%" holds %count% files, above the limit of %max%: use the "%command%" command.'
     invalid_path: This path is not valid.
     mime_not_allowed: The file type "%mime%" is not allowed.
     too_large: The file is too large (%size% KB, %max% KB allowed).

@@ -70,6 +70,25 @@ class FileRepository extends AbstractRepository
     }
 
     /**
+     * Files of a directory and of its subdirectories.
+     *
+     * @param string $directory on the disk
+     *
+     * @return list<FileInterface>
+     */
+    public function findUnder(string $disk, string $directory): array
+    {
+        /** @var list<FileInterface> */
+        return $this->createQueryBuilder('f')
+            ->where('f.disk = :disk')
+            ->andWhere("f.path LIKE :prefix ESCAPE '!'")
+            ->setParameter('disk', $disk)
+            ->setParameter('prefix', $this->likePrefix($directory))
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @param string       $directory on the disk
      * @param list<string> $usedIds   excluded by the orphans filter
      *

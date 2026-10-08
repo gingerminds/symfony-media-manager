@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Controller\File;
 
+use Gingerminds\CoreBundle\Controller\CrudContext;
 use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\File\FileLibrary;
+use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
+use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +22,16 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  */
 class FileLibraryActionController extends AbstractFileLibraryController
 {
+    public function __construct(
+        CrudContext $context,
+        FileLibrary $library,
+        FileRepository $files,
+        FileLibraryPresenter $presenter,
+        protected readonly int $maxDirectoryMove,
+    ) {
+        parent::__construct($context, $library, $files, $presenter);
+    }
+
     public function upload(Request $request): JsonResponse
     {
         $this->denyUnlessCanEdit($request);
@@ -48,15 +62,37 @@ class FileLibraryActionController extends AbstractFileLibraryController
         ));
     }
 
+    /**
+     * Empty directories only: the others are kept and returned; 422 when none could be deleted.
+     */
     public function deleteDirectory(Request $request): JsonResponse
     {
         $this->denyUnlessCanEdit($request);
 
         return $this->attempt(function () use ($request): JsonResponse {
-            $this->library->rmdir($request->getPayload()->getString('path'));
+            $result = $this->library->rmdirs($this->directoryPaths($request));
 
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+            return new JsonResponse(
+                $result,
+                [] === $result['deleted'] && [] !== $result['kept'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK,
+            );
         });
+    }
+
+    /**
+     * Moves `paths` under `parent`; with one path, `name` renames it.
+     */
+    public function moveDirectory(Request $request): JsonResponse
+    {
+        $this->denyUnlessCanEdit($request);
+        $payload = $request->getPayload();
+        $paths = $this->directoryPaths($request);
+        $name = 1 === \count($paths) ? $payload->getString('name') : '';
+
+        return $this->attempt(fn (): JsonResponse => new JsonResponse(array_map(
+            $this->presenter->directory(...),
+            $this->library->moveDirectories($paths, $payload->getString('parent'), '' === $name ? null : $name, $this->maxDirectoryMove),
+        )));
     }
 
     public function rename(Request $request, string $id): JsonResponse
@@ -124,6 +160,14 @@ class FileLibraryActionController extends AbstractFileLibraryController
         }
 
         return new JsonResponse(['file' => $this->presenter->file($keep), 'updated' => $updated]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function directoryPaths(Request $request): array
+    {
+        return array_values(array_unique(array_filter($request->getPayload()->all('paths'), \is_string(...))));
     }
 
     private function denyUnlessCanEdit(Request $request): void

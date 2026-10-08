@@ -13,6 +13,7 @@ use Gingerminds\MediaManagerBundle\Exception\InvalidPathException;
 use Gingerminds\MediaManagerBundle\Exception\LibraryException;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\LibraryQuery;
+use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 use Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article;
 use Gingerminds\MediaManagerBundle\Tests\Application\Entity\Page;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
@@ -266,6 +267,122 @@ final class FileLibraryTest extends KernelTestCase
         self::assertSame(1, $this->library->mergeDuplicates($thumbnail, [$copy]));
         self::assertSame($thumbnail, $media->getThumbnail());
         self::assertNull($this->entityManager->find(File::class, $copy->getId()));
+    }
+
+    public function testMoveAndRenameADirectory(): void
+    {
+        $this->library->mkdir('', 'docs');
+        $this->library->mkdir('docs', 'empty');
+        $this->library->mkdir('', 'archives');
+        $notes = $this->files->text('notes.txt', 'notes', 'docs');
+        $photo = $this->files->png('photo.png', 20, 20);
+        $this->library->mkdir('docs', 'photos');
+        $this->library->move([$photo], 'docs/photos');
+        $this->filesystem->write('library/docs/raw.txt', 'not in the files table');
+        $preset = self::getContainer()->get(ImageProcessor::class)->process($photo, 'thumbnail');
+        $article = new Article('Tractor');
+        $article->cover = $photo;
+        $this->entityManager->persist($article);
+        $this->entityManager->flush();
+
+        self::assertSame('archives/docs', $this->library->moveDirectory('docs', 'archives'));
+
+        self::assertSame('library/archives/docs/notes.txt', $notes->getPath());
+        self::assertSame('library/archives/docs/photos/photo.png', $photo->getPath());
+        self::assertTrue($this->filesystem->fileExists('library/archives/docs/photos/photo.png'));
+        self::assertTrue($this->filesystem->fileExists('library/archives/docs/raw.txt'), 'A file missing from the table follows.');
+        self::assertTrue($this->filesystem->directoryExists('library/archives/docs/empty'));
+        self::assertFalse($this->filesystem->directoryExists('library/docs'));
+        self::assertFalse($this->filesystem->fileExists($preset), 'The presets of the old path are purged.');
+        self::assertSame($photo, $article->cover);
+
+        self::assertSame('archives/documents-2026', $this->library->moveDirectory('archives/docs', 'archives', 'Documents 2026'));
+        $this->entityManager->clear();
+        self::assertSame('library/archives/documents-2026/notes.txt', $this->entityManager->find(File::class, $notes->getId())?->getPath());
+        self::assertSame(['archives/documents-2026'], $this->library->directories('archives'));
+        self::assertSame('archives/documents-2026', $this->library->moveDirectory('archives/documents-2026', 'archives'), 'Same place: nothing to do.');
+    }
+
+    public function testADirectoryCannotBeMovedAnywhere(): void
+    {
+        $this->library->mkdir('', 'docs');
+        $this->library->mkdir('docs', 'sub');
+        $this->library->mkdir('', 'other');
+        $this->library->mkdir('other', 'docs');
+
+        foreach ([
+            ['', 'other', 'The library root cannot be moved nor renamed.'],
+            ['docs', 'docs/sub', 'The folder "docs" cannot be moved into itself or one of its subfolders.'],
+            ['docs', 'docs', 'The folder "docs" cannot be moved into itself or one of its subfolders.'],
+            ['docs', 'other', 'The folder "other/docs" already exists.'],
+            ['missing', 'other', 'The folder "missing" does not exist.'],
+            ['docs', 'missing', 'The folder "missing" does not exist.'],
+        ] as [$path, $parent, $message]) {
+            try {
+                $this->library->moveDirectory($path, $parent);
+                self::fail(\sprintf('"%s" moved to "%s".', $path, $parent));
+            } catch (LibraryException $exception) {
+                self::assertSame($message, $exception->trans(self::getContainer()->get('translator'), 'en'));
+            }
+        }
+
+        $this->files->text('a.txt', 'content a', 'docs');
+        $this->files->text('b.txt', 'content b', 'docs/sub');
+
+        $this->expectExceptionMessage('The directory "docs" holds 2 files, more than 1.');
+        $this->library->moveDirectory('docs', 'other', 'big', 1);
+    }
+
+    public function testMoveSeveralDirectories(): void
+    {
+        $this->library->mkdir('', 'docs');
+        $this->library->mkdir('docs', 'sub');
+        $this->library->mkdir('', 'photos');
+        $this->library->mkdir('', 'archives');
+        $this->library->mkdir('archives', 'photos');
+
+        self::assertSame(['archives/docs'], $this->library->moveDirectories(['docs', 'docs/sub'], 'archives'), 'A subfolder follows its parent.');
+        self::assertSame(['archives/docs/sub'], $this->library->directories('archives/docs'));
+
+        $this->expectExceptionMessage('The directory "archives/photos" already exists.');
+        $this->library->moveDirectories(['photos'], 'archives');
+    }
+
+    public function testDeleteSeveralDirectories(): void
+    {
+        $this->library->mkdir('', 'empty');
+        $this->library->mkdir('', 'docs');
+        $this->files->text('notes.txt', 'notes', 'docs');
+
+        self::assertSame(['deleted' => ['empty'], 'kept' => ['docs']], $this->library->rmdirs(['empty', 'docs']));
+        self::assertSame(['docs'], $this->library->directories());
+    }
+
+    public function testAFailedMoveOfADirectoryPutsEverythingBack(): void
+    {
+        $this->library->mkdir('', 'docs');
+        $this->library->mkdir('', 'archives');
+        $notes = $this->files->text('notes.txt', 'notes', 'docs');
+        $failure = new class {
+            public function onFlush(): never
+            {
+                throw new \RuntimeException('Database down.');
+            }
+        };
+        $this->entityManager->getEventManager()->addEventListener('onFlush', $failure);
+
+        try {
+            $this->library->moveDirectory('docs', 'archives');
+            self::fail('The save failed.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Database down.', $exception->getMessage());
+        } finally {
+            $this->entityManager->getEventManager()->removeEventListener('onFlush', $failure);
+        }
+
+        self::assertSame('library/docs/notes.txt', $notes->getPath());
+        self::assertTrue($this->filesystem->fileExists('library/docs/notes.txt'));
+        self::assertFalse($this->filesystem->directoryExists('library/archives/docs'));
     }
 
     public function testMergeDuplicates(): void

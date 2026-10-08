@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   subfolders, unused, duplicates, creation dates), paginated grid with usage counts (`thumbnail`
   preset), detail panel (`card` preset preview, usages with their edit links, duplicates),
   uploads by button or drag & drop with progress (an existing content is reported, not stored
-  again), new / delete folder, rename, move and delete (used files are kept and listed with their
+  again), new folder, rename, move and delete (used files are kept and listed with their
   usages; the move dialog shows the folder tree), merge of the duplicates. Folders stay listed
   whatever the filters, except while searching (files only, matched on their name, not their
   folders); usages and duplicates are collapsible sections of the detail panel.
@@ -92,6 +92,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   and Bootstrap variables available), `gm-file-browser` Stimulus controller registered on the
   core app. Nothing to add to the project importmap: `RelativeImportCompiler` rewrites the relative
   imports of the bundle scripts (`gingerminds-media-manager/*.js`) to their versioned paths.
+- Folders of the library selected with checkboxes, like the files but never together: the toolbar
+  then offers the folder actions instead of the file ones. Rename (one folder), move
+  (`FileLibrary::moveDirectories()`, the selected folders and their subfolders greyed out in the
+  dialog) and delete (`rmdirs()`: the empty folders only, the others are kept and listed). A moved
+  folder takes everything on the disk with it, the files missing from `files` too; the rows get
+  their new paths (references keep working, they hold ids), the presets are purged and a folder
+  that fails is moved back. The root cannot be moved, nor a folder into itself, nor onto an
+  existing folder. `PATCH` / `DELETE /{admin}/files/directories` take `paths[]`. Up to
+  `library.max_directory_move` files per move (1000 by default, 0: no limit), above that
+  `gingerminds:media:directory:move <path> [<parent>] [--name=]` moves a folder without limit.
 - `MediaCategoryInterface` extends `TimestampableInterface`.
 - `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
   with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime

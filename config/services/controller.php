@@ -64,6 +64,7 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.library'),
             service(FileRepository::class),
             service('gingerminds_media_manager.file.library_presenter'),
+            param('gingerminds_media_manager.library.max_directory_move'),
         ])
         ->tag('controller.service_arguments')
         ->public();

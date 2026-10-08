@@ -22,6 +22,7 @@ final class ConfigurationTest extends TestCase
         self::assertSame(['default' => 'gingerminds_media_manager.storage.default'], $config['storage']['disks']);
         self::assertSame('library', $config['library']['root']);
         self::assertSame(51200, $config['library']['max_upload_size']);
+        self::assertSame(1000, $config['library']['max_directory_move']);
         self::assertContains('application/xlsx', $config['library']['allowed_mimes']);
         self::assertSame('imagick', $config['images']['driver']);
         self::assertSame(['micro', 'thumbnail', 'card', 'hero'], array_keys($config['images']['presets']));

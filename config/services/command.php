@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Gingerminds\MediaManagerBundle\Command\File\MoveDirectoryCommand;
 use Gingerminds\MediaManagerBundle\Command\Image\ClearImageCacheCommand;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
@@ -21,5 +22,9 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.image.processor'),
             param('gingerminds_media_manager.storage.default_disk'),
         ])
+        ->tag('console.command');
+
+    $services->set('gingerminds_media_manager.command.move_directory', MoveDirectoryCommand::class)
+        ->args([service('gingerminds_media_manager.file.library')])
         ->tag('console.command');
 };

@@ -118,6 +118,111 @@ class FileLibrary
     }
 
     /**
+     * Empty directories are deleted, the others are kept and returned.
+     *
+     * @param list<string> $paths
+     *
+     * @return array{deleted: list<string>, kept: list<string>}
+     */
+    public function rmdirs(array $paths): array
+    {
+        $result = ['deleted' => [], 'kept' => []];
+
+        foreach ($paths as $path) {
+            try {
+                $this->rmdir($path);
+                $result['deleted'][] = $path;
+            } catch (LibraryException $exception) {
+                if (!$exception->isDirectoryNotEmpty()) {
+                    throw $exception;
+                }
+
+                $result['kept'][] = $path;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Moves a directory under $parent, renamed when $name is given; returns its new path.
+     *
+     * @param int $maxFiles 0: no limit
+     */
+    public function moveDirectory(string $path, string $parent, ?string $name = null, int $maxFiles = 0): string
+    {
+        return $this->moveDirectories([$path], $parent, $name, $maxFiles)[0];
+    }
+
+    /**
+     * Moves directories under $parent; returns their new paths. Everything on the disk follows (files
+     * missing from `files` too), the rows get their new paths and the presets are purged. Every move
+     * is checked first and $maxFiles counts the files of all the directories; a directory that fails
+     * is moved back, the previous ones stay moved.
+     *
+     * @param list<string> $paths    a subdirectory of another one follows it
+     * @param string|null  $name     new name, one directory only
+     * @param int          $maxFiles 0: no limit
+     *
+     * @return list<string>
+     */
+    public function moveDirectories(array $paths, string $parent, ?string $name = null, int $maxFiles = 0): array
+    {
+        if (null !== $name && 1 !== \count($paths)) {
+            throw new \InvalidArgumentException('Only one directory is renamed at a time.');
+        }
+
+        $moves = [];
+        $targets = [];
+        $count = 0;
+
+        foreach ($paths as $path) {
+            if ('' === $this->paths->normalize(ltrim($path, '/'))) {
+                throw LibraryException::rootDirectoryMoved();
+            }
+
+            $source = $this->existingDirectory($path);
+            $moves[$source] = null;
+        }
+
+        $sources = array_keys($moves);
+        $sources = array_values(array_filter($sources, static fn (string $source): bool => !array_any(
+            $sources,
+            static fn (string $other): bool => str_starts_with($source, $other . '/'),
+        )));
+        $moves = [];
+
+        foreach ($sources as $source) {
+            $target = $this->existingDirectory($parent) . '/' . (null === $name ? basename($source) : $this->paths->directoryName($name));
+
+            if (str_starts_with($target . '/', $source . '/') && $target !== $source) {
+                throw LibraryException::directoryIntoItself($this->paths->relative($source));
+            }
+
+            if ($target !== $source && ($this->filesystem()->directoryExists($target) || isset($targets[$target]))) {
+                throw LibraryException::directoryExists($this->paths->relative($target));
+            }
+
+            $targets[$target] = true;
+            $contents = $target === $source ? [[], []] : $this->directoryContents($source);
+            $count += \count($contents[1]);
+            $moves[] = [$source, $target, ...$contents];
+        }
+
+        if ($maxFiles > 0 && $count > $maxFiles) {
+            throw LibraryException::directoryTooLarge(implode(', ', array_map($this->paths->relative(...), $sources)), $count, $maxFiles);
+        }
+
+        foreach ($moves as [$source, $target, $directories, $files]) {
+            if ($source !== $target) {
+                $this->relocateDirectory($source, $target, $directories, $files);
+            }
+        }
+
+        return array_map(fn (array $move): string => $this->paths->relative($move[1]), $moves);
+    }
+
+    /**
      * Content already in the library: nothing is stored, the existing file is returned.
      */
     public function upload(\SplFileInfo $file, string $directory = ''): UploadResult
@@ -270,6 +375,75 @@ class FileLibrary
 
             throw $exception;
         }
+    }
+
+    /**
+     * @return array{list<string>, list<string>} the subdirectories and the files, recursively
+     */
+    private function directoryContents(string $directory): array
+    {
+        $directories = [];
+        $files = [];
+
+        foreach ($this->filesystem()->listContents($directory, true) as $item) {
+            if ($item->isDir()) {
+                $directories[] = $item->path();
+            } else {
+                $files[] = $item->path();
+            }
+        }
+
+        return [$directories, $files];
+    }
+
+    /**
+     * Moves everything on the disk, then saves the paths of the rows; moved back if anything fails.
+     *
+     * @param list<string> $directories
+     * @param list<string> $files
+     */
+    private function relocateDirectory(string $source, string $target, array $directories, array $files): void
+    {
+        $filesystem = $this->filesystem();
+        $targetOf = static fn (string $from): string => $target . substr($from, \strlen($source));
+        $rows = $this->files->findUnder($this->disks->defaultDisk(), $source);
+        $previousPaths = [];
+        $moved = [];
+
+        try {
+            $filesystem->createDirectory($target);
+
+            foreach ($directories as $directory) {
+                $filesystem->createDirectory($targetOf($directory));
+            }
+
+            foreach ($files as $from) {
+                $filesystem->move($from, $targetOf($from));
+                $moved[] = $from;
+            }
+
+            foreach ($rows as $file) {
+                $this->images->clear($file);
+                $previousPaths[] = [$file, $file->getPath()];
+                $file->setPath($targetOf($file->getPath()));
+            }
+
+            $this->entityManager->flush();
+        } catch (\Throwable $exception) {
+            foreach (array_reverse($moved) as $from) {
+                $filesystem->move($targetOf($from), $from);
+            }
+
+            foreach ($previousPaths as [$file, $previousPath]) {
+                $file->setPath($previousPath);
+            }
+
+            $filesystem->deleteDirectory($target);
+
+            throw $exception;
+        }
+
+        $filesystem->deleteDirectory($source);
     }
 
     /**

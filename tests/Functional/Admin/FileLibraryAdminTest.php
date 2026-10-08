@@ -142,7 +142,7 @@ final class FileLibraryAdminTest extends ApiTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('#gm-file-picker-modal [data-controller="gm-file-browser"][data-gm-file-browser-mode-value="picker"]'));
         self::assertCount(1, $crawler->filter('[data-gm-file-browser-target="pickConfirm"]'));
-        self::assertCount(0, $crawler->filter('[data-gm-file-browser-target="deleteDirectoryButton"], [data-gm-file-browser-target="selectAll"]'));
+        self::assertCount(0, $crawler->filter('[data-gm-file-browser-target="directoryActions"], [data-gm-file-browser-target="selectAll"]'));
 
         $this->client->loginUser($this->fixtures->user('nobody@example.com', ['view media_categories']), 'admin');
         $this->client->request('GET', '/admin/files/picker');
@@ -221,14 +221,55 @@ final class FileLibraryAdminTest extends ApiTestCase
         self::assertSame('The folder "actualites-2026" already exists.', $this->response()['error']);
 
         $this->files->text('news.txt', 'news', 'actualites-2026');
-        $this->json('DELETE', '/admin/files/directories', ['path' => 'actualites-2026']);
+        self::assertSame(['deleted' => [], 'kept' => ['actualites-2026']], $this->json('DELETE', '/admin/files/directories', ['paths' => ['actualites-2026']]));
         $this->assertStatus(422);
-        self::assertSame('The folder "actualites-2026" is not empty.', $this->response()['error']);
 
         $this->library->mkdir('', 'empty');
-        $this->json('DELETE', '/admin/files/directories', ['path' => 'empty']);
-        $this->assertStatus(204);
+        self::assertSame(['deleted' => ['empty'], 'kept' => ['actualites-2026']], $this->json('DELETE', '/admin/files/directories', ['paths' => ['empty', 'actualites-2026']]));
+        $this->assertStatus(200);
         self::assertFalse($this->filesystem->directoryExists('library/empty'));
+
+        $this->json('DELETE', '/admin/files/directories', ['paths' => ['']]);
+        $this->assertStatus(422);
+        self::assertSame('The library root cannot be deleted.', $this->response()['error']);
+    }
+
+    public function testMoveDirectories(): void
+    {
+        $this->library->mkdir('', 'docs');
+        $this->library->mkdir('', 'photos');
+        $this->library->mkdir('', 'archives');
+        $notes = $this->files->text('notes.txt', 'notes', 'docs');
+        $this->login();
+
+        self::assertSame(
+            [['name' => 'docs', 'path' => 'archives/docs'], ['name' => 'photos', 'path' => 'archives/photos']],
+            $this->json('PATCH', '/admin/files/directories', ['paths' => ['docs', 'photos'], 'parent' => 'archives']),
+        );
+        $this->assertStatus(200);
+        self::assertSame(
+            [['name' => 'docs-2026', 'path' => 'archives/docs-2026']],
+            $this->json('PATCH', '/admin/files/directories', ['paths' => ['archives/docs'], 'parent' => 'archives', 'name' => 'Docs 2026']),
+        );
+        self::assertSame('library/archives/docs-2026/notes.txt', $this->entityManager()->find(File::class, $notes->getId())?->getPath());
+
+        $this->json('PATCH', '/admin/files/directories', ['paths' => ['archives'], 'parent' => 'archives/docs-2026']);
+        $this->assertStatus(422);
+        self::assertSame('The folder "archives" cannot be moved into itself or one of its subfolders.', $this->response()['error']);
+
+        // library.max_directory_move is 3 in the test application: the files of every folder count.
+        foreach (['a', 'b'] as $name) {
+            $this->files->text($name . '.txt', 'content ' . $name, 'archives/docs-2026');
+        }
+
+        $this->files->text('c.txt', 'content c', 'archives/photos');
+        $this->json('PATCH', '/admin/files/directories', ['paths' => ['archives/docs-2026', 'archives/photos'], 'parent' => '']);
+        $this->assertStatus(422);
+        self::assertSame('"archives/docs-2026, archives/photos" holds 4 files, above the limit of 3: use the "gingerminds:media:directory:move" command.', $this->response()['error']);
+
+        $this->client->loginUser($this->fixtures->user('viewer@example.com', ['view files']), 'admin');
+        $this->json('PATCH', '/admin/files/directories', ['paths' => ['archives'], 'parent' => '']);
+        $this->assertStatus(403);
     }
 
     public function testRenameAndMove(): void

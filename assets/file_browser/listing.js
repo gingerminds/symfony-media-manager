@@ -56,10 +56,6 @@ export default {
 
         this.breadcrumbTarget.innerHTML = this.breadcrumbItems(breadcrumb);
 
-        if (this.hasDeleteDirectoryButtonTarget) {
-            this.deleteDirectoryButtonTarget.classList.toggle('d-none', this.path === '');
-        }
-
         // Folders stay whatever the filters, to keep navigating, but a search only lists files.
         const showDirectories = pagination.page === 1 && this.searchTarget.value.trim() === '';
         const tiles = [
@@ -78,12 +74,20 @@ export default {
     },
 
     directoryTile(directory) {
+        const selected = this.directorySelection.has(directory.path);
+        const check = this.configValue.canEdit && !this.isPicker() ? `
+            <input type="checkbox" class="form-check-input gm-file-card-check" ${selected ? 'checked' : ''} aria-label="${this.esc(directory.name)}"
+                   data-action="gm-file-browser#toggleDirectorySelection" data-gm-file-browser-path-param="${this.esc(directory.path)}">` : '';
+
         return `
-            <button type="button" class="gm-file-card gm-file-card-directory" title="${this.esc(directory.name)}"
-                    data-action="gm-file-browser#open" data-gm-file-browser-path-param="${this.esc(directory.path)}">
-                <span class="gm-file-card-preview"><i class="bi bi-folder-fill"></i></span>
-                <span class="gm-file-card-body"><span class="gm-file-card-name">${this.esc(directory.name)}</span></span>
-            </button>`;
+            <div class="gm-file-card gm-file-card-directory${selected ? ' is-selected' : ''}" data-directory-path="${this.esc(directory.path)}">
+                ${check}
+                <button type="button" class="gm-file-card-preview" title="${this.esc(directory.name)}"
+                        data-action="gm-file-browser#open" data-gm-file-browser-path-param="${this.esc(directory.path)}">
+                    <i class="bi bi-folder-fill"></i>
+                </button>
+                <span class="gm-file-card-body"><span class="gm-file-card-name" title="${this.esc(directory.name)}">${this.esc(directory.name)}</span></span>
+            </div>`;
     },
 
     fileTile(file) {
@@ -165,6 +169,7 @@ export default {
         this.path = path;
         this.page = 1;
         this.selection.clear();
+        this.directorySelection.clear();
         this.closeDetail();
         this.load().then(() => this.ensureTree(path));
     },

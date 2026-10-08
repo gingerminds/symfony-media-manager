@@ -1,5 +1,5 @@
 /*
- * gm-file-browser: Folder and file actions, confirmed in the dialog.
+ * gm-file-browser: New folder and file actions, confirmed in the dialog.
  */
 export default {
     createDirectory() {
@@ -15,30 +15,6 @@ export default {
 
                 await this.refreshDirectory(this.path);
                 await this.load();
-
-                return true;
-            },
-        });
-    },
-
-    deleteDirectory() {
-        const path = this.path;
-
-        this.openDialog({
-            title: this.label('action.delete_directory'),
-            body: `<p class="mb-0">${this.esc(this.label('message.confirm_delete_directory', { name: path.split('/').pop() }))}</p>`,
-            confirmClass: 'btn-danger',
-            onConfirm: async () => {
-                const response = await this.request(this.configValue.urls.directory, { method: 'DELETE', json: { path } });
-
-                if (!response.ok) {
-                    return this.dialogError(this.errorOf(response));
-                }
-
-                const parent = path.split('/').slice(0, -1).join('/');
-                this.nodes.delete(path);
-                this.node(parent).children = null;
-                this.navigate(parent);
 
                 return true;
             },
@@ -75,16 +51,12 @@ export default {
         this.chooseDirectory([id]);
     },
 
-    async chooseDirectory(ids) {
-        this.chooserIds = ids;
-        this.chooserPath = this.path;
-        this.expanded.chooser = new Set(['']);
-        this.openDialog({
+    chooseDirectory(ids) {
+        this.openChooser({
             title: this.label('action.move'),
-            body: '<div data-chooser></div>',
-            confirmLabel: this.label('action.move_here'),
-            onConfirm: async () => {
-                const response = await this.request(this.configValue.urls.move, { method: 'POST', json: { ids, path: this.chooserPath } });
+            summary: (path) => this.label('message.move_to', { count: ids.length, path: path || this.label('root') }),
+            onConfirm: async (path) => {
+                const response = await this.request(this.configValue.urls.move, { method: 'POST', json: { ids, path } });
 
                 if (!response.ok) {
                     return this.dialogError(this.errorOf(response));
@@ -98,26 +70,6 @@ export default {
                 return true;
             },
         });
-        await this.ensureTree(this.path, 'chooser');
-    },
-
-    chooserOpen({ params: { path } }) {
-        this.chooserPath = path ?? '';
-        this.renderChooser();
-    },
-
-    renderChooser() {
-        const container = this.dialogBodyTarget.querySelector('[data-chooser]');
-
-        if (!container) {
-            return;
-        }
-
-        const path = this.chooserPath;
-        container.innerHTML = `
-            <ul class="list-unstyled mb-0 p-2 border rounded gm-file-chooser">${this.treeItem('', this.label('root'), 'chooser', path, 'chooserOpen')}</ul>
-            <p class="mt-3 mb-0">${this.esc(this.label('message.move_to', { count: this.chooserIds.length, path: path || this.label('root') }))}</p>`;
-        this.revealActiveFolder(container.querySelector('.gm-file-chooser'));
     },
 
     deleteSelection() {

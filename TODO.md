@@ -1,6 +1,6 @@
 # Reste à faire — portage de `gingerminds/laravel-media-manager`
 
-Point au 8 octobre 2026 (étape 6 commitée). Branche `build`.
+Point au 8 octobre 2026 (étapes 5c et 6 commitées). Branche `build`.
 
 ## Où on en est
 
@@ -13,7 +13,7 @@ Point au 8 octobre 2026 (étape 6 commitée). Branche `build`.
 | 4 | `FileLibrary` et registre des références (`FileReferenceRegistry`) | ✅ commité |
 | 5a | Page « Bibliothèque de fichiers », endpoints JSON, assets admin (slot `head` du core 1.6) | ✅ commité |
 | 5b | `FilePickerType` et modale de sélection | ✅ commité |
-| 5c | Déplacer et renommer un dossier | à faire |
+| 5c | Sélection, déplacement, renommage et suppression de dossiers | ✅ commité |
 | 6 | Media | ✅ commité |
 | 7 | Sélection de medias (`media-select`) | à faire |
 | 8 | Panier (basket) | à faire |
@@ -22,7 +22,7 @@ Point au 8 octobre 2026 (étape 6 commitée). Branche `build`.
 
 ---
 
-## Étape 5c — Déplacer et renommer un dossier
+## Étape 5c — Dossiers : sélection, déplacement, renommage, suppression (commitée)
 
 - `FileLibrary::moveDirectory($path, $parent, $name)` couvre le renommage (même parent) et le déplacement :
   - chaque fichier passe par `relocate()` (fichier physique, `path`, purge Glide, remise en place si l'enregistrement échoue) ;
@@ -33,8 +33,12 @@ Point au 8 octobre 2026 (étape 6 commitée). Branche `build`.
   - refus si la cible existe déjà (pas de fusion) ;
   - la racine ne se déplace pas ;
   - disque par défaut seulement (les dossiers n'existent que là).
-- Volume : plafond configurable du nombre de fichiers par requête (par exemple 1 000). Au-delà, renvoyer vers une commande console.
-- Admin : « Renommer » et « Déplacer » sur le dossier courant, à côté de « Supprimer le dossier ». Le déplacement réutilise la boîte de dialogue avec l'arbre. Droit `edit files`, rien dans la modale du sélecteur.
+- Volume : `library.max_directory_move` (1 000 par défaut, 0 sans limite). Au-delà, l'admin renvoie vers `gingerminds:media:directory:move <path> [<parent>] [--name=]`.
+- Admin :
+  - des cases à cocher sur les dossiers ; on sélectionne soit des dossiers, soit des fichiers, jamais les deux ;
+  - avec des dossiers cochés, la barre propose Renommer (un seul dossier), Déplacer et Supprimer (dossiers vides seulement) à la place des actions de fichiers ;
+  - plus de boutons sur le dossier courant ;
+  - droit `edit files`, rien dans la modale du sélecteur.
 - Points de doc : un `start_path` ou un `LibraryStartPathProviderInterface` qui vise un dossier par son nom ne le suit pas. Penser plus tard aux dossiers par site (multisite).
 - Tests : renommage, déplacement, cycles, conflit, retour arrière, plafond.
 
@@ -107,6 +111,7 @@ Pages à écrire : configuration, services, composants (types de formulaire, wid
 - Le droit `delete files` est créé par `gingerminds:permissions:sync` mais n'est pas utilisé : toutes les actions d'écriture relèvent de `edit files`.
 - `FileLibraryController` (lectures) est surchargeable via `resources.file.controller`. Les écritures se changent en décorant le service `gingerminds_media_manager.controller.admin.file_library_action`.
 - `LibraryStartPathProviderInterface` : aliaser l'interface pour changer le dossier d'ouverture.
+- Déplacer ou renommer un dossier : un `start_path` ou un `LibraryStartPathProviderInterface` qui vise ce dossier par son nom ne le suit pas. Au-delà de `library.max_directory_move`, passer par la commande.
 - Assets : rien à ajouter dans le projet. Le slot `admin_includes.head` du core charge la CSS et les contrôleurs, et `RelativeImportCompiler` rend les imports relatifs du bundle compatibles avec l'importmap.
 - `FilePickerType` : options, exemples (`accept`, `multiple`, `as_id` pour les champs JSON), événement `gm-file-picker:change`.
 - `README.md` à jour (dépendances, installation, migrations).

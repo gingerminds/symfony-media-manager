@@ -90,7 +90,6 @@ file:
     action:
         upload: Téléverser
         new_directory: Nouveau dossier
-        delete_directory: Supprimer le dossier
         open: Ouvrir
         rename: Renommer
         move: Déplacer
@@ -122,9 +121,14 @@ file:
         moved: '%count% fichier(s) déplacé(s).'
         merged: Doublons fusionnés, %count% référence(s) mise(s) à jour.
         confirm_delete: Supprimer %count% fichier(s) ? Les fichiers utilisés seront conservés.
-        confirm_delete_directory: Supprimer le dossier « %name% » ? Il doit être vide.
         confirm_merge: Les %count% doublon(s) seront remplacés par ce fichier partout où ils sont utilisés, puis supprimés.
         move_to: Déplacer %count% fichier(s) vers « %path% »
+        confirm_delete_directories: Supprimer %count% dossier(s) ? Seuls les dossiers vides seront supprimés.
+        directories_deleted: '%count% dossier(s) supprimé(s).'
+        directories_kept: 'Ces dossiers ne sont pas vides, ils n''ont pas été supprimés :'
+        directories_moved: '%count% dossier(s) déplacé(s) vers « %path% ».'
+        directory_renamed: Le dossier s'appelle maintenant « %name% ».
+        move_directories_to: Déplacer %count% dossier(s) vers « %path% »
     picker:
         title: Bibliothèque de fichiers
         choose: Choisir un fichier
@@ -147,6 +151,9 @@ error:
     directory_exists: Le dossier « %path% » existe déjà.
     directory_not_empty: Le dossier « %path% » n'est pas vide.
     root_directory: La racine de la bibliothèque ne peut pas être supprimée.
+    root_directory_moved: La racine de la bibliothèque ne peut être ni déplacée ni renommée.
+    directory_into_itself: Le dossier « %path% » ne peut pas être déplacé dans lui-même ni dans un de ses sous-dossiers.
+    directory_too_large: '« %path% » contient %count% fichiers, au-delà de la limite de %max% : utilisez la commande « %command% ».'
     invalid_path: Ce chemin n'est pas valide.
     mime_not_allowed: Le type de fichier « %mime% » n'est pas autorisé.
     too_large: Le fichier est trop lourd (%size% Ko, %max% Ko autorisés).
