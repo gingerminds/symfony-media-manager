@@ -1,0 +1,9 @@
+{% extends '@GingermindsCore/layout/base.html.twig' %}
+{% trans_default_domain 'GingermindsMediaManager' %}
+
+{% set page_title = 'file.name_p'|trans %}
+{% set breadcrumb = [{label: page_title}] %}
+
+{% block content %}
+    {% include '@GingermindsMediaManager/components/file/_browser.html.twig' with {browser: browser, mode: 'manager'} only %}
+{% endblock %}

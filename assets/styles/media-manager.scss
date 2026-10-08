@@ -1,0 +1,397 @@
+//
+// Gingerminds media manager admin stylesheet.
+//
+// Compiled by symfonycasts/sass-bundle next to the core admin.scss, with its load paths: the
+// project theme and Bootstrap sources. Only variables and mixins are imported, Bootstrap CSS
+// itself comes from the core stylesheet.
+//
+
+@import "bootstrap/scss/functions";
+@import "theme";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+
+$gm-file-tile-size: 150px !default;
+
+.gm-file-browser {
+    // Current folder, as the title of the card.
+    .gm-file-browser-path {
+        padding: 0;
+        background: none;
+        font-size: 15px;
+        font-weight: $font-weight-semibold;
+
+        .breadcrumb-item.active {
+            color: var(--bs-emphasis-color);
+        }
+
+        a {
+            text-decoration: none;
+        }
+    }
+
+    .alert-dismissible .btn-close {
+        top: 50%;
+        padding: 0 1rem;
+        transform: translateY(-50%);
+    }
+
+    .gm-file-browser-tree,
+    .gm-file-browser-detail {
+        @include media-breakpoint-up(md) {
+            min-height: 420px;
+        }
+    }
+
+    .gm-file-browser-detail {
+        @include media-breakpoint-down(md) {
+            border-top: var(--bs-border-width) solid var(--bs-border-color);
+        }
+
+        // Opens the file in a new tab.
+        .gm-file-detail-preview {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 160px;
+            border-radius: var(--bs-border-radius);
+            background: var(--bs-tertiary-bg);
+            color: var(--bs-secondary-color);
+            text-decoration: none;
+
+            img {
+                max-width: 100%;
+                max-height: 240px;
+                object-fit: contain;
+            }
+
+            .bi {
+                font-size: 3.5rem;
+            }
+
+            .gm-file-card-extension {
+                display: none;
+            }
+
+            .gm-file-detail-open {
+                position: absolute;
+                top: .5rem;
+                right: .5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                background: rgba(var(--bs-body-bg-rgb), .9);
+                color: var(--bs-primary);
+                opacity: 0;
+                transition: opacity .15s;
+
+                .bi {
+                    font-size: 1rem;
+                }
+            }
+
+            &:hover .gm-file-detail-open,
+            &:focus-visible .gm-file-detail-open {
+                opacity: 1;
+            }
+        }
+
+        // Plain sections, without the card look of the admin accordions.
+        .gm-file-detail-sections {
+            .accordion-item {
+                margin-bottom: 0;
+                border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+                border-radius: 0 !important;
+                box-shadow: none;
+            }
+
+            .accordion-button {
+                background: none;
+                box-shadow: none;
+            }
+        }
+    }
+
+    .gm-file-browser-main {
+        min-width: 0;
+    }
+
+
+    .gm-file-browser-dropzone {
+        position: absolute;
+        inset: .5rem;
+        z-index: 5;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border: 2px dashed var(--bs-primary);
+        border-radius: var(--bs-border-radius-lg);
+        background: rgba(var(--bs-primary-rgb), .08);
+        color: var(--bs-primary);
+        font-weight: $font-weight-semibold;
+        pointer-events: none;
+
+        &.is-visible {
+            display: flex;
+        }
+    }
+}
+
+// Scrolls on its own past a screen of folders.
+.gm-file-tree {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.gm-file-tree-children {
+    padding-left: .75rem;
+}
+
+.gm-file-tree-item {
+    border-radius: var(--bs-border-radius-sm);
+
+    a {
+        padding: .35rem .5rem .35rem 0;
+        color: var(--bs-body-color);
+        text-decoration: none;
+    }
+
+    &:hover {
+        background: var(--bs-tertiary-bg);
+    }
+
+    &.is-active {
+        background: rgba(var(--bs-primary-rgb), .1);
+
+        a {
+            color: var(--bs-primary);
+            font-weight: $font-weight-semibold;
+        }
+    }
+}
+
+.gm-file-tree-caret {
+    display: inline-flex;
+    flex: 0 0 1.5rem;
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-secondary-color);
+    font-size: .7rem;
+    text-decoration: none;
+}
+
+.gm-file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax($gm-file-tile-size, 1fr));
+    gap: .75rem;
+
+    .gm-file-grid-message {
+        grid-column: 1 / -1;
+    }
+}
+
+.gm-file-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    text-align: start;
+    transition: border-color .15s, box-shadow .15s;
+
+    &:hover {
+        border-color: rgba(var(--bs-primary-rgb), .5);
+    }
+
+    &.is-selected,
+    &.is-active {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 .15rem rgba(var(--bs-primary-rgb), .25);
+    }
+
+    .gm-file-card-check {
+        position: absolute;
+        top: .5rem;
+        left: .5rem;
+        z-index: 1;
+        margin: 0;
+    }
+
+    .gm-file-card-preview {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 4 / 3;
+        padding: 0;
+        border: 0;
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-secondary-color);
+
+        img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .bi {
+            font-size: 2.5rem;
+        }
+    }
+
+    .gm-file-card-extension {
+        position: absolute;
+        right: .5rem;
+        bottom: .4rem;
+        font-size: .65rem;
+        font-weight: $font-weight-semibold;
+        text-transform: uppercase;
+    }
+
+    .gm-file-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+        padding: .45rem .6rem;
+    }
+
+    .gm-file-card-name {
+        overflow: hidden;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-medium;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.gm-file-card-directory {
+    .gm-file-card-preview .bi {
+        color: var(--bs-warning);
+    }
+}
+
+.gm-file-chooser {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+// FilePickerType widget: the picked files as cards, as in the library grid.
+.gm-file-picker-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 9rem);
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.gm-file-picker-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+    font-size: $font-size-sm;
+}
+
+.gm-file-picker-thumb {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-secondary-color);
+
+    img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .bi {
+        font-size: 2rem;
+    }
+}
+
+.gm-file-picker-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: .35rem .5rem;
+}
+
+.gm-file-picker-remove,
+.gm-file-picker-handle {
+    position: absolute;
+    top: .35rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: var(--bs-box-shadow-sm);
+}
+
+.gm-file-picker-remove {
+    right: .35rem;
+    color: var(--bs-danger);
+}
+
+.gm-file-picker-handle {
+    left: .35rem;
+    background: var(--bs-body-bg);
+    color: var(--bs-secondary-color);
+    cursor: grab;
+}
+
+// Library modal of the picker: wide enough for the tree, the grid and the detail.
+.gm-file-picker-dialog {
+    @include media-breakpoint-up(lg) {
+        max-width: min(1400px, 96vw);
+    }
+
+    .gm-file-browser .card {
+        margin-bottom: 0;
+    }
+
+    // "Select" always in view while the library scrolls.
+    .gm-file-browser .card-footer {
+        position: sticky;
+        bottom: calc(-1 * var(--bs-modal-padding));
+        z-index: 2;
+        background: var(--bs-body-bg);
+        box-shadow: 0 -.25rem .75rem rgba(var(--bs-body-color-rgb), .08);
+    }
+}
+
+// Media list.
+.gm-media-preview {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+}
+
+.gm-media-file-name {
+    max-width: 240px;
+}

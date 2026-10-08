@@ -1,0 +1,13 @@
+gingerminds_media_manager:
+    media_category:
+        parent_cycle: A category cannot be placed in itself or in one of its subcategories.
+    media:
+        thumbnail_not_image: The thumbnail must be an image.
+    media_select:
+        invalid: This media is not valid.
+        not_found: This media no longer exists.
+        category: 'The media "{{ name }}" is not in an allowed category.'
+    file_picker:
+        invalid: This file is not valid.
+        not_found: This file is no longer in the library.
+        mime_type: 'The file "{{ name }}" is not of an accepted type ({{ types }}).'

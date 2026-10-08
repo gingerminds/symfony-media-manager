@@ -1,0 +1,24 @@
+{# MediaSelectType widget, driven by the Stimulus `gm-media-select` controller (medias rendered from `medias`). #}
+{% block gm_media_select_widget %}
+    {% trans_default_domain 'GingermindsMediaManager' %}
+    {% set labels = {} %}
+    {% for key in ['choose', 'replace', 'add', 'remove', 'reorder'] %}
+        {% set labels = labels|merge({(key): ('media_select.' ~ key)|trans}) %}
+    {% endfor %}
+    <div class="gm-media-select{{ multiple ? ' is-multiple' }}" data-controller="gm-media-select"
+         data-gm-media-select-url-value="{{ picker_url }}"
+         data-gm-media-select-multiple-value="{{ multiple ? 'true' : 'false' }}"
+         data-gm-media-select-categories-value="{{ categories|json_encode }}"
+         data-gm-media-select-per-page-value="{{ per_page }}"
+         data-gm-media-select-medias-value="{{ medias|json_encode }}"
+         data-gm-media-select-labels-value="{{ labels|json_encode }}">
+        <input type="hidden" {{ block('widget_attributes') }} value="{{ value }}" data-gm-media-select-target="input">
+        <div class="gm-file-picker-items" data-gm-media-select-target="items"></div>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-gm-media-select-target="button" data-action="gm-media-select#open"{{ can_pick and not disabled ? '' : ' disabled' }}>
+            <i class="bi bi-collection me-1"></i> <span data-gm-media-select-target="buttonLabel">{{ (multiple ? 'media_select.add' : 'media_select.choose')|trans }}</span>
+        </button>
+        {% if not can_pick %}
+            <div class="form-text text-danger">{{ 'media_select.forbidden'|trans }}</div>
+        {% endif %}
+    </div>
+{% endblock %}

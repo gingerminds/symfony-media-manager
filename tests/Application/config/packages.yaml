@@ -26,6 +26,8 @@ framework:
     rate_limiter:
         gingerminds_core_api:
             storage_service: test.rate_limiter_storage
+        gingerminds_media_manager_files:
+            storage_service: test.rate_limiter_storage
 
 doctrine:
     dbal:
@@ -91,11 +93,37 @@ security:
         - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: IS_AUTHENTICATED }
 
+parameters:
+    env(FILE_LIBRARY_DISK): 'default'
+    env(FILE_LIBRARY_ROOT): 'library'
+    env(FILE_LIBRARY_MAX_UPLOAD_SIZE): '100'
+
+# Env placeholders on purpose: they are resolved at runtime only.
+gingerminds_core:
+    resources:
+        article:
+            entity: Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article
+            controller: Gingerminds\MediaManagerBundle\Tests\Application\Controller\ArticleController
+
+gingerminds_media_manager:
+    storage:
+        default_disk: '%env(FILE_LIBRARY_DISK)%'
+    library:
+        root: '%env(FILE_LIBRARY_ROOT)%'
+        max_upload_size: '%env(int:FILE_LIBRARY_MAX_UPLOAD_SIZE)%'
+        allowed_mimes: ['text/plain', 'image/png', 'image/svg+xml', 'application/zip', 'application/docx']
+        max_directory_move: 3
+    images:
+        presets:
+            thumbnail: { w: 50, h: 40, fit: crop }
+            card: { w: 20, fm: png }
+    files_rate_limit: 5
+
 # In-memory files: nothing is written on disk by the tests.
 flysystem:
     storages:
         gingerminds_media_manager.storage.default:
-            adapter: 'memory'
+            memory: ~
 
 # Bootstrap SCSS lives in the bundle vendor/.
 symfonycasts_sass:

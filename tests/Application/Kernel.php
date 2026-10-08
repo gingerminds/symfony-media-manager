@@ -31,6 +31,10 @@ final class Kernel extends BaseKernel
     {
         $container->import(__DIR__ . '/config/packages.yaml');
         $container->import(__DIR__ . '/config/services.yaml');
+
+        if ('test_no_basket' === $this->environment) {
+            $container->import(__DIR__ . '/config/packages_no_basket.yaml');
+        }
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void

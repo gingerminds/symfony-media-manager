@@ -1,0 +1,17 @@
+{#
+ # `gingerminds_core.admin_includes.head`: the bundle stylesheet, and its Stimulus controllers registered
+ # on the core app. Imported by versioned URL: they are not dependencies of an importmap entrypoint.
+ #}
+<link rel="stylesheet" href="{{ asset('gingerminds-media-manager/styles/media-manager.scss') }}">
+<script type="module">
+    import { app } from 'gingerminds-core-admin';
+    import FileBrowserController from '{{ asset('gingerminds-media-manager/controllers/file_browser_controller.js') }}';
+    import FilePickerController from '{{ asset('gingerminds-media-manager/controllers/file_picker_controller.js') }}';
+    import MediaPickerController from '{{ asset('gingerminds-media-manager/controllers/media_picker_controller.js') }}';
+    import MediaSelectController from '{{ asset('gingerminds-media-manager/controllers/media_select_controller.js') }}';
+
+    app.register('gm-file-browser', FileBrowserController);
+    app.register('gm-file-picker', FilePickerController);
+    app.register('gm-media-picker', MediaPickerController);
+    app.register('gm-media-select', MediaSelectController);
+</script>
