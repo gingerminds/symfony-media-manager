@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle;
 
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
+use Gingerminds\MediaManagerBundle\Basket\Entity\Basket;
+use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
 use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaController;
@@ -51,6 +53,14 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
             'entity' => Media::class,
             'interface' => MediaInterface::class,
         ],
+    ];
+
+    /**
+     * Overridable entity of the baskets, only mapped when `basket.enabled`.
+     */
+    public const array BASKET_RESOURCE = [
+        'entity' => Basket::class,
+        'interface' => BasketInterface::class,
     ];
 
     /**
@@ -122,11 +132,18 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         $parameters->set('gingerminds_media_manager.files_rate_limit', $config['files_rate_limit']);
         $parameters->set('gingerminds_media_manager.basket.enabled', $config['basket']['enabled']);
         $parameters->set('gingerminds_media_manager.basket.claim_strategy', $config['basket']['claim_strategy']);
+        $parameters->set('gingerminds_media_manager.basket.ttl', $config['basket']['ttl']);
+
+        if ($config['basket']['enabled']) {
+            $container->import('../config/services/basket.php');
+            // A media in a basket can still be deleted.
+            $container->services()->get('gingerminds_media_manager.media.usage_counter')->arg(1, [BasketInterface::class]);
+        }
 
         $container->services()->get('gingerminds_media_manager.storage.disk_registry')
             ->arg(0, service_locator(array_map(service(...), $config['storage']['disks'])));
 
-        foreach (self::RESOURCES as $name => $resource) {
+        foreach ($this->resources($config) as $name => $resource) {
             $entity = $this->resourceValue($config, $name, 'entity');
             $parameters->set('gingerminds_media_manager.resource.' . $name . '.entity', $entity);
 
@@ -146,17 +163,25 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         $config = $this->resolveConfig($builder);
         $resolveTargetEntities = [];
 
-        foreach (self::RESOURCES as $name => $resource) {
+        foreach ($this->resources($config) as $name => $resource) {
             $resolveTargetEntities[$resource['interface']] = $this->resourceValue($config, $name, 'entity');
+        }
+
+        $mappings = [
+            'GingermindsMediaManagerFile' => $this->mapping('Entity/File'),
+            'GingermindsMediaManagerMedia' => $this->mapping('Entity/Media'),
+        ];
+
+        // Outside src/Entity: API Platform would find the basket resource there even when disabled.
+        if ($config['basket']['enabled']) {
+            $mappings['GingermindsMediaManagerBasket'] = $this->mapping('Basket/Entity');
+            $builder->prependExtensionConfig('api_platform', ['mapping' => ['paths' => [$this->getPath() . '/src/Basket/Entity']]]);
         }
 
         $builder->prependExtensionConfig('doctrine', [
             'orm' => [
                 'resolve_target_entities' => $resolveTargetEntities,
-                'mappings' => [
-                    'GingermindsMediaManagerFile' => $this->mapping('File'),
-                    'GingermindsMediaManagerMedia' => $this->mapping('Media'),
-                ],
+                'mappings' => $mappings,
             ],
         ]);
 
@@ -217,7 +242,9 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
      */
     private function resourceValue(array $config, string $name, string $key): ?string
     {
-        return $config['resources'][$name][$key] ?? self::RESOURCES[$name][$key] ?? self::ADMIN_RESOURCES[$name][$key];
+        $defaults = 'basket' === $name ? self::BASKET_RESOURCE : (self::RESOURCES[$name] ?? []) + (self::ADMIN_RESOURCES[$name] ?? []);
+
+        return $config['resources'][$name][$key] ?? $defaults[$key] ?? null;
     }
 
     /**
@@ -235,7 +262,7 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         }
 
         $configs = array_map(
-            static fn (array $config): array => array_intersect_key($config, ['resources' => true, 'files_rate_limit' => true]),
+            static fn (array $config): array => array_intersect_key($config, ['resources' => true, 'files_rate_limit' => true, 'basket' => true]),
             $builder->getExtensionConfig($this->extensionAlias),
         );
 
@@ -250,8 +277,20 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         return [
             'type' => 'attribute',
             'is_bundle' => false,
-            'dir' => $this->getPath() . '/src/Entity/' . $directory,
-            'prefix' => 'Gingerminds\\MediaManagerBundle\\Entity\\' . $directory,
+            'dir' => $this->getPath() . '/src/' . $directory,
+            'prefix' => 'Gingerminds\\MediaManagerBundle\\' . str_replace('/', '\\', $directory),
         ];
+    }
+
+    /**
+     * The overridable entities, the basket one when enabled.
+     *
+     * @param array<string, mixed> $config
+     *
+     * @return array<string, array{entity: class-string, interface: class-string}>
+     */
+    private function resources(array $config): array
+    {
+        return $config['basket']['enabled'] ? [...self::RESOURCES, 'basket' => self::BASKET_RESOURCE] : self::RESOURCES;
     }
 }

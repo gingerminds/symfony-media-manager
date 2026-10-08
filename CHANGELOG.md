@@ -119,6 +119,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (`MediaUsageCounter`).
 - `MediaCategoryChoiceType`: a media category picked in the indented tree, `exclude` removes a
   category and its descendants (category parent, media category).
+- Baskets of medias (`src/Basket`, overridable `BaseBasket` / `resources.basket.entity`): `baskets`
+  (`token` UUID, `owner_id` to the core user, `expires_at`) and `basket_media` (cascade on both
+  sides). API as in Laravel: `POST /baskets` (a guest basket; for a user, a new basket replacing
+  the previous one, `anonymous_token` claims a guest basket with `basket.claim_strategy`),
+  `GET` / `DELETE /baskets/{token}`, `POST /baskets/{token}/medias` (`media_ids`, no duplicates),
+  `DELETE /baskets/{token}/medias/{mediaId}`, `GET /baskets/{token}/download` (ZIP of the files,
+  each read on its own disk under its original name, then the basket is deleted; 422 when there is
+  nothing to download). A guest basket is open to whoever has its token, a user basket to its owner
+  only (`BasketVoter`). The API login response gets the `basket_token` of the user.
+- `basket.ttl` (30 days by default): a guest basket expires that long after its last change, a user
+  basket never; `gingerminds:media:basket:purge` deletes the expired ones (cron).
+- `basket.enabled: false` removes the baskets entirely: no Doctrine mapping (no tables), no API
+  resource, no voter nor login enrichment.
+- A media in a basket can still be deleted (`MediaUsageCounter` ignores the baskets).
 - `MediaCategoryInterface` extends `TimestampableInterface`.
 - `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
   with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime

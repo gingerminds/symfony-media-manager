@@ -1,0 +1,4 @@
+# test_no_basket environment (BasketDisabledTest).
+gingerminds_media_manager:
+    basket:
+        enabled: false

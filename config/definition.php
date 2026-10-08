@@ -160,6 +160,11 @@ $basket = static function (NodeBuilder $children): void {
                     ->values(['merge', 'replace', 'ignore'])
                     ->defaultValue('merge')
                 ->end()
+                ->integerNode('ttl')
+                    ->info('Days a guest basket lives after its last change (0: forever); a user basket never expires. Purge: gingerminds:media:basket:purge.')
+                    ->defaultValue(30)
+                    ->min(0)
+                ->end()
             ->end()
         ->end();
 };

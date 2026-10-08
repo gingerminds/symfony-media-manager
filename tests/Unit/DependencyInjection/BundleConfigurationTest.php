@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Tests\Unit\DependencyInjection;
 
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
+use Gingerminds\MediaManagerBundle\Basket\Entity\Basket;
+use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Entity\Media\Media;
@@ -27,8 +29,13 @@ final class BundleConfigurationTest extends TestCase
         $container = $this->prepend([]);
 
         $doctrine = $this->merged($container, 'doctrine')['orm'];
-        self::assertSame([FileInterface::class => File::class, MediaCategoryInterface::class => MediaCategory::class, MediaInterface::class => Media::class], $doctrine['resolve_target_entities']);
-        self::assertSame(['GingermindsMediaManagerFile', 'GingermindsMediaManagerMedia'], array_keys($doctrine['mappings']));
+        self::assertSame(
+            [FileInterface::class => File::class, MediaCategoryInterface::class => MediaCategory::class, MediaInterface::class => Media::class, BasketInterface::class => Basket::class],
+            $doctrine['resolve_target_entities'],
+        );
+        self::assertSame(['GingermindsMediaManagerFile', 'GingermindsMediaManagerMedia', 'GingermindsMediaManagerBasket'], array_keys($doctrine['mappings']));
+        self::assertSame('Gingerminds\MediaManagerBundle\Basket\Entity', $doctrine['mappings']['GingermindsMediaManagerBasket']['prefix']);
+        self::assertSame([new GingermindsMediaManagerBundle()->getPath() . '/src/Basket/Entity'], $this->merged($container, 'api_platform')['mapping']['paths']);
         self::assertSame('Gingerminds\MediaManagerBundle\Entity\File', $doctrine['mappings']['GingermindsMediaManagerFile']['prefix']);
 
         self::assertSame(
@@ -50,6 +57,16 @@ final class BundleConfigurationTest extends TestCase
 
         $resource = $this->merged($this->prepend([['resources' => ['media_category' => ['controller' => 'App\\Controller\\CategoryController']]]]), 'gingerminds_core')['resources']['media_category'];
         self::assertSame('App\\Controller\\CategoryController', $resource['controller']);
+    }
+
+    public function testADisabledBasketIsNeitherMappedNorAnApiResource(): void
+    {
+        $container = $this->prepend([['basket' => ['enabled' => false]]]);
+        $doctrine = $this->merged($container, 'doctrine')['orm'];
+
+        self::assertArrayNotHasKey(BasketInterface::class, $doctrine['resolve_target_entities']);
+        self::assertArrayNotHasKey('GingermindsMediaManagerBasket', $doctrine['mappings']);
+        self::assertSame([], $container->getExtensionConfig('api_platform'));
     }
 
     public function testTheMediasAreACoreResource(): void

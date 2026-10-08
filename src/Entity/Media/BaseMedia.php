@@ -31,22 +31,25 @@ abstract class BaseMedia implements MediaInterface, SortableInterface, Searchabl
     public const string GROUP_LIST = 'media:list';
     public const string GROUP_READ = 'media:read';
 
+    // The medias of a basket (BaseBasket::GROUP_READ).
+    public const string GROUP_BASKET = 'basket:read';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[ApiProperty(identifier: true)]
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
+    #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_BASKET])]
     protected ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
+    #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_BASKET])]
     protected ?string $code = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
+    #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_BASKET])]
     protected ?string $name = null;
 
     // RESTRICT: a file is never deleted with the media, nor a media with its file.

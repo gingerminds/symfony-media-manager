@@ -1,6 +1,6 @@
 # Reste à faire — portage de `gingerminds/laravel-media-manager`
 
-Point au 8 octobre 2026 (étapes 5c, 6 et 7 commitées). Branche `build`.
+Point au 8 octobre 2026 (étapes 5c à 8 commitées). Branche `build`.
 
 ## Où on en est
 
@@ -16,7 +16,7 @@ Point au 8 octobre 2026 (étapes 5c, 6 et 7 commitées). Branche `build`.
 | 5c | Sélection, déplacement, renommage et suppression de dossiers | ✅ commité |
 | 6 | Media | ✅ commité |
 | 7 | Sélection de medias (`media-select`) | ✅ commité |
-| 8 | Panier (basket) | à faire |
+| 8 | Panier (basket) | ✅ commité |
 | 9 | Commandes de maintenance | à faire |
 | 10 | Documentation | à faire |
 
@@ -76,20 +76,16 @@ Point au 8 octobre 2026 (étapes 5c, 6 et 7 commitées). Branche `build`.
 - Pas d'indication de langue (propre aux projets Laravel) : ajouter un point d'extension si un projet en a besoin.
 - Testée dans le skeleton avec un formulaire de démonstration temporaire sur le dashboard (retiré depuis).
 
-## Étape 8 — Panier (basket)
+## Étape 8 — Panier (commitée)
 
-- **Entités** :
-  - `Basket` : `token` UUID unique, propriétaire (relation polymorphe en Laravel : à transposer, a priori vers l'utilisateur du core), `expires_at`, horodatage ;
-  - pivot `basket_media`, en cascade côté panier et côté media.
-- **API** :
-  - `POST /baskets`, `GET/DELETE /baskets/{token}` ;
-  - `POST /baskets/{token}/medias`, `DELETE /baskets/{token}/medias/{mediaId}` ;
-  - `GET /baskets/{token}/download` : ZIP des fichiers, sur le disque de chaque fichier (YANMAR 1.9), avec `ZipArchiveException`.
-- **Connexion** :
-  - enrichissement de la réponse de login (`BasketLoginResponseEnricher`) : voir le point d'extension équivalent du core ;
-  - `basket.claim_strategy` (`merge`, `replace`, `ignore`) pour le panier anonyme au login.
-- **`basket.enabled: false` doit vraiment tout couper** : entités hors mapping, opérations API retirées, enrichissement du login désactivé.
-- **Permissions** et voter (`BasketPolicy`).
+- Tout le panier est dans `src/Basket`, hors de `src/Entity` : API Platform scanne ce dossier même quand la fonctionnalité est désactivée.
+- Propriétaire : l'utilisateur du core (`owner_id`, `CASCADE`).
+- ZIP : noms d'origine, « nom (2).ext » en cas de doublon.
+- Durée de vie : `basket.ttl` (30 jours) pour les paniers invités seulement, et purge par `gingerminds:media:basket:purge`.
+- Comportements repris du Laravel :
+  - `POST /baskets` connecté remplace le panier de l'utilisateur ;
+  - le téléchargement supprime le panier.
+- `basket.enabled: false` vérifié par un test dans un environnement dédié (`test_no_basket`).
 
 ## Étape 9 — Commandes de maintenance (plan YANMAR 1.8)
 
@@ -125,7 +121,13 @@ Pages à écrire : configuration, services, composants (types de formulaire, wid
   - exemple d'entité de lien (`AbstractMediaLink`, relation propriétaire en `CASCADE`, `cascade: ['persist']` et `orphanRemoval` côté entité) ;
   - options `collection` et `link_factory` ;
   - une relation directe vers `MediaInterface` doit être en `RESTRICT`.
-- Étape 8 : `MediaUsageCounter` accepte une liste de classes ignorées, pour que les paniers ne bloquent pas la suppression d'un media.
+- Panier :
+  - API ;
+  - règles d'accès ;
+  - `claim_strategy` ;
+  - `ttl` et purge (cron) ;
+  - import Laravel : `owner_type` de l'utilisateur vers `owner_id`, les autres propriétaires ignorés ;
+  - `basket.enabled: false`.
 - `README.md` à jour (dépendances, installation, migrations).
 
 ## Plus tard
