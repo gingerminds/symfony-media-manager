@@ -17,7 +17,6 @@ use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -26,6 +25,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 abstract class BaseMedia implements MediaInterface, SortableInterface, SearchableInterface, FilterableInterface, EagerLoadableInterface, CacheableResourceInterface
 {
     use CacheableResourceTrait;
+    use MediaApiFieldsTrait;
     use TimestampableTrait;
 
     public const string GROUP_LIST = 'media:list';
@@ -125,58 +125,6 @@ abstract class BaseMedia implements MediaInterface, SortableInterface, Searchabl
     public function getPreview(): ?FileInterface
     {
         return true === $this->file?->isImage() ? $this->file : $this->thumbnail;
-    }
-
-    /**
-     * Always the id, never the path (Laravel sent the path of a non-image file).
-     */
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
-    #[SerializedName('file')]
-    public function getFileId(): ?string
-    {
-        return $this->file?->getId();
-    }
-
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
-    #[SerializedName('file_reference')]
-    public function getFileReference(): ?string
-    {
-        return $this->file?->getId();
-    }
-
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
-    #[SerializedName('file_size')]
-    public function getFileSize(): ?int
-    {
-        return $this->file?->getSize();
-    }
-
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
-    #[SerializedName('file_type')]
-    public function getFileType(): ?string
-    {
-        return $this->file?->getMimeType();
-    }
-
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
-    #[SerializedName('thumbnail_reference')]
-    public function getThumbnailReference(): ?string
-    {
-        return $this->thumbnail?->getId();
-    }
-
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
-    #[SerializedName('thumbnail_size')]
-    public function getThumbnailSize(): ?int
-    {
-        return $this->thumbnail?->getSize();
-    }
-
-    #[Groups([self::GROUP_LIST, self::GROUP_READ])]
-    #[SerializedName('media_category_id')]
-    public function getCategoryId(): ?int
-    {
-        return $this->category?->getId();
     }
 
     #[Assert\Callback]

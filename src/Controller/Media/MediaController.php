@@ -118,7 +118,11 @@ class MediaController extends AbstractCrudController
 
         $ids = $this->categories->findIdsWithDescendants([$category]);
 
-        return array_values(null === $allowed ? $ids : array_intersect($ids, $allowed)) ?: [0];
+        if (null !== $allowed) {
+            $ids = array_values(array_intersect($ids, $allowed));
+        }
+
+        return [] === $ids ? [0] : $ids;
     }
 
     protected function createEntity(): object

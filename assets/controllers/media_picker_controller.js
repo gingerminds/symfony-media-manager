@@ -148,9 +148,10 @@ export default class MediaPickerController extends Controller {
     }
 
     card(media) {
+        const icon = media.file ? this.icon(media.file) : 'bi-file-earmark';
         const preview = media.thumbnailUrl
             ? `<img src="${this.esc(media.thumbnailUrl)}" alt="" loading="lazy">`
-            : `<i class="bi ${media.file ? this.icon(media.file) : 'bi-file-earmark'}"></i>`;
+            : `<i class="bi ${icon}"></i>`;
 
         return `
             <div class="gm-file-card${this.picked.has(media.id) ? ' is-selected' : ''}" data-media-id="${this.esc(media.id)}">

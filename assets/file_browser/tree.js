@@ -104,10 +104,13 @@ export default {
         const expanded = this.expanded[scope].has(path);
         const hasChildren = node.children === null || node.children.length > 0;
         const active = path === current;
+        const chevron = expanded ? 'bi-chevron-down' : 'bi-chevron-right';
+        const folder = active ? 'bi-folder2-open' : 'bi-folder';
+        const icon = path === '' ? 'bi-house-door' : folder;
         const caret = hasChildren
             ? `<button type="button" class="btn btn-link btn-sm p-0 gm-file-tree-caret" aria-expanded="${expanded}"
                        data-action="gm-file-browser#toggleNode" data-gm-file-browser-path-param="${this.esc(path)}" data-gm-file-browser-scope-param="${scope}">
-                   <i class="bi bi-chevron-${expanded ? 'down' : 'right'}"></i>
+                   <i class="bi ${chevron}"></i>
                </button>`
             : '<span class="gm-file-tree-caret"></span>';
         const children = expanded && node.children?.length
@@ -120,7 +123,7 @@ export default {
                     ${caret}
                     <a href="#" class="flex-grow-1 text-truncate" title="${this.esc(name)}" ${active ? 'aria-current="true"' : ''}
                        data-action="gm-file-browser#${action}:prevent" data-gm-file-browser-path-param="${this.esc(path)}">
-                        <i class="bi bi-${path === '' ? 'house-door' : `folder${active ? '2-open' : ''}`} me-1"></i>${this.esc(name)}
+                        <i class="bi ${icon} me-1"></i>${this.esc(name)}
                     </a>
                 </div>
                 ${children}

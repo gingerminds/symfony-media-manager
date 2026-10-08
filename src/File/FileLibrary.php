@@ -172,37 +172,14 @@ class FileLibrary
             throw new \InvalidArgumentException('Only one directory is renamed at a time.');
         }
 
+        $sources = $this->directorySources($paths);
+        $parentDirectory = $this->existingDirectory($parent);
         $moves = [];
         $targets = [];
         $count = 0;
 
-        foreach ($paths as $path) {
-            if ('' === $this->paths->normalize(ltrim($path, '/'))) {
-                throw LibraryException::rootDirectoryMoved();
-            }
-
-            $source = $this->existingDirectory($path);
-            $moves[$source] = null;
-        }
-
-        $sources = array_keys($moves);
-        $sources = array_values(array_filter($sources, static fn (string $source): bool => !array_any(
-            $sources,
-            static fn (string $other): bool => str_starts_with($source, $other . '/'),
-        )));
-        $moves = [];
-
         foreach ($sources as $source) {
-            $target = $this->existingDirectory($parent) . '/' . (null === $name ? basename($source) : $this->paths->directoryName($name));
-
-            if (str_starts_with($target . '/', $source . '/') && $target !== $source) {
-                throw LibraryException::directoryIntoItself($this->paths->relative($source));
-            }
-
-            if ($target !== $source && ($this->filesystem()->directoryExists($target) || isset($targets[$target]))) {
-                throw LibraryException::directoryExists($this->paths->relative($target));
-            }
-
+            $target = $this->directoryTarget($source, $parentDirectory, $name, $targets);
             $targets[$target] = true;
             $contents = $target === $source ? [[], []] : $this->directoryContents($source);
             $count += \count($contents[1]);
@@ -375,6 +352,57 @@ class FileLibrary
 
             throw $exception;
         }
+    }
+
+    /**
+     * The directories on the disk, without the subdirectories of another one (they follow it).
+     *
+     * @param list<string> $paths
+     *
+     * @return list<string>
+     */
+    private function directorySources(array $paths): array
+    {
+        $sources = [];
+
+        foreach ($paths as $path) {
+            if ('' === $this->paths->normalize(ltrim($path, '/'))) {
+                throw LibraryException::rootDirectoryMoved();
+            }
+
+            $sources[$this->existingDirectory($path)] = true;
+        }
+
+        $sources = array_keys($sources);
+
+        return array_values(array_filter($sources, static fn (string $source): bool => !array_any(
+            $sources,
+            static fn (string $other): bool => str_starts_with($source, $other . '/'),
+        )));
+    }
+
+    /**
+     * Where $source goes under $parent; not into itself nor onto an existing directory.
+     *
+     * @param array<string, true> $targets targets of the other moved directories
+     */
+    private function directoryTarget(string $source, string $parent, ?string $name, array $targets): string
+    {
+        $target = $parent . '/' . (null === $name ? basename($source) : $this->paths->directoryName($name));
+
+        if ($target === $source) {
+            return $target;
+        }
+
+        if (str_starts_with($target . '/', $source . '/')) {
+            throw LibraryException::directoryIntoItself($this->paths->relative($source));
+        }
+
+        if (isset($targets[$target]) || $this->filesystem()->directoryExists($target)) {
+            throw LibraryException::directoryExists($this->paths->relative($target));
+        }
+
+        return $target;
     }
 
     /**

@@ -119,16 +119,25 @@ export default class MediaSelectController extends Controller {
         this.inputTarget.value = this.medias.map((media) => media.id).join(',');
         this.itemsTarget.innerHTML = this.medias.map((media) => this.item(media)).join('');
         this.itemsTarget.classList.toggle('d-none', this.medias.length === 0);
-        this.buttonLabelTarget.textContent = this.label(this.multipleValue ? 'add' : (this.medias.length > 0 ? 'replace' : 'choose'));
+        this.buttonLabelTarget.textContent = this.label(this.buttonLabel());
+    }
+
+    buttonLabel() {
+        if (this.multipleValue) {
+            return 'add';
+        }
+
+        return this.medias.length > 0 ? 'replace' : 'choose';
     }
 
     item(media) {
         const handle = this.multipleValue
             ? `<span class="gm-file-picker-handle" title="${this.esc(this.label('reorder'))}"><i class="bi bi-grip-vertical"></i></span>`
             : '';
+        const icon = media.file ? this.icon(media.file) : 'bi-file-earmark';
         const thumbnail = media.thumbnailUrl
             ? `<img src="${this.esc(media.thumbnailUrl)}" alt="">`
-            : `<i class="bi ${media.file ? this.icon(media.file) : 'bi-file-earmark'}"></i>`;
+            : `<i class="bi ${icon}"></i>`;
 
         return `
             <div class="gm-file-picker-card" data-media-id="${this.esc(media.id)}">

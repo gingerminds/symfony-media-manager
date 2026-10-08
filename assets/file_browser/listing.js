@@ -75,8 +75,9 @@ export default {
 
     directoryTile(directory) {
         const selected = this.directorySelection.has(directory.path);
+        const checked = selected ? 'checked' : '';
         const check = this.configValue.canEdit && !this.isPicker() ? `
-            <input type="checkbox" class="form-check-input gm-file-card-check" ${selected ? 'checked' : ''} aria-label="${this.esc(directory.name)}"
+            <input type="checkbox" class="form-check-input gm-file-card-check" ${checked} aria-label="${this.esc(directory.name)}"
                    data-action="gm-file-browser#toggleDirectorySelection" data-gm-file-browser-path-param="${this.esc(directory.path)}">` : '';
 
         return `
@@ -92,8 +93,9 @@ export default {
 
     fileTile(file) {
         const selected = this.selection.has(file.id);
+        const checked = selected ? 'checked' : '';
         const check = this.configValue.canEdit && !this.isPicker() ? `
-            <input type="checkbox" class="form-check-input gm-file-card-check" ${selected ? 'checked' : ''} aria-label="${this.esc(file.name)}"
+            <input type="checkbox" class="form-check-input gm-file-card-check" ${checked} aria-label="${this.esc(file.name)}"
                    data-action="gm-file-browser#toggleSelection" data-gm-file-browser-id-param="${file.id}">` : '';
         const usages = file.usages > 0
             ? `<span class="badge bg-success-subtle text-success" title="${this.esc(this.label('field.usages'))}"><i class="bi bi-link-45deg"></i> ${file.usages}</span>`
@@ -153,11 +155,13 @@ export default {
     },
 
     breadcrumbItems(breadcrumb) {
-        return [{ name: this.label('root'), path: '' }, ...breadcrumb].map((item, index, items) => (
-            index === items.length - 1
-                ? `<li class="breadcrumb-item active" aria-current="page">${index === 0 ? '<i class="bi bi-house-door me-1"></i>' : ''}${this.esc(item.name)}</li>`
-                : `<li class="breadcrumb-item"><a href="#" data-action="gm-file-browser#open:prevent" data-gm-file-browser-path-param="${this.esc(item.path)}">${index === 0 ? '<i class="bi bi-house-door me-1"></i>' : ''}${this.esc(item.name)}</a></li>`
-        )).join('');
+        return [{ name: this.label('root'), path: '' }, ...breadcrumb].map((item, index, items) => {
+            const home = index === 0 ? '<i class="bi bi-house-door me-1"></i>' : '';
+
+            return index === items.length - 1
+                ? `<li class="breadcrumb-item active" aria-current="page">${home}${this.esc(item.name)}</li>`
+                : `<li class="breadcrumb-item"><a href="#" data-action="gm-file-browser#open:prevent" data-gm-file-browser-path-param="${this.esc(item.path)}">${home}${this.esc(item.name)}</a></li>`;
+        }).join('');
     },
 
     open({ params: { path } }) {

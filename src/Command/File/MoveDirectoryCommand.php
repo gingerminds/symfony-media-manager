@@ -38,8 +38,7 @@ final class MoveDirectoryCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $path = trim((string) $input->getArgument('path'), '/');
-        $parent = $input->getArgument('parent');
-        $parent = \is_string($parent) ? trim($parent, '/') : (str_contains($path, '/') ? \dirname($path) : '');
+        $parent = $this->parent($input->getArgument('parent'), $path);
         $name = $input->getOption('name');
 
         try {
@@ -53,5 +52,17 @@ final class MoveDirectoryCommand extends Command
         $io->success(\sprintf('"%s" is now "%s".', $path, $newPath));
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * The given parent, or the current one of the directory.
+     */
+    private function parent(mixed $argument, string $path): string
+    {
+        if (\is_string($argument)) {
+            return trim($argument, '/');
+        }
+
+        return str_contains($path, '/') ? \dirname($path) : '';
     }
 }
