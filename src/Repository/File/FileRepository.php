@@ -88,7 +88,8 @@ class FileRepository extends AbstractRepository
         }
 
         if (null !== $query->search && '' !== trim($query->search)) {
-            $qb->andWhere("LOWER(f.originalName) LIKE :search ESCAPE '!' OR LOWER(f.path) LIKE :search ESCAPE '!'")
+            // Not the path: its directories would match every file they hold.
+            $qb->andWhere("LOWER(f.originalName) LIKE :search ESCAPE '!'")
                 ->setParameter('search', '%' . $this->escapeLike(mb_strtolower(trim($query->search))) . '%');
         }
 

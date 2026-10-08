@@ -121,6 +121,15 @@ final class FileLibraryTest extends KernelTestCase
         unset($photo, $notes, $copy);
     }
 
+    public function testTheSearchIgnoresTheDirectoryNames(): void
+    {
+        $this->library->mkdir('', 'stress-test');
+        $this->files->text('photo.png', 'photo', 'stress-test');
+        $this->files->text('Test report.txt', 'report', 'stress-test');
+
+        self::assertSame(['Test report.txt'], $this->names(new LibraryQuery(recursive: true, search: 'test')));
+    }
+
     public function testUploadReturnsTheExistingFileForAKnownContent(): void
     {
         $this->library->mkdir('', 'docs');

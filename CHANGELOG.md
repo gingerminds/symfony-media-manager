@@ -76,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   uploads by button or drag & drop with progress (an existing content is reported, not stored
   again), new / delete folder, rename, move and delete (used files are kept and listed with their
   usages; the move dialog shows the folder tree), merge of the duplicates. Folders stay listed
-  whatever the filters; usages and duplicates are collapsible sections of the detail panel.
+  whatever the filters, except while searching (files only, matched on their name, not their
+  folders); usages and duplicates are collapsible sections of the detail panel.
 - JSON endpoints of the library browser under `/{admin}/files` (`gingerminds_media_manager_file_*`
   routes; reads in `FileLibraryController`, writes in the `FileLibraryActionController` service): `browse`, `directories` (GET, POST, DELETE; each directory tells whether it has
   subdirectories), `{id}` (GET, PATCH), `upload`, `move`,

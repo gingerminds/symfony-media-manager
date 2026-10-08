@@ -60,9 +60,10 @@ export default {
             this.deleteDirectoryButtonTarget.classList.toggle('d-none', this.path === '');
         }
 
-        // Folders stay whatever the filters, to keep navigating.
+        // Folders stay whatever the filters, to keep navigating, but a search only lists files.
+        const showDirectories = pagination.page === 1 && this.searchTarget.value.trim() === '';
         const tiles = [
-            ...(pagination.page === 1 ? directories.map((directory) => this.directoryTile(directory)) : []),
+            ...(showDirectories ? directories.map((directory) => this.directoryTile(directory)) : []),
             ...files.map((file) => this.fileTile(file)),
         ];
 
