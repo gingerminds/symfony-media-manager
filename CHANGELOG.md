@@ -117,6 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `collection` + `link_factory` options of `MediaSelectType` to edit one collection of the links.
 - A media used through a Doctrine association (a link, a project relation) cannot be deleted
   (`MediaUsageCounter`).
+- `MediaCategoryChoiceType`: a media category picked in the indented tree, `exclude` removes a
+  category and its descendants (category parent, media category).
 - `MediaCategoryInterface` extends `TimestampableInterface`.
 - `FilePickerType`: one file (`FileInterface`) or several (`multiple`, a collection), or their ids
   with `as_id` (JSON fields), picked in the library (no direct upload). Options: `accept` (mime

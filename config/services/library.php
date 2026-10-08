@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Gingerminds\MediaManagerBundle\File\DirectoryMover;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
@@ -34,6 +35,15 @@ return static function (ContainerConfigurator $container): void {
         ->args([tagged_iterator(FileReferenceSourceInterface::TAG), tagged_iterator(FileUsageResolverInterface::TAG)]);
     $services->alias(FileReferenceRegistry::class, 'gingerminds_media_manager.file.reference_registry');
 
+    $services->set('gingerminds_media_manager.file.directory_mover', DirectoryMover::class)
+        ->args([
+            service(FileRepository::class),
+            service('gingerminds_media_manager.storage.disk_registry'),
+            service('gingerminds_media_manager.file.path_guard'),
+            service('gingerminds_media_manager.image.processor'),
+            service('doctrine.orm.entity_manager'),
+        ]);
+
     $services->set('gingerminds_media_manager.file.library', FileLibrary::class)
         ->args([
             service('gingerminds_media_manager.file.storage'),
@@ -43,6 +53,7 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.path_guard'),
             service('gingerminds_media_manager.image.processor'),
             service('doctrine.orm.entity_manager'),
+            service('gingerminds_media_manager.file.directory_mover'),
             param('gingerminds_media_manager.library.per_page'),
         ]);
     $services->alias(FileLibrary::class, 'gingerminds_media_manager.file.library');

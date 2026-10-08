@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Form\Media;
 
 use Gingerminds\CoreBundle\Resource\ResourceRegistry;
-use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaInterface;
 use Gingerminds\MediaManagerBundle\Form\File\FilePickerType;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
-use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -23,18 +20,11 @@ class MediaType extends AbstractType
 {
     public function __construct(
         protected readonly ResourceRegistry $resources,
-        protected readonly MediaCategoryRepository $categories,
     ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $depths = [];
-
-        foreach ($this->categories->findFlatTree() as [$category, $depth]) {
-            $depths[spl_object_id($category)] = [$category, $depth];
-        }
-
         $builder
             ->add('code', TextType::class, [
                 'label' => 'media.field.code',
@@ -58,13 +48,9 @@ class MediaType extends AbstractType
                 'required' => false,
                 'size' => 'xl',
             ])
-            ->add('category', EntityType::class, [
+            ->add('category', MediaCategoryChoiceType::class, [
                 'label' => 'media.field.category',
-                'class' => $this->resources->getEntityClass('media_category'),
-                'choices' => array_column($depths, 0),
-                'choice_label' => static fn (MediaCategoryInterface $choice): string => str_repeat('— ', $depths[spl_object_id($choice)][1] ?? 0) . $choice,
                 'placeholder' => 'media.placeholder.category',
-                'required' => false,
                 'size' => 'xl',
             ]);
     }

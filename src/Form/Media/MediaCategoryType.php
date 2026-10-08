@@ -7,8 +7,6 @@ namespace Gingerminds\MediaManagerBundle\Form\Media;
 use Gingerminds\CoreBundle\Resource\ResourceRegistry;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
-use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -21,20 +19,12 @@ class MediaCategoryType extends AbstractType
 {
     public function __construct(
         protected readonly ResourceRegistry $resources,
-        protected readonly MediaCategoryRepository $categories,
     ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $category = $builder->getData();
-        $depths = [];
-
-        foreach ($this->categories->findFlatTree() as [$choice, $depth]) {
-            if (!$category instanceof MediaCategoryInterface || !$category->contains($choice)) {
-                $depths[spl_object_id($choice)] = [$choice, $depth];
-            }
-        }
 
         $builder
             ->add('code', TextType::class, [
@@ -45,13 +35,10 @@ class MediaCategoryType extends AbstractType
                 'label' => 'media_category.field.name',
                 'size' => 'md',
             ])
-            ->add('parent', EntityType::class, [
+            ->add('parent', MediaCategoryChoiceType::class, [
                 'label' => 'media_category.field.parent',
-                'class' => $this->resources->getEntityClass('media_category'),
-                'choices' => array_column($depths, 0),
-                'choice_label' => static fn (MediaCategoryInterface $choice): string => str_repeat('— ', $depths[spl_object_id($choice)][1] ?? 0) . $choice,
+                'exclude' => $category instanceof MediaCategoryInterface ? $category : null,
                 'placeholder' => 'media_category.placeholder.parent',
-                'required' => false,
                 'size' => 'xl',
             ]);
     }
