@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- File library: the `from` / `to` creation date filters are whole days of the core
+  `display_timezone`, compared as UTC bounds (`FileLibraryController` takes the core
+  `DisplayTimezone` service). Requires the core `DisplayTimezone` (dates stored in UTC).
+
 ### Added
 
 - `GingermindsMediaManagerBundle` skeleton (`gingerminds_media_manager` configuration: named

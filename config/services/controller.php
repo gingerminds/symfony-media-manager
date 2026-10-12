@@ -59,6 +59,7 @@ return static function (ContainerConfigurator $container): void {
             service(LibraryStartPathProviderInterface::class),
             param('gingerminds_media_manager.library.max_upload_size'),
             param('gingerminds_media_manager.library.allowed_mimes'),
+            service('gingerminds_core.display_timezone'),
         ])
         ->tag('controller.service_arguments');
     $services->alias(FileLibraryController::class, 'gingerminds_media_manager.controller.admin.file_library')->public();
