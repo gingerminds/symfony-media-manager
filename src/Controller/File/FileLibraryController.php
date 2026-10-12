@@ -6,6 +6,7 @@ namespace Gingerminds\MediaManagerBundle\Controller\File;
 
 use Gingerminds\CoreBundle\Controller\CrudContext;
 use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
+use Gingerminds\CoreBundle\Service\DisplayTimezone;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
@@ -40,6 +41,7 @@ class FileLibraryController extends AbstractFileLibraryController
         protected readonly LibraryStartPathProviderInterface $startPathProvider,
         protected readonly int $maxUploadSize,
         protected readonly array $allowedMimes,
+        protected readonly DisplayTimezone $displayTimezone = new DisplayTimezone(),
     ) {
         parent::__construct($context, $library, $files, $presenter);
     }
@@ -133,14 +135,16 @@ class FileLibraryController extends AbstractFileLibraryController
         $query = $request->query;
         $type = $query->getString('type');
         $sort = $query->getString('sort', 'name');
+        // Days of the display timezone, as UTC bounds (`created_at` is stored in UTC).
+        [$createdFrom, $createdTo] = $this->displayTimezone->dayRangeToUtc($query->getString('from'), $query->getString('to'));
 
         return new LibraryQuery(
             directory: $query->getString('path'),
             recursive: $query->getBoolean('recursive'),
             search: $query->getString('search') ?: null,
             type: isset(LibraryQuery::TYPES[$type]) ? $type : null,
-            createdFrom: $this->date($query->getString('from')),
-            createdTo: $this->date($query->getString('to'))?->setTime(23, 59, 59),
+            createdFrom: $createdFrom,
+            createdTo: $createdTo,
             orphans: $query->getBoolean('orphans'),
             duplicates: $query->getBoolean('duplicates'),
             sortBy: isset(LibraryQuery::SORTS[$sort]) ? $sort : 'name',
@@ -161,12 +165,5 @@ class FileLibraryController extends AbstractFileLibraryController
             fn (string $directory): array => $this->presenter->directory($directory, $this->library->hasDirectories($directory)),
             $this->library->directories($path),
         );
-    }
-
-    private function date(string $value): ?\DateTimeImmutable
-    {
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-
-        return false === $date ? null : $date;
     }
 }
