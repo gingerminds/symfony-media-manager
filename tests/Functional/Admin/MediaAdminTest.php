@@ -52,6 +52,19 @@ final class MediaAdminTest extends ApiTestCase
         self::assertSame(['Brochure'], $this->names($crawler));
     }
 
+    public function testTheFormColumnsEndWithTheFormIncludes(): void
+    {
+        $media = $this->fixtures->media($this->files->png('tractor.png'), 'Tractor', code: 'tractor');
+        $this->client->loginUser($this->fixtures->user('editor@example.com', superAdmin: true), 'admin');
+
+        $crawler = $this->client->request('GET', '/admin/medias/' . $media->getId() . '/edit');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('tractor', $crawler->filter('.col-lg-8 > .gm-test-form-include')->text());
+        self::assertSame('media', $crawler->filter('.col-lg-4 > .gm-test-form-include')->attr('data-form'));
+        self::assertCount(1, $crawler->filter('.col-lg-4 #media_category'));
+    }
+
     public function testCreateWithTheFilePicker(): void
     {
         $photos = $this->fixtures->mediaCategory('photos');

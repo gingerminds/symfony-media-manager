@@ -15,7 +15,7 @@
         "api-platform/symfony": "^4.4",
         "doctrine/doctrine-bundle": "^2.18 || ^3.0",
         "doctrine/orm": "^3.5",
-        "gingerminds/symfony-core": "^1.6",
+        "gingerminds/symfony-core": "^1.7",
         "league/flysystem-bundle": "^3.7",
         "league/glide": "^4.1",
         "symfony/asset-mapper": "^8.1",

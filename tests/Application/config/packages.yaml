@@ -100,6 +100,10 @@ parameters:
 
 # Env placeholders on purpose: they are resolved at runtime only.
 gingerminds_core:
+    # MediaAdminTest: the form include slots of the media form.
+    admin_includes:
+        media_form_main: ['admin/_form_include.html.twig']
+        media_form_sidebar: ['admin/_form_include.html.twig']
     resources:
         article:
             entity: Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article
