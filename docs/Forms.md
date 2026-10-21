@@ -142,3 +142,20 @@ $builder->add('category', MediaCategoryChoiceType::class, [
     'exclude' => $category, // removes this category and its descendants
 ]);
 ```
+
+## Extending the media forms
+
+The media and media category forms use the core form layout: their columns end with the
+`media_form_main` / `media_form_sidebar` and `media_category_form_main` /
+`media_category_form_sidebar` admin include slots, e.g. for the fields a project adds to
+`MediaType` with a form type extension:
+
+```yaml
+# config/packages/gingerminds_core.yaml
+gingerminds_core:
+    admin_includes:
+        media_form_sidebar: ['admin/media/_credits.html.twig']
+```
+
+See the core [Forms](https://github.com/gingerminds/symfony-core/blob/master/docs/templating/forms.md#form-layout-and-include-slots)
+documentation.

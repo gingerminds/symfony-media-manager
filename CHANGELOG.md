@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Form include slots of the core 1.7 form layout on the media and media category forms
+  (`media_form_main|sidebar`, `media_category_form_main|sidebar`), e.g. for the fields another
+  bundle or the project adds with a form type extension. Requires `gingerminds/symfony-core` ^1.7.
+
 ### Changed
 
 - File library: the `from` / `to` creation date filters are whole days of the core
