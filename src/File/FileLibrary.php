@@ -225,6 +225,16 @@ class FileLibrary
         }
     }
 
+    public function setAlt(FileInterface $file, ?string $alt): void
+    {
+        if (mb_strlen(trim($alt ?? '')) > FileInterface::ALT_MAX_LENGTH) {
+            throw LibraryException::altTooLong(FileInterface::ALT_MAX_LENGTH);
+        }
+
+        $file->setAlt($alt);
+        $this->entityManager->flush();
+    }
+
     /**
      * @param list<FileInterface> $files
      */
@@ -271,7 +281,8 @@ class FileLibrary
     }
 
     /**
-     * Every reference to the duplicates now points to $keep, then the duplicates are deleted.
+     * Every reference to the duplicates now points to $keep, then the duplicates are deleted. $keep
+     * takes the alt of the first duplicate having one when it has none.
      *
      * @param list<FileInterface> $duplicates same content (hash) as $keep
      *
@@ -290,9 +301,15 @@ class FileLibrary
                 throw new \InvalidArgumentException(\sprintf('The file "%s" is not a duplicate of "%s".', $duplicate->getId(), $keep->getId()));
             }
 
+            if (null === $keep->getAlt()) {
+                $keep->setAlt($duplicate->getAlt());
+            }
+
             $updated += $this->references->replace($duplicate, $keep);
             $this->storage->delete($duplicate);
         }
+
+        $this->entityManager->flush();
 
         return $updated;
     }

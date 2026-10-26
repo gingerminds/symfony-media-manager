@@ -19,6 +19,9 @@ sha256 `hash`) and a physical file on its disk, under `library.root`.
 - uploads by button or drag & drop: a content already in the library is not stored again, the
   existing file is reported;
 - files: rename, move, delete, merge the duplicates;
+- images: an alternative text (`alt`), edited in the detail panel, one per file whatever the
+  locale (a resource needing another one per usage declares its own field); merging duplicates
+  keeps it, or takes the one of a duplicate when the kept file has none;
 - folders, selected with their checkbox (files or folders, never both): new, rename, move,
   delete (empty folders only).
 

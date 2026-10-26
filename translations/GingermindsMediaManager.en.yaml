@@ -107,6 +107,7 @@ file:
         duplicates: Duplicates
         directory_name: Folder name
         file_name: File name
+        alt: Alternative text
     action:
         upload: Upload
         new_directory: New folder
@@ -125,6 +126,7 @@ file:
         last: Last page
         cancel: Cancel
         confirm: Confirm
+        save: Save
         close: Close
     message:
         loading: Loading…
@@ -149,6 +151,7 @@ file:
         directories_moved: '%count% folder(s) moved to "%path%".'
         directory_renamed: The folder is now named "%name%".
         move_directories_to: Move %count% folder(s) to "%path%"
+        alt_saved: The alternative text has been saved.
     picker:
         title: File library
         choose: Choose a file
@@ -179,3 +182,4 @@ error:
     too_large: The file is too large (%size% KB, %max% KB allowed).
     could_not_store: The file "%name%" could not be stored.
     not_duplicates: These files are not duplicates.
+    alt_too_long: The alternative text cannot exceed %max% characters.

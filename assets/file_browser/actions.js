@@ -43,6 +43,29 @@ export default {
         });
     },
 
+    async saveAlt({ params: { id } }) {
+        const input = this.detailTarget.querySelector('#gm-file-detail-alt');
+        const response = await this.request(this.fileUrl(id), { method: 'PATCH', json: { alt: input.value } });
+
+        if (!response.ok) {
+            input.classList.add('is-invalid');
+            this.alert('danger', this.esc(this.errorOf(response)));
+
+            return;
+        }
+
+        input.classList.remove('is-invalid');
+        input.value = response.data.alt ?? '';
+        this.detailFile.alt = response.data.alt;
+        const file = this.files.get(id);
+
+        if (file) {
+            file.alt = response.data.alt;
+        }
+
+        this.alert('success', this.esc(this.label('message.alt_saved')), true);
+    },
+
     moveSelection() {
         this.chooseDirectory([...this.selection]);
     },

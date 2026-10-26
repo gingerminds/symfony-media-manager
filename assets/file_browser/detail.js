@@ -58,6 +58,17 @@ export default {
         const action = (name, icon, label, style) => `
             <button type="button" class="btn btn-sm btn-${style}" title="${this.esc(this.label(label))}" aria-label="${this.esc(this.label(label))}"
                     data-action="gm-file-browser#${name}" data-gm-file-browser-id-param="${file.id}"><i class="bi ${icon}"></i></button>`;
+        const alt = file.isImage ? `
+            <div class="mb-3 gm-file-detail-alt">
+                <label class="form-label small text-muted mb-1" for="gm-file-detail-alt">${this.esc(this.label('field.alt'))}</label>
+                ${this.canManage() ? `
+                <div class="input-group input-group-sm">
+                    <input type="text" id="gm-file-detail-alt" class="form-control" maxlength="255" value="${this.esc(file.alt)}"
+                           data-action="keydown.enter->gm-file-browser#saveAlt:prevent" data-gm-file-browser-id-param="${file.id}">
+                    <button type="button" class="btn btn-outline-primary" title="${this.esc(this.label('action.save'))}" aria-label="${this.esc(this.label('action.save'))}"
+                            data-action="gm-file-browser#saveAlt" data-gm-file-browser-id-param="${file.id}"><i class="bi bi-check-lg"></i></button>
+                </div>` : `<p id="gm-file-detail-alt" class="small mb-0 text-break">${this.esc(file.alt ?? '—')}</p>`}
+            </div>` : '';
         const actions = `
             <div class="d-flex gap-1 mb-3 gm-file-detail-actions">
                 ${this.canManage() ? [
@@ -77,6 +88,7 @@ export default {
                     ${this.preview(file, true)}<span class="gm-file-detail-open"><i class="bi bi-box-arrow-up-right"></i></span>
                 </a>
                 ${actions}
+                ${alt}
                 <dl class="row small mb-0">
                     ${row('field.type', this.esc(file.mimeType))}
                     ${row('field.size', this.esc(this.formatSize(file.size)))}

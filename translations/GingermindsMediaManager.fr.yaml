@@ -107,6 +107,7 @@ file:
         duplicates: Doublons
         directory_name: Nom du dossier
         file_name: Nom du fichier
+        alt: Texte alternatif
     action:
         upload: Téléverser
         new_directory: Nouveau dossier
@@ -125,6 +126,7 @@ file:
         last: Dernière page
         cancel: Annuler
         confirm: Confirmer
+        save: Enregistrer
         close: Fermer
     message:
         loading: Chargement…
@@ -149,6 +151,7 @@ file:
         directories_moved: '%count% dossier(s) déplacé(s) vers « %path% ».'
         directory_renamed: Le dossier s'appelle maintenant « %name% ».
         move_directories_to: Déplacer %count% dossier(s) vers « %path% »
+        alt_saved: Le texte alternatif a été enregistré.
     picker:
         title: Bibliothèque de fichiers
         choose: Choisir un fichier
@@ -179,3 +182,4 @@ error:
     too_large: Le fichier est trop lourd (%size% Ko, %max% Ko autorisés).
     could_not_store: Le fichier « %name% » n'a pas pu être enregistré.
     not_duplicates: Ces fichiers ne sont pas des doublons.
+    alt_too_long: Le texte alternatif ne peut pas dépasser %max% caractères.

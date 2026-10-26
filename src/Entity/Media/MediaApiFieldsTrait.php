@@ -44,6 +44,13 @@ trait MediaApiFieldsTrait
     }
 
     #[Groups([BaseMedia::GROUP_LIST, BaseMedia::GROUP_READ, BaseMedia::GROUP_BASKET])]
+    #[SerializedName('file_alt')]
+    public function getFileAlt(): ?string
+    {
+        return $this->file?->getAlt();
+    }
+
+    #[Groups([BaseMedia::GROUP_LIST, BaseMedia::GROUP_READ, BaseMedia::GROUP_BASKET])]
     #[SerializedName('thumbnail_reference')]
     public function getThumbnailReference(): ?string
     {

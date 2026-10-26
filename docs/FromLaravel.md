@@ -65,7 +65,7 @@ Same tables and columns, with:
 
 | Table | Changes |
 |---|---|
-| `files` | `hash` (sha256, indexed) added. |
+| `files` | `hash` (sha256, indexed) and `alt` (nullable) added. |
 | `media_categories` | `code` unique. |
 | `medias` | `code` added (unique, required); `file_id` required; `file_id`, `thumbnail_id` in `RESTRICT` (Laravel: cascade). The legacy `file_name`, `mime_type`, `size` columns were already dropped by the Laravel migrations. |
 | `baskets` | `owner_type` / `owner_id` (polymorphic) become `owner_id` to `users` (`CASCADE`). |

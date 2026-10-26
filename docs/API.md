@@ -28,6 +28,7 @@ See [Images](Images.md): cache headers, errors, rate limit.
     "file_reference": "0199b0c4-7a7c-7c5e-9d3e-5b8f8a6c1d2e",
     "file_size": 52413,
     "file_type": "application/pdf",
+    "file_alt": null,
     "thumbnail_reference": "0199b0c4-8b1d-7a2e-8c4f-2d6e9a1b3c5f",
     "thumbnail_size": 8120,
     "media_category_id": 3
@@ -37,6 +38,7 @@ See [Images](Images.md): cache headers, errors, rate limit.
 - `file` and `file_reference` are the id of the file, always: build the URL with
   `/api/files/{file}` or `/api/files/{file}/{preset}`. For the preview of a media that is not an
   image, use `thumbnail_reference`.
+- `file_alt` is the alternative text of the file, set in the file library (null when empty).
 - Filters: `filters[search]` (code, name), `filters[category]` or the Laravel name
   `filters[media_category_id]` (a category id, a list `[]=`, or `null` for the medias without
   category). The category filter is exact, without the subcategories.

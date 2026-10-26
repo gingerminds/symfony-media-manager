@@ -6,13 +6,13 @@
 {% set picker = mode == 'picker' %}
 {% set label_keys = [
     'root', 'directories',
-    'field.name', 'field.type', 'field.size', 'field.created_at', 'field.directory', 'field.usages', 'field.duplicates', 'field.directory_name', 'field.file_name',
+    'field.name', 'field.type', 'field.size', 'field.created_at', 'field.directory', 'field.usages', 'field.duplicates', 'field.directory_name', 'field.file_name', 'field.alt',
     'action.open', 'action.rename', 'action.move', 'action.move_here', 'action.delete', 'action.merge', 'action.show', 'action.new_directory',
-    'action.select_page', 'action.cancel', 'action.confirm', 'action.close', 'action.first', 'action.previous', 'action.next', 'action.last',
+    'action.select_page', 'action.cancel', 'action.confirm', 'action.save', 'action.close', 'action.first', 'action.previous', 'action.next', 'action.last',
     'message.loading', 'message.empty', 'message.selected', 'message.total', 'message.not_used', 'message.uploaded', 'message.duplicate',
     'message.too_large', 'message.deleted', 'message.blocked', 'message.moved', 'message.merged', 'message.confirm_delete', 'message.confirm_delete_directories',
     'message.confirm_merge', 'message.move_to', 'message.move_directories_to', 'message.directories_moved', 'message.directory_renamed',
-    'message.directories_deleted', 'message.directories_kept', 'picker.none', 'picker.selected', 'picker.use',
+    'message.directories_deleted', 'message.directories_kept', 'message.alt_saved', 'picker.none', 'picker.selected', 'picker.use',
 ] %}
 {% set labels = {'error.generic': 'error.generic'|trans} %}
 {% for key in label_keys %}

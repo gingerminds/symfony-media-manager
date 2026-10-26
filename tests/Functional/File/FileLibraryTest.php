@@ -408,6 +408,23 @@ final class FileLibraryTest extends KernelTestCase
         $this->library->mergeDuplicates($keep, [$other]);
     }
 
+    public function testTheKeptFileTakesTheAltOfADuplicate(): void
+    {
+        $keep = $this->files->text('logo.txt', 'logo');
+        $first = $this->files->text('logo-1.txt', 'logo');
+        $second = $this->files->text('logo-2.txt', 'logo');
+        $first->setAlt('Logo');
+        $second->setAlt('Other logo');
+
+        $this->library->mergeDuplicates($keep, [$first, $second]);
+        self::assertSame('Logo', $keep->getAlt());
+
+        $copy = $this->files->text('logo-3.txt', 'logo');
+        $copy->setAlt('Copy');
+        $this->library->mergeDuplicates($keep, [$copy]);
+        self::assertSame('Logo', $keep->getAlt());
+    }
+
     public function testASharedPhysicalFileIsKeptUntilItsLastRow(): void
     {
         $file = $this->files->text('shared.txt', 'shared');

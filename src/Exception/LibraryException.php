@@ -47,6 +47,11 @@ final class LibraryException extends \RuntimeException implements TranslatableEx
         return new self(\sprintf('The directory "%s" cannot be moved into itself.', $path))->translated('error.directory_into_itself', [self::PATH => $path]);
     }
 
+    public static function altTooLong(int $max): self
+    {
+        return new self(\sprintf('The alternative text exceeds %d characters.', $max))->translated('error.alt_too_long', ['%max%' => $max]);
+    }
+
     public static function directoryTooLarge(string $path, int $count, int $max): self
     {
         return new self(\sprintf('The directory "%s" holds %d files, more than %d.', $path, $count, $max))
