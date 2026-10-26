@@ -365,6 +365,17 @@ $gm-file-tile-size: 150px !default;
     cursor: grab;
 }
 
+// Media picker: as wide as the library one, it covers a form modal under it.
+.gm-media-picker-dialog {
+    @include media-breakpoint-up(lg) {
+        max-width: min(1400px, 96vw);
+    }
+
+    .modal-body {
+        min-height: 50vh;
+    }
+}
+
 // Library modal of the picker: wide enough for the tree, the grid and the detail.
 .gm-file-picker-dialog {
     @include media-breakpoint-up(lg) {
