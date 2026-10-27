@@ -46,11 +46,11 @@ class ImageProcessor
     }
 
     /**
-     * Raster images only: Glide cannot render SVG.
+     * Raster images only: Glide cannot render SVG ("image/svg+xml", or "image/svg" of older libmagic).
      */
     public function supports(FileInterface $file): bool
     {
-        return $file->isImage() && 'image/svg+xml' !== $file->getMimeType();
+        return $file->isImage() && !str_starts_with(strtolower($file->getMimeType()), 'image/svg');
     }
 
     /**
@@ -60,6 +60,10 @@ class ImageProcessor
     {
         if (!$this->hasPreset($preset)) {
             throw UnknownImagePresetException::named($preset);
+        }
+
+        if (!$this->supports($file)) {
+            throw new \InvalidArgumentException(\sprintf('The file "%s" (%s) is not a raster image.', $file->getId(), $file->getMimeType()));
         }
 
         return $this->server($file->getDisk())->makeImage($file->getPath(), ['p' => $preset]);

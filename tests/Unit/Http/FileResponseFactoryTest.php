@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Tests\Unit\Http;
 
 use Gingerminds\MediaManagerBundle\Http\FileResponseFactory;
+use Gingerminds\MediaManagerBundle\Http\FileResponseHeaders;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
@@ -57,6 +58,43 @@ final class FileResponseFactoryTest extends TestCase
         $request = new Request(server: ['HTTP_IF_MODIFIED_SINCE' => gmdate('D, d M Y H:i:s', time() + 60) . ' GMT']);
 
         self::assertSame(304, $this->factory->create($request, 'default', 'library/a.txt')->getStatusCode());
+    }
+
+    /**
+     * @return iterable<string, array{string|null}>
+     */
+    public static function scriptableTypes(): iterable
+    {
+        yield 'svg' => ['image/svg+xml'];
+        yield 'text' => ['text/plain'];
+        yield 'guessed from the disk' => [null];
+    }
+
+    #[DataProvider('scriptableTypes')]
+    public function testTheContentIsNeitherSniffedNorRunInTheOrigin(?string $mimeType): void
+    {
+        $response = $this->factory->create(new Request(), 'default', 'library/a.txt', $mimeType, 'a.txt');
+
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame("default-src 'none'; style-src 'unsafe-inline'; sandbox", $response->headers->get('Content-Security-Policy'));
+    }
+
+    public function testANotModifiedResponseKeepsTheSecurityHeaders(): void
+    {
+        $request = new Request(server: ['HTTP_IF_MODIFIED_SINCE' => gmdate('D, d M Y H:i:s', time() + 60) . ' GMT']);
+        $response = $this->factory->create($request, 'default', 'library/a.txt', 'image/svg+xml');
+
+        self::assertSame(304, $response->getStatusCode());
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame(FileResponseHeaders::CONTENT_SECURITY_POLICY, $response->headers->get('Content-Security-Policy'));
+    }
+
+    public function testAPdfStaysViewableInTheBrowser(): void
+    {
+        $response = $this->factory->create(new Request(), 'default', 'library/a.txt', 'application/pdf');
+
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertNull($response->headers->get('Content-Security-Policy'));
     }
 
     public function testAMissingFileIsNotFound(): void

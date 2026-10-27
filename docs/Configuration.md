@@ -59,6 +59,9 @@ gingerminds_media_manager:
 - `allowed_mimes` are checked on upload, **after normalization**: the content is guessed (never the
   extension), Office documents become `application/<extension>` (`application/docx`,
   `application/xlsx`...) once their zip content is checked.
+- `image/svg+xml` is allowed by default: an SVG may contain scripts, so every file is served with a
+  sandboxing `Content-Security-Policy` and `nosniff` ([Images](Images.md#urls)). Serve the storage
+  through the bundle only, never from `public/` or a bucket URL, where these headers are missing.
 - `max_upload_size` is in KB: keep it below the PHP `upload_max_filesize` / `post_max_size` and
   the web server limit.
 

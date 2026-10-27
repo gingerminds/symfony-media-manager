@@ -12,7 +12,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\String\UnicodeString;
 
 /**
- * Streams a stored file with browser cache headers (one day, revalidated with ETag / Last-Modified).
+ * Streams a stored file with browser cache headers (one day, revalidated with ETag / Last-Modified)
+ * and the security headers of FileResponseHeaders, 304 included.
  */
 final readonly class FileResponseFactory
 {
@@ -43,12 +44,14 @@ final readonly class FileResponseFactory
         $response->headers->addCacheControlDirective('must-revalidate');
         $response->setEtag(md5($path . $lastModified));
         $response->setLastModified(new \DateTimeImmutable('@' . $lastModified));
+        $mimeType ??= $filesystem->mimeType($path);
+        FileResponseHeaders::apply($response, $mimeType);
 
         if ($response->isNotModified($request)) {
             return $response;
         }
 
-        $response->headers->set('Content-Type', $mimeType ?? $filesystem->mimeType($path));
+        $response->headers->set('Content-Type', $mimeType);
         $response->headers->set('Content-Length', (string) $filesystem->fileSize($path));
 
         if (null !== $name) {

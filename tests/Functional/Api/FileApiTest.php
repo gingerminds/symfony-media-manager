@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Tests\Functional\Api;
 
+use Gingerminds\MediaManagerBundle\Http\FileResponseHeaders;
 use Gingerminds\MediaManagerBundle\Tests\Functional\ApiTestCase;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
 use League\Flysystem\FilesystemOperator;
@@ -37,6 +38,34 @@ final class FileApiTest extends ApiTestCase
         $this->client->request('GET', '/api/files/' . $file->getId(), server: ['HTTP_IF_NONE_MATCH' => (string) $response->headers->get('ETag')]);
 
         self::assertResponseStatusCodeSame(304);
+    }
+
+    public function testAnSvgOpenedDirectlyCannotRunScripts(): void
+    {
+        $file = $this->files->text('xss.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(document.domain)</script></svg>');
+
+        foreach (['/api/files/' . $file->getId(), '/api/files/' . $file->getId() . '/thumbnail'] as $url) {
+            $this->client->request('GET', $url);
+
+            self::assertResponseIsSuccessful();
+            self::assertResponseHeaderSame('Content-Type', 'image/svg+xml');
+            self::assertResponseHeaderSame('X-Content-Type-Options', 'nosniff');
+            self::assertResponseHeaderSame('Content-Security-Policy', FileResponseHeaders::CONTENT_SECURITY_POLICY);
+        }
+    }
+
+    public function testEveryServedFileHasTheSecurityHeaders(): void
+    {
+        $text = $this->files->text();
+        $png = $this->files->png();
+
+        foreach (['/api/files/' . $text->getId(), '/api/files/' . $png->getId(), '/api/files/' . $png->getId() . '/thumbnail'] as $url) {
+            $this->client->request('GET', $url);
+
+            self::assertResponseIsSuccessful();
+            self::assertResponseHeaderSame('X-Content-Type-Options', 'nosniff');
+            self::assertResponseHeaderSame('Content-Security-Policy', FileResponseHeaders::CONTENT_SECURITY_POLICY);
+        }
     }
 
     public function testAnUnknownFileIsNotFound(): void

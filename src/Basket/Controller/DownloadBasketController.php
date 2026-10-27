@@ -8,6 +8,7 @@ use Gingerminds\MediaManagerBundle\Basket\BasketArchiver;
 use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
 use Gingerminds\MediaManagerBundle\Basket\Repository\BasketRepository;
 use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
+use Gingerminds\MediaManagerBundle\Http\FileResponseHeaders;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -51,8 +52,11 @@ final readonly class DownloadBasketController
 
         $this->baskets->delete($basket);
 
-        return new BinaryFileResponse($archive, headers: ['Content-Type' => 'application/zip'])
+        $response = new BinaryFileResponse($archive, headers: ['Content-Type' => 'application/zip'])
             ->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, 'basket.zip')
             ->deleteFileAfterSend();
+        FileResponseHeaders::apply($response, 'application/zip');
+
+        return $response;
     }
 }

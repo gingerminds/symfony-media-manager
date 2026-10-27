@@ -6,6 +6,7 @@ namespace Gingerminds\MediaManagerBundle\Tests\Functional\Basket;
 
 use Gingerminds\MediaManagerBundle\Basket\Entity\Basket;
 use Gingerminds\MediaManagerBundle\Entity\Media\Media;
+use Gingerminds\MediaManagerBundle\Http\FileResponseHeaders;
 use Gingerminds\MediaManagerBundle\Media\MediaUsageCounter;
 use Gingerminds\MediaManagerBundle\Tests\Functional\ApiTestCase;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
@@ -140,6 +141,8 @@ final class BasketApiTest extends ApiTestCase
         $response = $this->client->getResponse();
         self::assertInstanceOf(BinaryFileResponse::class, $response);
         self::assertSame('attachment; filename=basket.zip', $response->headers->get('Content-Disposition'));
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame(FileResponseHeaders::CONTENT_SECURITY_POLICY, $response->headers->get('Content-Security-Policy'));
         // The file is deleted once sent: the content is in the internal response.
         $path = (string) tempnam(sys_get_temp_dir(), 'gm-test-zip');
         file_put_contents($path, $this->client->getInternalResponse()->getContent());
