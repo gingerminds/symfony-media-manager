@@ -91,6 +91,7 @@ class FileLibraryPresenter
         return [
             'id' => $file->getId(),
             'name' => $file->getOriginalName(),
+            'alt' => $file->getAlt(),
             'extension' => strtolower(pathinfo($file->getPath(), \PATHINFO_EXTENSION)),
             'mimeType' => $file->getMimeType(),
             'size' => $file->getSize(),

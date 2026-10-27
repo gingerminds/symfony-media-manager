@@ -175,6 +175,7 @@ final class FileLibraryAdminTest extends ApiTestCase
         $shown = $this->json('GET', '/admin/files/' . $file->getId());
 
         self::assertSame('logo.txt', $shown['name']);
+        self::assertNull($shown['alt']);
         self::assertSame(1, $shown['usages']);
         self::assertSame('Tractor', $shown['usageList'][0]['title']);
         self::assertSame('/admin/articles/' . $article->getId() . '/edit', $shown['usageList'][0]['editUrl']);
@@ -290,6 +291,32 @@ final class FileLibraryAdminTest extends ApiTestCase
 
         $this->json('POST', '/admin/files/move', ['ids' => [$file->getId()], 'path' => 'missing']);
         $this->assertStatus(422);
+    }
+
+    public function testUpdateOnlyChangesTheSentFields(): void
+    {
+        $photo = $this->files->png('photo.png');
+        $this->login();
+
+        $updated = $this->json('PATCH', '/admin/files/' . $photo->getId(), ['alt' => '  Red tractor  ']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Red tractor', $updated['alt']);
+        self::assertSame('photo.png', $updated['name']);
+
+        $updated = $this->json('PATCH', '/admin/files/' . $photo->getId(), ['name' => 'Tractor']);
+        self::assertSame('Red tractor', $updated['alt']);
+        self::assertSame('Tractor.png', $updated['name']);
+
+        $updated = $this->json('PATCH', '/admin/files/' . $photo->getId(), ['name' => 'Field', 'alt' => ' ']);
+        self::assertNull($updated['alt']);
+        self::assertSame('Field.png', $updated['name']);
+
+        $this->json('PATCH', '/admin/files/' . $photo->getId(), ['alt' => str_repeat('a', 256)]);
+        $this->assertStatus(422);
+        self::assertSame('The alternative text cannot exceed 255 characters.', $this->response()['error']);
+
+        $this->entityManager()->clear();
+        self::assertNull($this->entityManager()->find(File::class, $photo->getId())?->getAlt());
     }
 
     public function testDeleteKeepsTheUsedFiles(): void

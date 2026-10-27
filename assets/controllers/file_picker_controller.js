@@ -2,6 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 import Sortable from 'sortablejs';
 
 import helpers from '../file_browser/helpers.js';
+import { showModal } from '../file_browser/modal.js';
 
 /*
  * FilePickerType widget (form/file_picker_theme.html.twig): the picked files, kept as comma
@@ -56,7 +57,7 @@ export default class FilePickerController extends Controller {
             const { element, browser } = await this.loadModal();
             modal.field = this;
             browser.startPicking({ accept: this.acceptValue, types: this.typesValue, multiple: this.multipleValue, startPath: this.startPathValue });
-            window.bootstrap.Modal.getOrCreateInstance(element).show();
+            showModal(element);
         } finally {
             this.buttonTarget.disabled = false;
         }

@@ -8,6 +8,8 @@ use Gingerminds\CoreBundle\Model\ResourceInterface;
 
 interface FileInterface extends ResourceInterface, \Stringable
 {
+    public const int ALT_MAX_LENGTH = 255;
+
     public function getId(): string;
 
     /**
@@ -33,6 +35,13 @@ interface FileInterface extends ResourceInterface, \Stringable
     public function getHash(): ?string;
 
     public function setHash(?string $hash): void;
+
+    /**
+     * Alternative text of an image, null when empty.
+     */
+    public function getAlt(): ?string;
+
+    public function setAlt(?string $alt): void;
 
     public function isImage(): bool;
 }

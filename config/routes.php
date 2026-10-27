@@ -38,7 +38,7 @@ return static function (RoutingConfigurator $routes): void {
         'move' => ['/move', $writes, 'move', 'POST'],
         'delete' => ['/delete', $writes, 'delete', 'POST'],
         'merge' => ['/merge', $writes, 'merge', 'POST'],
-        'rename' => ['/{id}', $writes, 'rename', 'PATCH'],
+        'update' => ['/{id}', $writes, 'update', 'PATCH'],
     ];
 
     foreach ($actions as $name => [$path, $controller, $action, $method]) {

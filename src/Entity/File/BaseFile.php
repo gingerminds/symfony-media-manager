@@ -19,6 +19,9 @@ abstract class BaseFile implements FileInterface, TimestampableInterface
     #[ORM\Column(type: Types::GUID)]
     protected string $id;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    protected ?string $alt = null;
+
     public function __construct(
         #[ORM\Column(length: 255)]
         protected string $disk,
@@ -84,6 +87,17 @@ abstract class BaseFile implements FileInterface, TimestampableInterface
     public function setHash(?string $hash): void
     {
         $this->hash = $hash;
+    }
+
+    public function getAlt(): ?string
+    {
+        return $this->alt;
+    }
+
+    public function setAlt(?string $alt): void
+    {
+        $alt = null === $alt ? '' : trim($alt);
+        $this->alt = '' === $alt ? null : $alt;
     }
 
     public function isImage(): bool

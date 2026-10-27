@@ -95,13 +95,23 @@ class FileLibraryActionController extends AbstractFileLibraryController
         )));
     }
 
-    public function rename(Request $request, string $id): JsonResponse
+    /**
+     * Only the fields of the payload (`name`, `alt`) are updated.
+     */
+    public function update(Request $request, string $id): JsonResponse
     {
         $this->denyUnlessCanEdit($request);
         $file = $this->findFile($id);
+        $payload = $request->getPayload();
 
-        return $this->attempt(function () use ($request, $file): JsonResponse {
-            $this->library->rename($file, $request->getPayload()->getString('name'));
+        return $this->attempt(function () use ($payload, $file): JsonResponse {
+            if ($payload->has('alt')) {
+                $this->library->setAlt($file, $payload->getString('alt'));
+            }
+
+            if ($payload->has('name')) {
+                $this->library->rename($file, $payload->getString('name'));
+            }
 
             return new JsonResponse($this->presenter->file($file));
         });

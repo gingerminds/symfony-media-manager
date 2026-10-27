@@ -37,7 +37,7 @@ final class BasketApiTest extends ApiTestCase
         $basket = $this->api('POST', $url . '/medias', json: ['media_ids' => [$first->getId(), (string) $second->getId(), $first->getId()]]);
         $this->assertStatus(200);
         self::assertSame([$first->getId(), $second->getId()], array_column($basket['medias'], 'id'));
-        self::assertSame(['@id', '@type', 'id', 'code', 'name', 'file', 'file_reference', 'file_size', 'file_type', 'thumbnail_reference', 'thumbnail_size', 'media_category_id'], array_keys($basket['medias'][0]));
+        self::assertSame(['@id', '@type', 'id', 'code', 'name', 'file', 'file_reference', 'file_size', 'file_type', 'file_alt', 'thumbnail_reference', 'thumbnail_size', 'media_category_id'], array_keys($basket['medias'][0]));
 
         $basket = $this->api('DELETE', $url . '/medias/' . $first->getId());
         $this->assertStatus(200);

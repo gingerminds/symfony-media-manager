@@ -8,15 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Alternative text of the files: nullable `alt` column on `BaseFile` (`FileInterface::getAlt()` /
+  `setAlt()`, 255 characters max, blank saved as null), edited in the detail panel of the file
+  library for the images, exposed as `alt` by the library endpoints and as `file_alt` by the media
+  API. Merging duplicates gives the kept file the alt of a duplicate when it has none. Projects
+  generate a migration adding the `alt` column to their `files` table.
 - Form include slots of the core 1.7 form layout on the media and media category forms
   (`media_form_main|sidebar`, `media_category_form_main|sidebar`), e.g. for the fields another
   bundle or the project adds with a form type extension. Requires `gingerminds/symfony-core` ^1.7.
 
 ### Changed
 
+- `PATCH /admin/files/{id}` updates the sent fields only (`name` and/or `alt`): the action
+  `FileLibraryActionController::rename()` is now `update()` and the route
+  `gingerminds_media_manager_file_rename` is now `gingerminds_media_manager_file_update`.
+- CI: PHPUnit coverage (Xdebug, Clover report) sent to SonarQube, which now runs after the tests;
+  line coverage shown on the merge requests.
 - File library: the `from` / `to` creation date filters are whole days of the core
   `display_timezone`, compared as UTC bounds (`FileLibraryController` takes the core
   `DisplayTimezone` service). Requires the core `DisplayTimezone` (dates stored in UTC).
+
+### Fixed
+
+- File library and media picker modals: centered, the media picker as wide as the library one.
+  Opened over another modal (a form in a modal), they go above it with their backdrop instead of
+  showing it through.
 
 ### Added
 

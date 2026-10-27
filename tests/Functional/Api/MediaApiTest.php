@@ -32,7 +32,7 @@ final class MediaApiTest extends ApiTestCase
         self::assertSame(2, $data['totalItems']);
         $item = $data['member'][0];
         self::assertSame([
-            '@id', '@type', 'id', 'code', 'name', 'file', 'file_reference', 'file_size', 'file_type',
+            '@id', '@type', 'id', 'code', 'name', 'file', 'file_reference', 'file_size', 'file_type', 'file_alt',
             'thumbnail_reference', 'thumbnail_size', 'media_category_id',
         ], array_keys($item));
         self::assertSame($media->getId(), $item['id']);
@@ -41,6 +41,7 @@ final class MediaApiTest extends ApiTestCase
         self::assertSame($file->getId(), $item['file_reference']);
         self::assertSame(8, $item['file_size']);
         self::assertSame('text/plain', $item['file_type']);
+        self::assertNull($item['file_alt']);
         self::assertSame($thumbnail->getId(), $item['thumbnail_reference']);
         self::assertSame($thumbnail->getSize(), $item['thumbnail_size']);
         self::assertSame($photos->getId(), $item['media_category_id']);
