@@ -63,6 +63,7 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.path_guard'),
             service('gingerminds_media_manager.image.processor'),
             service('doctrine.orm.entity_manager'),
+            service('gingerminds_media_manager.file.path_locker'),
         ]);
 
     $services->set('gingerminds_media_manager.maintenance.orphan_finder', OrphanFinder::class)

@@ -22,6 +22,7 @@
         "symfony/doctrine-bridge": "^8.1",
         "symfony/form": "^8.1",
         "symfony/framework-bundle": "^8.1",
+        "symfony/lock": "^8.1",
         "symfony/mime": "^8.1",
         "symfony/property-access": "^8.1",
         "symfony/security-bundle": "^8.1",

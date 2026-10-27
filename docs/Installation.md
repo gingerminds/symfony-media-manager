@@ -60,7 +60,21 @@ gingerminds_media_manager:
 Every file row keeps the name of its disk: see [Configuration](Configuration.md#storage), and
 [Coming from Laravel](FromLaravel.md) to keep the disks of an imported database.
 
-Keep the storage **private** (out of `public/`): the files are served by `GET /api/files/{id}`.
+Keep the storage **private** (out of `public/`): the files are served by `GET /api/files/{id}`,
+with the headers that keep an uploaded SVG from running scripts.
+
+### Locks
+
+Uploads, renames and moves lock the file names through the `framework.lock` store (`symfony/lock`,
+required by the bundle). Without configuration it is local to the server (`semaphore`, else
+`flock`), which is enough for one server, however many PHP workers. With several servers or
+containers sharing the database and the storage, use a shared store:
+
+```yaml
+# config/packages/lock.yaml (Flex recipe of symfony/lock)
+framework:
+    lock: '%env(LOCK_DSN)%'   # e.g. LOCK_DSN=redis://redis:6379
+```
 
 ## 4. Database
 
