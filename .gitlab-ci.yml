@@ -1,7 +1,8 @@
+# SonarQube runs last: it reads the PHPUnit reports (tests and coverage).
 stages:
-  - quality
   - syntax
   - test
+  - quality
 
 variables:
   PHP_IMAGE: registry.gitlab.gingerminds.fr/gm/docker-images/php-8.5-fpm-node-22-composer-2
@@ -38,6 +39,9 @@ workflow:
 sonarqube:
   stage: quality
   extends: .rules-qa
+  needs:
+    - job: phpunit
+      artifacts: true
   image:
     name: sonarsource/sonar-scanner-cli:11
     entrypoint: [ "" ]
@@ -110,8 +114,13 @@ phpunit:
     - echo "🧪 Running PHPUnit..."
     - php tests/Application/bin/console importmap:install
     - php tests/Application/bin/console sass:build
-    - vendor/bin/phpunit --log-junit qa-reports/phpunit-report.xml
+    - XDEBUG_MODE=coverage vendor/bin/phpunit --log-junit qa-reports/phpunit-report.xml --coverage-clover qa-reports/coverage.xml --coverage-text --colors=never
+  # Line coverage of the --coverage-text summary, shown on the merge request.
+  coverage: '/^\s*Lines:\s*(\d+(?:\.\d+)?)%/'
   artifacts:
+    paths:
+      - qa-reports/phpunit-report.xml
+      - qa-reports/coverage.xml
     reports:
       junit: qa-reports/phpunit-report.xml
     expire_in: 1 week

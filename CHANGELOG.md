@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `PATCH /admin/files/{id}` updates the sent fields only (`name` and/or `alt`): the action
   `FileLibraryActionController::rename()` is now `update()` and the route
   `gingerminds_media_manager_file_rename` is now `gingerminds_media_manager_file_update`.
+- CI: PHPUnit coverage (Xdebug, Clover report) sent to SonarQube, which now runs after the tests;
+  line coverage shown on the merge requests.
 - File library: the `from` / `to` creation date filters are whole days of the core
   `display_timezone`, compared as UTC bounds (`FileLibraryController` takes the core
   `DisplayTimezone` service). Requires the core `DisplayTimezone` (dates stored in UTC).
