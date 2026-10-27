@@ -2,6 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 import Sortable from 'sortablejs';
 
 import helpers from '../file_browser/helpers.js';
+import { showModal } from '../file_browser/modal.js';
 
 /*
  * MediaSelectType widget (form/media_select_theme.html.twig): the picked medias, kept as comma
@@ -53,7 +54,7 @@ export default class MediaSelectController extends Controller {
             const { element, picker } = await this.loadModal();
             modal.field = this;
             picker.start({ multiple: this.multipleValue, categories: this.categoriesValue, perPage: this.perPageValue, selected: this.medias });
-            window.bootstrap.Modal.getOrCreateInstance(element).show();
+            showModal(element);
         } finally {
             this.buttonTarget.disabled = false;
         }

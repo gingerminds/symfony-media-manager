@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `display_timezone`, compared as UTC bounds (`FileLibraryController` takes the core
   `DisplayTimezone` service). Requires the core `DisplayTimezone` (dates stored in UTC).
 
+### Fixed
+
+- File library and media picker modals: centered, the media picker as wide as the library one.
+  Opened over another modal (a form in a modal), they go above it with their backdrop instead of
+  showing it through.
+
 ### Added
 
 - `GingermindsMediaManagerBundle` skeleton (`gingerminds_media_manager` configuration: named
