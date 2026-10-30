@@ -15,6 +15,7 @@ use Gingerminds\MediaManagerBundle\Basket\Repository\BasketRepository;
 use Gingerminds\MediaManagerBundle\Basket\Security\BasketLoginResponseEnricher;
 use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
+use Symfony\Component\Scheduler\Attribute\AsPeriodicTask;
 
 /*
  * Baskets, only loaded when `basket.enabled`.
@@ -56,8 +57,13 @@ return static function (ContainerConfigurator $container): void {
         ->args([service(BasketRepository::class)])
         ->tag('gingerminds_core.login_response_enricher');
 
-    // Autoconfigured: #[AsCommand] and #[AsPeriodicTask].
-    $services->set('gingerminds_media_manager.command.purge_baskets', PurgeBasketsCommand::class)
+    $purge = $services->set('gingerminds_media_manager.command.purge_baskets', PurgeBasketsCommand::class)
         ->args([service(BasketRepository::class)])
-        ->autoconfigure();
+        ->tag('console.command');
+
+    // A daily task of the `default` schedule with symfony/scheduler (the tag of #[AsPeriodicTask],
+    // an attribute that would break the autoconfiguration without the component).
+    if (class_exists(AsPeriodicTask::class)) {
+        $purge->tag('scheduler.task', [...get_object_vars(new AsPeriodicTask(frequency: '1 day')), 'trigger' => 'every']);
+    }
 };

@@ -106,6 +106,14 @@ final class BundleConfigurationTest extends TestCase
         self::assertFalse($container->hasDefinition(ResourceRegistryPass::BUNDLE_RESOURCE_TAG . '.basket'));
     }
 
+    public function testThePurgeIsADailyTaskWithTheScheduler(): void
+    {
+        $tags = $this->load([])->getDefinition('gingerminds_media_manager.command.purge_baskets')->getTag('scheduler.task');
+
+        self::assertSame('1 day', $tags[0]['frequency'] ?? null);
+        self::assertSame('every', $tags[0]['trigger'] ?? null);
+    }
+
     public function testTheAdminAssetsArePrepended(): void
     {
         $container = $this->prepend([]);

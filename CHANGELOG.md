@@ -50,8 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.
-- `gingerminds:media:basket:purge` is a daily `#[AsPeriodicTask]` when `symfony/scheduler` is
-  installed (`messenger:consume scheduler_default`); a cron still works.
+- `gingerminds:media:basket:purge` is a daily periodic task of the `default` schedule when
+  `symfony/scheduler` is installed (`messenger:consume scheduler_default`), through the
+  `scheduler.task` tag (no `#[AsPeriodicTask]`: it breaks the autoconfiguration without the
+  component); a cron still works.
 - `gm_file_url()`: `MediaManagerExtension` is a Twig runtime (`#[AsTwigFunction]`), built on its
   first call.
 - `PATCH /admin/files/{id}` updates the sent fields only (`name` and/or `alt`): the action
