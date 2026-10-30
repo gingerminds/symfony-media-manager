@@ -1,0 +1,20 @@
+{#
+ # The folder tree of the browser: the branch of the current folder open (`browser.tree`), the
+ # other folders load their subfolders when opened (_tree_frame.html.twig).
+ # Vars: browser, chooser (radios `target` of the move dialog instead of links).
+ #}
+{% trans_default_domain 'GingermindsMediaManager' %}
+{% import '@GingermindsMediaManager/components/file/_macros.html.twig' as m %}
+<ul class="list-unstyled mb-0 gm-file-tree">
+    <li>
+        <div class="gm-file-tree-item d-flex align-items-center{{ not chooser and browser.state.path == '' ? ' is-active' }}">
+            <span class="gm-file-tree-caret"></span>
+            {% if chooser %}
+                <label class="flex-grow-1 text-truncate"><input type="radio" class="form-check-input me-1" name="target" value="" required> <i class="bi bi-house-door me-1"></i>{{ 'file.root'|trans }}</label>
+            {% else %}
+                <a href="{{ m.url(browser, {path: '', page: null, file: null}) }}" class="flex-grow-1 text-truncate" data-turbo-frame="gm-file-browser"><i class="bi bi-house-door me-1"></i>{{ 'file.root'|trans }}</a>
+            {% endif %}
+        </div>
+        {% include '@GingermindsMediaManager/components/file/_tree_level.html.twig' with {nodes: browser.tree[''] ?? []} %}
+    </li>
+</ul>

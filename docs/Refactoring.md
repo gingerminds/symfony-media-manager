@@ -14,7 +14,7 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 
 | Constat | Où | Natif | Effort |
 |---|---|---|---|
-| Admin des fichiers en SPA JSON : ≈ 1 400 lignes de JS, `innerHTML` et échappement manuel, 12 routes JSON | `assets/file_browser/*`, `templates/components/file/_browser.html.twig:17-25`, `FileLibraryController` / `FileLibraryActionController` | Twig + Turbo Frames + `symfony/ux-dropzone` (plus de payloads JSON parsés à la main ni de `findFile()`) ; pagination de la bibliothèque (`LibraryQuery`, `FileRepository::paginateLibrary`) alignée sur le contrat des listes du core au passage | L |
+| Picker des médias en JSON : recherche `GET /admin/medias/search`, résultats construits en JS (`innerHTML`) | `assets/controllers/media_picker_controller.js`, `MediaController::search()` | même rendu serveur que la bibliothèque (Turbo frame) | M |
 | `RelativeImportCompiler` + enregistrement inline des contrôleurs Stimulus | `src/AssetMapper/RelativeImportCompiler.php`, `templates/admin/_head.html.twig` | package UX (`symfony.controllers`) ou entrypoint importmap [H] | M |
 
 ## 4. Bugs et mauvais code
@@ -26,7 +26,7 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 | Le ZIP copie chaque fichier en temporaire avant de zipper | `src/Basket/BasketArchiver.php:69-89` | zip en `StreamedResponse` | M |
 | Suppression : disque avant base, un flush par fichier | `FileStorage.php:86-94` | suppression disque en `postFlush` ou via Messenger | S |
 | Filtre « orphelins » en `NOT IN` de tous les ids ; parcours complet de table | `src/File/FileLibrary.php:79`, `src/File/Reference/JsonFieldFileReferenceSource.php:45-63` | `NOT EXISTS` | M |
-| `hasDirectories` par sous-dossier (N `ListObjects` sur S3) ; 4 allers-retours storage par réponse fichier | `FileLibraryController.php:162-167`, `FileResponseFactory` | ETag sur `hash` / `updatedAt` lu en base | M |
+| 4 allers-retours storage par réponse fichier | `FileResponseFactory` | ETag sur `hash` / `updatedAt` lu en base | M |
 | Deux scans identiques des métadonnées Doctrine | `src/Media/MediaUsageCounter.php:57-80`, `src/File/Reference/DoctrineAssociationReferenceSource.php:104-127` | factoriser | S |
 
 ## 5. Doublons à remonter dans le core

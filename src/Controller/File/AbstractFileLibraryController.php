@@ -11,14 +11,11 @@ use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Shared by the library page (reads) and the library actions (writes).
+ * Shared by the library browser (reads) and the library actions (writes).
  */
 abstract class AbstractFileLibraryController extends AbstractController
 {
@@ -36,36 +33,14 @@ abstract class AbstractFileLibraryController extends AbstractController
     }
 
     /**
-     * Library errors (missing directory, upload refused...) as a 422 with a translated message.
-     *
-     * @param callable(): JsonResponse $action
+     * A library error (missing folder, upload refused...) translated.
      */
-    protected function attempt(callable $action): JsonResponse
+    protected function transException(TranslatableExceptionInterface $exception): string
     {
-        try {
-            return $action();
-        } catch (TranslatableExceptionInterface $exception) {
-            $translator = $this->container->get('translator');
-            \assert($translator instanceof TranslatorInterface);
+        $translator = $this->container->get('translator');
+        \assert($translator instanceof TranslatorInterface);
 
-            return $this->error($exception->trans($translator));
-        }
-    }
-
-    protected function error(string $message): JsonResponse
-    {
-        return new JsonResponse(['error' => $message], Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    protected function findFile(string $id): FileInterface
-    {
-        $file = Uuid::isValid($id) ? $this->files->find($id) : null;
-
-        if (!$file instanceof FileInterface) {
-            throw new NotFoundHttpException('File not found.');
-        }
-
-        return $file;
+        return $exception->trans($translator);
     }
 
     /**

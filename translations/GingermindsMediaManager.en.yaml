@@ -94,12 +94,10 @@ file:
         from: Added from
         to: "Added until"
     field:
-        name: Name
         type: Type
         size: Size
         created_at: Added on
         directory: Folder
-        sort: Sort
         usages: Usages
         duplicates: Duplicates
         directory_name: Folder name
@@ -107,29 +105,24 @@ file:
         alt: Alternative text
     action:
         upload: Upload
+        rename_directory: Rename the folder
         new_directory: New folder
         open: Open
         rename: Rename
         move: Move
-        move_here: Move here
         delete: Delete
         merge: Keep this file and merge its duplicates
-        show: Show
-        clear_selection: Clear the selection
         select_page: Select all
-        first: First page
-        previous: Previous
-        next: Next
-        last: Last page
         cancel: Cancel
         confirm: Confirm
         save: Save
         close: Close
     message:
-        loading: Loading…
+        rename_one: Select one folder, without files, to rename it.
+        nothing_selected: No file or folder selected.
+        selected: '%count% item(s) selected'
         empty: No file
         drop: Drop your files to upload them into this folder
-        selected: '%count% selected'
         total: '%count% file(s)'
         not_used: This file is not used anywhere.
         uploaded: '"%name%" has been uploaded.'
@@ -141,14 +134,17 @@ file:
         merged: Duplicates merged, %count% reference(s) updated.
         confirm_delete: Delete %count% file(s)? The used files will be kept.
         confirm_merge: The %count% duplicate(s) will be replaced by this file wherever they are used, then deleted.
-        move_to: Move %count% file(s) to "%path%"
         confirm_delete_directories: Delete %count% folder(s)? Only the empty folders will be deleted.
         directories_deleted: '%count% folder(s) deleted.'
         directories_kept: 'These folders are not empty, they have not been deleted:'
         directories_moved: '%count% folder(s) moved to "%path%".'
         directory_renamed: The folder is now named "%name%".
-        move_directories_to: Move %count% folder(s) to "%path%"
         alt_saved: The alternative text has been saved.
+    unit:
+        b: B
+        kb: KB
+        mb: MB
+        gb: GB
     picker:
         title: File library
         choose: Choose a file
@@ -162,10 +158,8 @@ file:
         select: Select
         none: No file selected
         selected: '%count% file(s) selected'
-        use: Use this one
 
 error:
-    generic: An error occurred, please try again.
     upload_failed: The file could not be sent.
     directory_not_found: The folder "%path%" does not exist.
     directory_exists: The folder "%path%" already exists.

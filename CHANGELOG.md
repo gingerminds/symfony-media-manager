@@ -47,6 +47,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Platform (`CreateBasketInput`, `AddMediasInput`: a `422` with `violations`, also for an invalid
   `anonymous_token`, ignored until now); the owner is checked by the `security` of the operations
   (`BasketVoter`), an anonymous request on a user basket is a `401` (was `403`).
+- **BC break** File library admin: rendered by the server in a Turbo frame (`gm-file-browser`)
+  instead of the JSON endpoints and the `gm-file-browser` Stimulus controller (≈ 1 800 lines of
+  JS). The state is in the query (`path`, filters, `sort`, `page`, `file` for the detail panel,
+  `dialog` with `ids[]` / `paths[]`) and the page advances the URL. The dialogs (new folder, rename
+  a folder, move, delete) are modals rendered by the server, moved to the body by `gm-file-dialog`
+  (above the picker modal too), and closed back to the URL without `dialog`; the toolbar actions
+  are enabled by the selection (`gm-file-selection`: move and delete by anything, rename by a single
+  folder). The folder tree loads its subfolders when opened (`/admin/files/tree`) and only shows a
+  caret on the folders that have some (`FileLibrary::hasDirectories()`). The writes are
+  forms (CSRF token `gm-file-library` in `_token`, `return` URL, input DTOs mapped by
+  `#[MapRequestPayload]`) coming back to the browser with flash messages: `POST /admin/files/directories`,
+  `/directories/rename`, `/move` and `/delete` (files and folders together), `/{id}` (`name`,
+  `alt`), `/merge`. Only `POST /admin/files/upload` answers JSON, one file a request with its
+  progress (`gm-file-upload`). The picker modal loads the same frame (`gm-file-pick` keeps the
+  picked files). Removed: the `browse`, `directories` and `show` JSON routes, the
+  `directory_delete` / `directory_move` routes, `FileLibraryPresenter::browse()` / `directory()` /
+  `breadcrumb()` / `usages()`,
+  `FileLibraryController::ID_PLACEHOLDER` (now `FilePickerType::ID_PLACEHOLDER`) and the
+  `assets/file_browser/` scripts (`helpers.js` and `modal.js` move to `assets/lib/`).
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

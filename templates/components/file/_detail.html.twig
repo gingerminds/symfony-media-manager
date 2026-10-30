@@ -1,0 +1,118 @@
+{# Detail panel of the open file (`browser.detail`: file, usages, duplicates). #}
+{% trans_default_domain 'GingermindsMediaManager' %}
+{% import '@GingermindsMediaManager/components/file/_macros.html.twig' as m %}
+{% set file = browser.detail.file %}
+{% set directory = browser.detail.directories[file.id] ?? '' %}
+{% set can_edit = browser.can_edit %}
+<aside class="col-md-4 col-xl-3 border-start gm-file-browser-detail" aria-label="{{ 'file.detail'|trans }}">
+    <div class="p-3">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
+            <h6 class="mb-0 text-break">{{ file.originalName }}</h6>
+            <a href="{{ m.url(browser, {file: null}) }}" class="btn-close" aria-label="{{ 'file.action.close'|trans }}"></a>
+        </div>
+        <a href="{{ gm_file_url(file) }}" target="_blank" rel="noopener" class="gm-file-detail-preview mb-2" title="{{ 'file.action.open'|trans }}" data-turbo="false">
+            {{ m.preview(file, browser.presets, 'card') }}<span class="gm-file-detail-open"><i class="bi bi-box-arrow-up-right"></i></span>
+        </a>
+
+        {% if can_edit %}
+            <form method="post" action="{{ path('gingerminds_media_manager_file_update', {id: file.id}) }}" class="mb-2">
+                {{ m.post_inputs(browser) }}
+                <label class="form-label small text-muted mb-1" for="gm-file-detail-name">{{ 'file.field.file_name'|trans }}</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" id="gm-file-detail-name" name="name" value="{{ file.originalName }}" class="form-control" required>
+                    <button type="submit" class="btn btn-outline-primary" title="{{ 'file.action.rename'|trans }}" aria-label="{{ 'file.action.rename'|trans }}"><i class="bi bi-check-lg"></i></button>
+                </div>
+            </form>
+        {% endif %}
+
+        {% if file.image %}
+            <div class="mb-3 gm-file-detail-alt">
+                {% if can_edit %}
+                    <form method="post" action="{{ path('gingerminds_media_manager_file_update', {id: file.id}) }}">
+                        {{ m.post_inputs(browser) }}
+                        <label class="form-label small text-muted mb-1" for="gm-file-detail-alt">{{ 'file.field.alt'|trans }}</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="gm-file-detail-alt" name="alt" value="{{ file.alt }}" maxlength="255" class="form-control">
+                            <button type="submit" class="btn btn-outline-primary" title="{{ 'file.action.save'|trans }}" aria-label="{{ 'file.action.save'|trans }}"><i class="bi bi-check-lg"></i></button>
+                        </div>
+                    </form>
+                {% else %}
+                    <span class="form-label small text-muted mb-1 d-block">{{ 'file.field.alt'|trans }}</span>
+                    <p id="gm-file-detail-alt" class="small mb-0 text-break">{{ file.alt ?? '—' }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if can_edit %}
+            <div class="d-flex gap-1 mb-3 gm-file-detail-actions">
+                <a href="{{ m.url(browser, {dialog: 'move', 'ids[]': file.id}) }}" class="btn btn-sm btn-outline-info" title="{{ 'file.action.move'|trans }}" aria-label="{{ 'file.action.move'|trans }}"><i class="bi bi-folder-symlink"></i></a>
+                <a href="{{ m.url(browser, {dialog: 'delete', 'ids[]': file.id}) }}" class="btn btn-sm btn-outline-danger ms-auto" title="{{ 'file.action.delete'|trans }}" aria-label="{{ 'file.action.delete'|trans }}"><i class="bi bi-trash"></i></a>
+            </div>
+        {% endif %}
+
+        <dl class="row small mb-0">
+            <dt class="col-5 text-muted fw-normal">{{ 'file.field.type'|trans }}</dt><dd class="col-7 text-break">{{ file.mimeType }}</dd>
+            <dt class="col-5 text-muted fw-normal">{{ 'file.field.size'|trans }}</dt><dd class="col-7 text-break">{{ m.size(file.size) }}</dd>
+            <dt class="col-5 text-muted fw-normal">{{ 'file.field.created_at'|trans }}</dt><dd class="col-7 text-break">{{ file.createdAt ? file.createdAt|date('d/m/Y H:i') }}</dd>
+            <dt class="col-5 text-muted fw-normal">{{ 'file.field.directory'|trans }}</dt><dd class="col-7 text-break">{{ directory ?: 'file.root'|trans }}</dd>
+        </dl>
+
+        <div class="accordion accordion-flush mt-3 gm-file-detail-sections">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2 px-0 fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#gm-file-detail-usages" aria-expanded="false">
+                        {{ 'file.field.usages'|trans }} <span class="badge bg-primary-subtle text-primary ms-2">{{ browser.detail.usages|length }}</span>
+                    </button>
+                </h2>
+                <div id="gm-file-detail-usages" class="accordion-collapse collapse">
+                    <div class="pb-3">
+                        {% for usage in browser.detail.usages %}
+                            {% if loop.first %}<ul class="list-unstyled mb-0">{% endif %}
+                            <li class="mb-2">
+                                <span class="text-muted small">{{ usage.label }}</span><br>
+                                {% if usage.editUrl %}
+                                    <a href="{{ usage.editUrl }}" target="_blank" rel="noopener" data-turbo="false">{{ usage.title }} <i class="bi bi-box-arrow-up-right small"></i></a>
+                                {% else %}
+                                    {{ usage.title }}
+                                {% endif %}
+                            </li>
+                            {% if loop.last %}</ul>{% endif %}
+                        {% else %}
+                            <p class="text-muted small mb-0">{{ 'file.message.not_used'|trans }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% if browser.detail.duplicates is not empty %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed py-2 px-0 fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#gm-file-detail-duplicates" aria-expanded="false">
+                            {{ 'file.field.duplicates'|trans }} <span class="badge bg-warning-subtle text-warning ms-2">{{ browser.detail.duplicates|length }}</span>
+                        </button>
+                    </h2>
+                    <div id="gm-file-detail-duplicates" class="accordion-collapse collapse">
+                        <div class="pb-3">
+                            <ul class="list-unstyled small mb-3">
+                                {% for duplicate in browser.detail.duplicates %}
+                                    {% set duplicate_directory = browser.detail.directories[duplicate.id] ?? '' %}
+                                    <li class="mb-1">
+                                        <a href="{{ m.url(browser, {path: duplicate_directory, page: null, file: duplicate.id}) }}">{{ duplicate.originalName }}</a>
+                                        <span class="text-muted">— {{ duplicate_directory ?: 'file.root'|trans }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            {% if can_edit %}
+                                <form method="post" action="{{ path('gingerminds_media_manager_file_merge') }}">
+                                    {{ m.post_inputs(browser) }}
+                                    <input type="hidden" name="keep" value="{{ file.id }}">
+                                    <p class="small text-muted">{{ 'file.message.confirm_merge'|trans({'%count%': browser.detail.duplicates|length}) }}</p>
+                                    <button type="submit" class="btn btn-sm btn-outline-warning w-100"><i class="bi bi-intersect me-1"></i> {{ 'file.action.merge'|trans }}</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</aside>

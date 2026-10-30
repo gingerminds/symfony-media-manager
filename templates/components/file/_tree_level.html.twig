@@ -1,0 +1,43 @@
+{# A level of the folder tree (_tree.html.twig). Vars: browser, chooser, nodes. #}
+{% import '@GingermindsMediaManager/components/file/_macros.html.twig' as m %}
+{% if nodes is not empty %}
+    <ul class="list-unstyled mb-0 gm-file-tree-children">
+        {% for node in nodes %}
+            {% set name = node|split('/')|last %}
+            {% set open = browser.tree[node] is defined %}
+            {% set branch = open ? (browser.tree[node] is not empty) : (browser.branches[node] ?? true) %}
+            {% set active = not chooser and node == browser.state.path %}
+            {% set item %}
+                {% if chooser %}
+                    <label class="flex-grow-1 text-truncate" title="{{ name }}"><input type="radio" class="form-check-input me-1" name="target" value="{{ node }}" required> <i class="bi bi-folder me-1"></i>{{ name }}</label>
+                {% else %}
+                    <a href="{{ m.url(browser, {path: node, page: null, file: null}) }}" class="flex-grow-1 text-truncate" title="{{ name }}" data-turbo-frame="gm-file-browser"{{ active ? ' aria-current="true"' }}>
+                        <i class="bi {{ active ? 'bi-folder2-open' : 'bi-folder' }} me-1"></i>{{ name }}
+                    </a>
+                {% endif %}
+            {% endset %}
+            <li>
+                {% if not branch %}
+                    {# No subfolder: nothing to open. #}
+                    <div class="gm-file-tree-item d-flex align-items-center{{ active ? ' is-active' }}">
+                        <span class="gm-file-tree-caret"></span>
+                        {{ item }}
+                    </div>
+                {% else %}
+                    <details class="gm-file-tree-node"{{ open ? ' open' }}>
+                        <summary class="gm-file-tree-item d-flex align-items-center{{ active ? ' is-active' }}">
+                            <span class="gm-file-tree-caret"><i class="bi bi-chevron-right"></i></span>
+                            {{ item }}
+                        </summary>
+                        {% if open %}
+                            {% include '@GingermindsMediaManager/components/file/_tree_level.html.twig' with {nodes: browser.tree[node]} %}
+                        {% else %}
+                            <turbo-frame id="gm-file-{{ chooser ? 'chooser' : 'tree' }}-{{ node|replace({'/': '--'}) }}" loading="lazy"
+                                         src="{{ path('gingerminds_media_manager_file_tree', browser.state|merge({node: node, chooser: chooser ? 1 : null, picker: browser.picker ? 1 : null})) }}"></turbo-frame>
+                        {% endif %}
+                    </details>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

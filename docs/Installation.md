@@ -44,8 +44,7 @@ storage with that name (it replaces the bundle one) or map your own storages to 
 flysystem:
     storages:
         media.storage:
-            adapter: 'local'
-            options:
+            local:
                 directory: '%kernel.project_dir%/var/storage/media'
 
 # config/packages/gingerminds_media_manager.yaml

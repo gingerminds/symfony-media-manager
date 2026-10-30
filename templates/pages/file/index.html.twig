@@ -4,6 +4,9 @@
 {% set page_title = 'file.name_p'|trans %}
 {% set breadcrumb = [{label: page_title}] %}
 
+{# Shown in the browser frame, also after its own navigations. #}
+{% block flashes %}{% endblock %}
+
 {% block content %}
-    {% include '@GingermindsMediaManager/components/file/_browser.html.twig' with {browser: browser, mode: 'manager'} only %}
+    {% include '@GingermindsMediaManager/components/file/_browser.html.twig' with {browser: browser} only %}
 {% endblock %}

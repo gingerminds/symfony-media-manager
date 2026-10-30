@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 
-import helpers from '../file_browser/helpers.js';
+import helpers from '../lib/helpers.js';
 
 /*
  * Media picker modal (components/media/_picker_modal.html.twig), opened by the gm-media-select fields:

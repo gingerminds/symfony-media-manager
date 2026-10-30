@@ -117,7 +117,7 @@ A form field or a project pointing at a folder by its name (`start_path`,
 | `view files` | browse the library, see the details and usages, pick files in a form |
 | `edit files` | everything else: upload, folders, rename, move, delete, merge |
 
-`delete files` is created by `gingerminds:permissions:sync` but not used.
+Deleting needs `edit files` (`resources.file.permissions`): there is no `delete files` permission.
 
 ## Extending
 
@@ -129,8 +129,8 @@ services:
     Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface: '@App\Media\SiteStartPathProvider'
 ```
 
-- **Reads** (page, browse, details, picker): `resources.file.controller`, extending
-  `FileLibraryController`.
+- **Reads** (page, picker, folder tree): `resources.file.controller`, extending
+  `FileLibraryController` (`browser()` gives the template variables).
 - **Writes** (upload, folders, rename, move, delete, merge): decorate the
   `gingerminds_media_manager.controller.admin.file_library_action` service
   (`FileLibraryActionController`).
@@ -139,5 +139,12 @@ services:
 - In Twig, `gm_file_url(file, preset = null, absolute = false)` gives the URL of a file or of a
   preset.
 
-The library endpoints (`/admin/files/*`) are JSON, their writes need the `gm-file-library` CSRF
-token in the `X-CSRF-Token` header; a library error is a 422 with a translated message.
+The library is rendered by the server in a Turbo frame (`gm-file-browser`): its state is in the
+query (`path`, the filters, `page`, `file` for the detail panel, `dialog` with the selected
+`ids[]` / `paths[]`, shown in a modal), and the page advances the URL (back button, shareable
+links). The toolbar actions are enabled by the selection: move and delete by any file or folder,
+rename by a single folder. The folder tree only lets open the folders that have subfolders, loaded
+when opened. The writes are
+forms posted with the `gm-file-library` CSRF token and a `return` URL (the browser), a library
+error coming back as a flash message. Only the upload answers JSON: one file a request, posted by
+the `gm-file-upload` Stimulus controller with its progress.

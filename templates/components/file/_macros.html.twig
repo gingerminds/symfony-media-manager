@@ -1,0 +1,57 @@
+{# Helpers of the library browser templates. #}
+
+{# The browser URL with some state parameters changed (null removes one). #}
+{% macro url(browser, overrides = {}) -%}
+    {{ path(browser.route, browser.state|merge(overrides)) }}
+{%- endmacro %}
+
+{# Hidden inputs of the browser state, for the GET forms (filters, selection). #}
+{% macro state_inputs(state, except = []) %}
+    {% for key, value in state|filter((value, key) => key not in except) %}
+        {% if value is iterable %}
+            {% for item in value %}<input type="hidden" name="{{ key }}[]" value="{{ item }}">{% endfor %}
+        {% else %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{# Hidden inputs of the POST forms: CSRF token and the browser URL to go back to. #}
+{% macro post_inputs(browser) %}
+    <input type="hidden" name="_token" value="{{ csrf_token(browser.csrf_token_id) }}">
+    <input type="hidden" name="return" value="{{ path(browser.route, browser.state) }}">
+{% endmacro %}
+
+{% macro size(bytes) -%}
+    {% set units = ['b', 'kb', 'mb', 'gb'] %}
+    {% set unit = 0 %}
+    {% set size = bytes %}
+    {% for step in 1..3 %}
+        {% if size >= 1024 %}{% set size = size / 1024 %}{% set unit = unit + 1 %}{% endif %}
+    {% endfor %}
+    {{- size|number_format(unit > 1 ? 1 : 0, app.request.locale == 'fr' ? ',' : '.', ' ') }} {{ ('file.unit.' ~ units[unit])|trans({}, 'GingermindsMediaManager') -}}
+{%- endmacro %}
+
+{% macro icon(file) -%}
+    {% set extension = file.path|split('.')|last|lower %}
+    {% set icons = {
+        pdf: 'bi-file-earmark-pdf', zip: 'bi-file-earmark-zip', gz: 'bi-file-earmark-zip', rar: 'bi-file-earmark-zip', '7z': 'bi-file-earmark-zip',
+        doc: 'bi-file-earmark-word', docx: 'bi-file-earmark-word', odt: 'bi-file-earmark-word',
+        xls: 'bi-file-earmark-excel', xlsx: 'bi-file-earmark-excel', ods: 'bi-file-earmark-excel', csv: 'bi-file-earmark-spreadsheet',
+        ppt: 'bi-file-earmark-ppt', pptx: 'bi-file-earmark-ppt', odp: 'bi-file-earmark-ppt',
+        txt: 'bi-file-earmark-text',
+    } %}
+    {%- if icons[extension] is defined %}{{ icons[extension] }}
+    {%- elseif file.mimeType starts with 'video/' %}bi-file-earmark-play
+    {%- elseif file.mimeType starts with 'audio/' %}bi-file-earmark-music
+    {%- else %}bi-file-earmark{% endif -%}
+{%- endmacro %}
+
+{# Thumbnail of an image (`preset`, the original when not declared), else the icon and the extension. #}
+{% macro preview(file, presets, preset = 'thumbnail') -%}
+    {% if file.image %}
+        <img src="{{ gm_file_url(file, preset in presets ? preset : null) }}" alt=""{% if preset == 'thumbnail' %} loading="lazy"{% endif %}>
+    {% else %}
+        <i class="bi {{ _self.icon(file) }}"></i><span class="gm-file-card-extension">{{ file.path|split('.')|last|lower }}</span>
+    {% endif %}
+{%- endmacro %}

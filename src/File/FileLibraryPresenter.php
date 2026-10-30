@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\File;
 
 use Gingerminds\CoreBundle\Model\TimestampableInterface;
-use Gingerminds\CoreBundle\Pagination\Paginator;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
-use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceRegistry;
-use Gingerminds\MediaManagerBundle\File\Reference\FileUsage;
 use Gingerminds\MediaManagerBundle\Twig\MediaManagerExtension;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * JSON of the library browser.
+ * The files as JSON: picked files of the FilePickerType fields, uploads.
  */
 class FileLibraryPresenter
 {
@@ -25,59 +22,19 @@ class FileLibraryPresenter
      */
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
-        private readonly FileReferenceRegistry $references,
         private readonly PathGuard $paths,
         private readonly array $presets,
     ) {
     }
 
     /**
-     * @param Paginator<FileInterface>                                    $page
-     * @param list<array{name: string, path: string, hasChildren?: bool}> $directories
+     * The declared presets, for the previews of the browser.
      *
-     * @return array<string, mixed>
+     * @return list<string>
      */
-    public function browse(string $path, array $directories, Paginator $page): array
+    public function presets(): array
     {
-        $files = array_values($page->getItems());
-        $usages = $this->references->usages($files);
-
-        return [
-            'path' => $path,
-            'breadcrumb' => $this->breadcrumb($path),
-            'directories' => $directories,
-            'files' => array_map(fn (FileInterface $file): array => $this->file($file, \count($usages[$file->getId()] ?? [])), $files),
-            'pagination' => [
-                'page' => $page->getPage(),
-                'pages' => $page->getLastPage(),
-                'itemsPerPage' => $page->getItemsPerPage(),
-                'totalItems' => $page->getTotalItems(),
-            ],
-        ];
-    }
-
-    /**
-     * @return array{name: string, path: string, hasChildren?: bool}
-     */
-    public function directory(string $path, ?bool $hasChildren = null): array
-    {
-        return ['name' => basename($path), 'path' => $path] + (null === $hasChildren ? [] : ['hasChildren' => $hasChildren]);
-    }
-
-    /**
-     * @return list<array{name: string, path: string}>
-     */
-    public function breadcrumb(string $path): array
-    {
-        $breadcrumb = [];
-        $current = '';
-
-        foreach (array_filter(explode('/', $path), static fn (string $segment): bool => '' !== $segment) as $segment) {
-            $current = ltrim($current . '/' . $segment, '/');
-            $breadcrumb[] = $this->directory($current);
-        }
-
-        return $breadcrumb;
+        return array_map(strval(...), array_keys($this->presets));
     }
 
     /**
@@ -103,16 +60,6 @@ class FileLibraryPresenter
             'previewUrl' => $this->presetUrl($file, self::PREVIEW_PRESET),
             'usages' => $usages,
         ];
-    }
-
-    /**
-     * @param list<FileUsage> $usages
-     *
-     * @return list<array{label: string, title: string, editUrl: string|null}>
-     */
-    public function usages(array $usages): array
-    {
-        return array_map(static fn (FileUsage $usage): array => ['label' => $usage->label, 'title' => $usage->title, 'editUrl' => $usage->editUrl], $usages);
     }
 
     /**

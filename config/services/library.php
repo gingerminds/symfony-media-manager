@@ -63,7 +63,6 @@ return static function (ContainerConfigurator $container): void {
     $services->set('gingerminds_media_manager.file.library_presenter', FileLibraryPresenter::class)
         ->args([
             service('router'),
-            service('gingerminds_media_manager.file.reference_registry'),
             service('gingerminds_media_manager.file.path_guard'),
             param('gingerminds_media_manager.images.presets'),
         ]);

@@ -57,6 +57,9 @@ class FileLibrary
         return array_values($directories);
     }
 
+    /**
+     * Whether the directory has subdirectories (hidden ones excluded), without listing them all.
+     */
     public function hasDirectories(string $path): bool
     {
         foreach ($this->filesystem()->listContents($this->existingDirectory($path), false) as $item) {

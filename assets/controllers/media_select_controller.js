@@ -1,8 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import Sortable from 'sortablejs';
 
-import helpers from '../file_browser/helpers.js';
-import { showModal } from '../file_browser/modal.js';
+import helpers from '../lib/helpers.js';
+import { showModal } from '../lib/modal.js';
 
 /*
  * MediaSelectType widget (form/media_select_theme.html.twig): the picked medias, kept as comma

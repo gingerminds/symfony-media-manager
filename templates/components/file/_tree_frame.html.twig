@@ -1,0 +1,4 @@
+{# The subfolders of a folder of the tree, loaded when it is opened (FileLibraryController::tree). #}
+<turbo-frame id="gm-file-{{ chooser ? 'chooser' : 'tree' }}-{{ node|replace({'/': '--'}) }}">
+    {% include '@GingermindsMediaManager/components/file/_tree_level.html.twig' with {nodes: children} %}
+</turbo-frame>
