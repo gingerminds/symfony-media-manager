@@ -21,6 +21,6 @@ class ShowFileController
 
     public function __invoke(Request $request, FileInterface $data): Response
     {
-        return $this->responses->create($request, $data->getDisk(), $data->getPath(), $data->getMimeType(), $data->getOriginalName());
+        return $this->responses->file($request, $data);
     }
 }

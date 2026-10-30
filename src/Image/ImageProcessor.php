@@ -40,6 +40,16 @@ class ImageProcessor
         return array_map(strval(...), array_keys($this->presets));
     }
 
+    /**
+     * The Glide parameters of a preset, the default format included.
+     *
+     * @return array<string, mixed>
+     */
+    public function parameters(string $preset): array
+    {
+        return ($this->presets[$preset] ?? []) + ['fm' => $this->defaultFormat];
+    }
+
     public function hasPreset(string $preset): bool
     {
         return isset($this->presets[$preset]);

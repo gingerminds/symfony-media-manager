@@ -38,15 +38,15 @@ class ShowFilePresetController extends ShowFileController
         }
 
         if (!$this->images->supports($file)) {
-            return $this->responses->create($request, $file->getDisk(), $file->getPath(), $file->getMimeType());
+            return $this->responses->file($request, $file);
         }
 
-        try {
-            $path = $this->images->process($file, $preset);
-        } catch (FileNotFoundException $exception) {
-            throw new NotFoundHttpException('Image not found.', $exception);
-        }
-
-        return $this->responses->create($request, $file->getDisk(), $path);
+        return $this->responses->preset($request, $file, $preset, $this->images->parameters($preset), function () use ($file, $preset): string {
+            try {
+                return $this->images->process($file, $preset);
+            } catch (FileNotFoundException $exception) {
+                throw new NotFoundHttpException('Image not found.', $exception);
+            }
+        });
     }
 }

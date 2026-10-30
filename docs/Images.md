@@ -26,7 +26,9 @@ the admin falls back to the original files.
 | `GET /api/files/{id}` | The original file, inline, under its original name. |
 | `GET /api/files/{id}/{preset}` | The image rendered with the preset. |
 
-- Public, with a one day browser cache revalidated by `ETag` / `Last-Modified` (304).
+- Public, with a one day browser cache revalidated by `ETag` / `Last-Modified` (304). They come
+  from the row (the content hash, the dates; for a preset, with its definition): a 304 reads
+  nothing on the disk and renders no preset, a 200 opens the file only.
 - `X-Content-Type-Options: nosniff` and `Content-Security-Policy: default-src 'none'; style-src
   'unsafe-inline'; sandbox` on every response (304 and basket ZIP included): an SVG with a script
   opened directly cannot run it in the application origin, it still displays in an `<img>`. A PDF

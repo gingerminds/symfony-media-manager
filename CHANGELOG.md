@@ -96,6 +96,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `FileReferenceRegistry::usedIds()` are replaced by `excludeReferenced(QueryBuilder $qb, string $alias)`;
   `JsonFieldFileReferenceSource` still reads its field in PHP (a `LIKE` on JSON is not portable).
   `FileRepository::paginateLibrary()` takes that restriction as a closure.
+- **BC break** `FileResponseFactory`: `file(Request, FileInterface)` and `preset(Request, FileInterface,
+  preset, parameters, render)` instead of `create(Request, disk, path, ...)`. The cache headers come
+  from the row: `ETag` the content hash (the id and the dates without hash; for a preset, with its
+  definition), `Last-Modified` the dates, the type and the size of the file: a 304 reads nothing on
+  the disk and renders no preset, a 200 only opens the file (404 when it is missing), instead of
+  four storage calls. The ETags change once (they were `md5(path . lastModified)`).
+  `ImageProcessor::parameters()` gives the definition of a preset.
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

@@ -16,12 +16,6 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 |---|---|---|---|
 | Picker des médias en JSON : recherche `GET /admin/medias/search`, résultats construits en JS (`innerHTML`) | `assets/controllers/media_picker_controller.js`, `MediaController::search()` | même rendu serveur que la bibliothèque (Turbo frame) | M |
 
-## 4. Bugs et mauvais code
-
-| Constat | Où | Correction | Effort |
-|---|---|---|---|
-| 4 allers-retours storage par réponse fichier | `FileResponseFactory` | ETag sur `hash` / `updatedAt` lu en base | M |
-
 ## 5. Doublons à remonter dans le core
 
 - `assets/file_browser/modal.js` (empilement des modales Bootstrap) : à déplacer dans le core s'il sert ailleurs [H].
