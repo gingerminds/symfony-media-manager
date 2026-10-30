@@ -88,7 +88,7 @@ final class ClearImageCacheCommandTest extends KernelTestCase
         $file = $this->files->png();
         $path = $this->images->process($file, 'thumbnail');
 
-        self::getContainer()->get('test.file_storage')->delete($file);
+        self::getContainer()->get('test.file_storage')->delete([$file]);
 
         self::assertFalse($this->storage->fileExists($path));
     }

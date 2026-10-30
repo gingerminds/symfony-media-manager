@@ -158,6 +158,18 @@ class FileRepository extends AbstractRepository
     }
 
     /**
+     * @param list<FileInterface> $files
+     */
+    public function removeAll(array $files): void
+    {
+        foreach ($files as $file) {
+            $this->remove($file, false);
+        }
+
+        $this->getEntityManager()->flush();
+    }
+
+    /**
      * @return int number of updated rows
      */
     public function replaceMimeType(string $from, string $to): int

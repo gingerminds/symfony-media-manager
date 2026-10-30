@@ -43,6 +43,7 @@ return static function (ContainerConfigurator $container): void {
             param('gingerminds_media_manager.library.max_upload_size'),
             param('gingerminds_media_manager.library.allowed_mimes'),
             service('gingerminds_media_manager.file.path_locker'),
+            service('logger')->ignoreOnInvalid(),
         ]);
     $services->alias(FileStorage::class, 'gingerminds_media_manager.file.storage');
 };

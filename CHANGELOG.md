@@ -83,6 +83,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - The basket ZIP is streamed (`maennchen/zipstream-php`): no temporary copy of each file nor
   temporary archive, the download starts at once. `BasketArchiver::archive()` becomes `entries()`
   (the files found on their disk, by entry name) and `write()`; `ZipArchiveException` is removed.
+- **BC break** `FileStorage::delete()` takes a list of files: the rows are deleted first, in one
+  flush, then the physical files no other row points to (and their presets), a failure on the disk
+  being logged. A failed flush (a reference added meanwhile) no longer leaves rows without file.
+  `FileLibrary::delete()` and `mergeDuplicates()` delete in one go.
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

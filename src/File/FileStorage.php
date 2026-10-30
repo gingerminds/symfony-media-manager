@@ -12,6 +12,8 @@ use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -33,6 +35,7 @@ class FileStorage
         private readonly int $maxUploadSize,
         private readonly array $allowedMimes,
         private readonly PathLocker $locker,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -79,16 +82,32 @@ class FileStorage
     }
 
     /**
-     * The physical file is kept while another row still points to it.
+     * The rows first, in one flush, then the physical files no other row points to (and their
+     * presets): a failed flush (a reference added meanwhile) leaves every file in place. A physical
+     * file that cannot be deleted is only logged.
+     *
+     * @param list<FileInterface> $files
      */
-    public function delete(FileInterface $file): void
+    public function delete(array $files): void
     {
-        if ($this->files->countByPath($file->getDisk(), $file->getPath()) <= 1) {
-            $this->images->clear($file);
-            $this->disks->get($file->getDisk())->delete($file->getPath());
-        }
+        $this->files->removeAll($files);
 
-        $this->files->remove($file);
+        foreach ($files as $file) {
+            if ($this->files->countByPath($file->getDisk(), $file->getPath()) > 0) {
+                continue;
+            }
+
+            try {
+                $this->images->clear($file);
+                $this->disks->get($file->getDisk())->delete($file->getPath());
+            } catch (FilesystemException $exception) {
+                $this->logger->warning('The file "{path}" of the disk "{disk}" could not be deleted: {message}', [
+                    'path' => $file->getPath(),
+                    'disk' => $file->getDisk(),
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
     }
 
     public function exists(FileInterface $file): bool

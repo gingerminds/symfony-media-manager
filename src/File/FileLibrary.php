@@ -269,13 +269,12 @@ class FileLibrary
         foreach ($files as $file) {
             if ([] !== ($usages[$file->getId()] ?? [])) {
                 $blocked[] = ['file' => $file, 'usages' => $usages[$file->getId()]];
-
-                continue;
+            } else {
+                $deleted[] = $file;
             }
-
-            $this->storage->delete($file);
-            $deleted[] = $file;
         }
+
+        $this->storage->delete($deleted);
 
         return new DeleteResult($deleted, $blocked);
     }
@@ -303,6 +302,7 @@ class FileLibrary
     public function mergeDuplicates(FileInterface $keep, array $duplicates): int
     {
         $updated = 0;
+        $merged = [];
 
         foreach ($duplicates as $duplicate) {
             if ($duplicate->getId() === $keep->getId()) {
@@ -318,10 +318,11 @@ class FileLibrary
             }
 
             $updated += $this->references->replace($duplicate, $keep);
-            $this->storage->delete($duplicate);
+            $merged[] = $duplicate;
         }
 
-        $this->entityManager->flush();
+        // Flushes the alt of $keep too.
+        $this->storage->delete($merged);
 
         return $updated;
     }
