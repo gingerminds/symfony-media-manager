@@ -77,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   zip content. `library.allowed_mimes` takes the real types (its default too), the `document` type
   filter matches them. `gingerminds:media:files:mime-types [--dry-run]` replaces the Laravel types
   of an imported database.
+- **BC break** `GET /api/baskets/{token}/download` keeps the basket (no side effect on a `GET`, a
+  download can be retried): `basket.delete_after_download: true` deletes it once downloaded, as the
+  Laravel media manager did.
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

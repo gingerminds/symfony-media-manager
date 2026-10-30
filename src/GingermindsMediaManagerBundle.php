@@ -116,6 +116,7 @@ final class GingermindsMediaManagerBundle extends AbstractResourceBundle
         $parameters->set('gingerminds_media_manager.basket.enabled', $config['basket']['enabled']);
         $parameters->set('gingerminds_media_manager.basket.claim_strategy', $config['basket']['claim_strategy']);
         $parameters->set('gingerminds_media_manager.basket.ttl', $config['basket']['ttl']);
+        $parameters->set('gingerminds_media_manager.basket.delete_after_download', $config['basket']['delete_after_download']);
 
         if ($config['basket']['enabled']) {
             $container->import('../config/services/basket.php');

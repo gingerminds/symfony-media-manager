@@ -34,6 +34,7 @@ gingerminds_media_manager:
     basket:
         enabled: true
         claim_strategy: merge            # merge | replace | ignore
+        delete_after_download: false     # true: the basket is deleted once downloaded (Laravel)
         ttl: 30                          # days of a guest basket, 0: forever
     resources:
         media: { entity: ~, controller: ~, form: ~ }

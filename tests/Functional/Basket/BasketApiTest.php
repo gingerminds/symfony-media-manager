@@ -158,8 +158,9 @@ final class BasketApiTest extends ApiTestCase
         unlink($path);
         self::assertFileDoesNotExist($response->getFile()->getPathname());
 
+        // Kept: basket.delete_after_download is off by default.
         $this->api('GET', $url);
-        $this->assertStatus(404);
+        $this->assertStatus(200);
     }
 
     public function testAnExpiredGuestBasketIsGoneAndPurged(): void

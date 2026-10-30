@@ -46,7 +46,12 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('gingerminds_media_manager.file.storage')]);
 
     $services->set('gingerminds_media_manager.basket.controller.download', DownloadBasketController::class)
-        ->args([service(BasketRepository::class), service('gingerminds_media_manager.basket.archiver'), service('security.authorization_checker')])
+        ->args([
+            service(BasketRepository::class),
+            service('gingerminds_media_manager.basket.archiver'),
+            service('security.authorization_checker'),
+            param('gingerminds_media_manager.basket.delete_after_download'),
+        ])
         ->tag('controller.service_arguments')
         ->public();
 

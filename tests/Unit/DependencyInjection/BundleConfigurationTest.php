@@ -106,6 +106,12 @@ final class BundleConfigurationTest extends TestCase
         self::assertFalse($container->hasDefinition(ResourceRegistryPass::BUNDLE_RESOURCE_TAG . '.basket'));
     }
 
+    public function testTheBasketCanBeDeletedOnceDownloaded(): void
+    {
+        self::assertFalse($this->load([])->getParameter('gingerminds_media_manager.basket.delete_after_download'));
+        self::assertTrue($this->load([['basket' => ['delete_after_download' => true]]])->getParameter('gingerminds_media_manager.basket.delete_after_download'));
+    }
+
     public function testThePurgeIsADailyTaskWithTheScheduler(): void
     {
         $tags = $this->load([])->getDefinition('gingerminds_media_manager.command.purge_baskets')->getTag('scheduler.task');

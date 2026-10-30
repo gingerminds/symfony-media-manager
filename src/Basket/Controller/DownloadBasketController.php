@@ -17,7 +17,8 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
- * `GET /api/baskets/{token}/download`: the files of the basket as a ZIP, then the basket is deleted.
+ * `GET /api/baskets/{token}/download`: the files of the basket as a ZIP; the basket is kept, unless
+ * `basket.delete_after_download`.
  */
 final readonly class DownloadBasketController
 {
@@ -25,6 +26,7 @@ final readonly class DownloadBasketController
         private BasketRepository $baskets,
         private BasketArchiver $archiver,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private bool $deleteAfterDownload = false,
     ) {
     }
 
@@ -50,7 +52,9 @@ final readonly class DownloadBasketController
             throw new UnprocessableEntityHttpException('No file of the basket could be found.');
         }
 
-        $this->baskets->delete($basket);
+        if ($this->deleteAfterDownload) {
+            $this->baskets->delete($basket);
+        }
 
         $response = new BinaryFileResponse($archive, headers: ['Content-Type' => 'application/zip'])
             ->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, 'basket.zip')

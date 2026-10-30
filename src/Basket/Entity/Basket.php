@@ -74,7 +74,7 @@ use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
             controller: 'gingerminds_media_manager.basket.controller.download',
             openapi: new Operation(
                 summary: 'Download a basket as a ZIP',
-                description: 'The files of the medias, then the basket is deleted. 422 when there is nothing to download.',
+                description: 'The files of the medias (the basket is kept, unless basket.delete_after_download). 422 when there is nothing to download.',
             ),
             output: false,
             read: false,
