@@ -17,6 +17,6 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('gingerminds_media_manager.file.library_presenter')]);
 
     $services->set('gingerminds_media_manager.media.usage_counter', MediaUsageCounter::class)
-        ->args([service('doctrine.orm.entity_manager')]);
+        ->args([service('doctrine.orm.entity_manager'), service('gingerminds_media_manager.doctrine.association_finder')]);
     $services->alias(MediaUsageCounter::class, 'gingerminds_media_manager.media.usage_counter');
 };

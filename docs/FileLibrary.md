@@ -31,7 +31,15 @@ sha256 `hash`) and a physical file on its disk, under `library.root`.
   (`library.max_upload_size`);
 - the file name is slugged (`Rapport final.PDF` gives `rapport-final.pdf`), `-1`, `-2`... when the
   name is taken; the original name is kept as the display name;
-- the content is hashed: uploading a known content returns the existing file instead.
+- choosing the free name, writing the file and saving its row happen under a `symfony/lock` lock
+  (renames, moves and `files:relocate` too): two simultaneous uploads of `photo.jpg` give
+  `photo.jpg` and `photo-1.jpg`, never one file for two rows. Several rows may still share a path
+  (imported Laravel uploads), so `(disk, path)` is not unique: the physical file is deleted with
+  its last row;
+- a directory being moved is locked: an upload, a move or a new directory into it (or below)
+  waits for the end of the move instead of being left behind and deleted with the old directory;
+- the content is hashed: uploading a known content returns the existing file instead, also when
+  two uploads of that content run at the same time (locked by hash).
 
 ## Usages and references
 
@@ -51,10 +59,14 @@ services:
             $field: content
 ```
 
-Other storages implement `FileReferenceSourceInterface` (autoconfigured).
+Other storages implement `FileReferenceSourceInterface` (autoconfigured): `references()` (who uses
+these files), `excludeReferenced()` (restricts a query of the files to the unused ones, the
+"orphans" filter and `files:orphans`: a `NOT EXISTS` per association for the Doctrine
+associations) and `replace()`.
 
 A JSON field has no database integrity: the ids are searched as strings (reliable for UUIDs) with
-`LIKE`, which does not work on a Postgres `jsonb` column (use `json` or `text`).
+`LIKE`, which does not work on a Postgres `jsonb` column (use `json` or `text`). The orphans filter
+reads the field of every row in PHP.
 
 A usage is shown as the label of its owner and a link to its edit page, found through its
 `gingerminds_core` resource. For an owner without admin resource, add a resolver
@@ -109,7 +121,7 @@ A form field or a project pointing at a folder by its name (`start_path`,
 | `view files` | browse the library, see the details and usages, pick files in a form |
 | `edit files` | everything else: upload, folders, rename, move, delete, merge |
 
-`delete files` is created by `gingerminds:permissions:sync` but not used.
+Deleting needs `edit files` (`resources.file.permissions`): there is no `delete files` permission.
 
 ## Extending
 
@@ -121,15 +133,38 @@ services:
     Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface: '@App\Media\SiteStartPathProvider'
 ```
 
-- **Reads** (page, browse, details, picker): `resources.file.controller`, extending
-  `FileLibraryController`.
+- **Reads** (page, picker, folder tree): `resources.file.controller`, extending
+  `FileLibraryController` (`browser()` gives the template variables).
 - **Writes** (upload, folders, rename, move, delete, merge): decorate the
   `gingerminds_media_manager.controller.admin.file_library_action` service
   (`FileLibraryActionController`).
-- **Services**: `FileLibrary` (library operations), `FileStorage` (store, read, delete on the
-  disks), `FileReferenceRegistry` (usages, `isUsed()`, `usedIds()`, `replace()`), `DiskRegistry`.
+- **Naming rule**: alias `FileNamerInterface` to your service (the default `SlugFileNamer` gives
+  `mon-fichier-ete.pdf` for `Mon Fichier été.PDF`); a name with a `/`, `.` or `..` is refused.
+- **Serving the files**: alias `Gingerminds\MediaManagerBundle\Http\FileResponseFactoryInterface`
+  to your service (X-Sendfile, a redirection to a signed bucket URL...).
+- **Events** (`Gingerminds\MediaManagerBundle\Event`):
+
+| Event | When |
+|---|---|
+| `FileUploadingEvent` | Before a new content is stored (`file`, `directory`): throw `FileUploadException::rejected($name, $reason)` to refuse it (antivirus). |
+| `FileStoredEvent` | A file row created (upload, `files:index`), after the flush. |
+| `FileMovedEvent` | The path of a file changed (`previousPath`): moved, renamed, its folder moved, relocated. |
+| `FileDeletedEvent` | A file row deleted, after the flush (its physical file goes with its last row). |
+
+  The last three come from the Doctrine flush of the rows, whoever writes them; they are dispatched
+  once the flush is done.
+- **Services**: `FileLibrary` (the files: list, upload, rename, move, delete, merge),
+  `LibraryDirectories` (the folders: list, create, delete, move, rename), `FileStorage` (store, read, delete on the
+  disks), `FileReferenceRegistry` (`usages()`, `excludeReferenced()`, `replace()`), `DiskRegistry`.
 - In Twig, `gm_file_url(file, preset = null, absolute = false)` gives the URL of a file or of a
   preset.
 
-The library endpoints (`/admin/files/*`) are JSON, their writes need the `gm-file-library` CSRF
-token in the `X-CSRF-Token` header; a library error is a 422 with a translated message.
+The library is rendered by the server in a Turbo frame (`gm-file-browser`): its state is in the
+query (`path`, the filters, `page`, `file` for the detail panel, `dialog` with the selected
+`ids[]` / `paths[]`, shown in a modal), and the page advances the URL (back button, shareable
+links). The toolbar actions are enabled by the selection: move and delete by any file or folder,
+rename by a single folder. The folder tree only lets open the folders that have subfolders, loaded
+when opened. The writes are
+forms posted with the `gm-file-library` CSRF token and a `return` URL (the browser), a library
+error coming back as a flash message. Only the upload answers JSON: one file a request, posted by
+the `gm-file-upload` Stimulus controller with its progress.

@@ -7,7 +7,7 @@ namespace Gingerminds\MediaManagerBundle\Menu;
 use Gingerminds\CoreBundle\Menu\AdminMenuProviderInterface;
 use Gingerminds\CoreBundle\Menu\MenuItem;
 use Gingerminds\CoreBundle\Resource\ResourceRegistry;
-use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
 
 /**
@@ -42,7 +42,7 @@ final readonly class MediaManagerAdminMenuProvider implements AdminMenuProviderI
                 $resource->translationKey('name_p'),
                 $resource->route('index'),
                 icon: $icon,
-                permission: AbstractResourceVoter::VIEW,
+                permission: ResourceVoter::VIEW,
                 permissionSubject: $name,
                 translationDomain: $resource->translationDomain,
                 weight: $weight,

@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Form\File;
 
-use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
-use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
-use Gingerminds\MediaManagerBundle\File\LibraryQuery;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\File\MimeTypePatterns;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
@@ -30,6 +28,11 @@ use Symfony\Component\Uid\Uuid;
  */
 final class FilePickerType extends AbstractType
 {
+    /**
+     * Replaced by a file id in the preview URL of the widget.
+     */
+    public const string ID_PLACEHOLDER = '00000000-0000-7000-8000-000000000000';
+
     /**
      * @param array<string, mixed> $presets
      */
@@ -61,14 +64,13 @@ final class FilePickerType extends AbstractType
         $view->vars['files'] = array_values(array_filter(array_map(static fn (string $id): ?array => $files[$id] ?? null, $ids)));
         $view->vars['multiple'] = $options['multiple'];
         $view->vars['accept'] = $options['accept'];
-        $view->vars['types'] = LibraryQuery::typesFor($options['accept']);
         $view->vars['start_path'] = $options['start_path'] ?? $this->startPathProvider->getStartPath();
-        $view->vars['can_pick'] = $this->authorizationChecker->isGranted(AbstractResourceVoter::VIEW, 'file');
+        $view->vars['can_pick'] = $this->authorizationChecker->isGranted(ResourceVoter::VIEW, 'file');
         $view->vars['picker_url'] = $this->urlGenerator->generate('gingerminds_media_manager_file_picker');
         $view->vars['preview_url'] = isset($this->presets[$options['preview_preset']])
-            ? $this->urlGenerator->generate(MediaManagerExtension::FILE_PRESET_ROUTE, ['id' => FileLibraryController::ID_PLACEHOLDER, 'preset' => $options['preview_preset']])
+            ? $this->urlGenerator->generate(MediaManagerExtension::FILE_PRESET_ROUTE, ['id' => self::ID_PLACEHOLDER, 'preset' => $options['preview_preset']])
             : null;
-        $view->vars['id_placeholder'] = FileLibraryController::ID_PLACEHOLDER;
+        $view->vars['id_placeholder'] = self::ID_PLACEHOLDER;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

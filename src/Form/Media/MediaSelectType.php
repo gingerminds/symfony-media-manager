@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Form\Media;
 
-use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
 use Gingerminds\MediaManagerBundle\Media\MediaPresenter;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
@@ -60,9 +60,8 @@ final class MediaSelectType extends AbstractType
         $view->vars['multiple'] = $options['multiple'];
         $view->vars['categories'] = array_map(static fn (MediaCategoryInterface $category): int => (int) $category->getId(), $categories);
         $view->vars['per_page'] = $options['per_page'];
-        $view->vars['can_pick'] = $this->authorizationChecker->isGranted(AbstractResourceVoter::VIEW, 'media');
+        $view->vars['can_pick'] = $this->authorizationChecker->isGranted(ResourceVoter::VIEW, 'media');
         $view->vars['picker_url'] = $this->urlGenerator->generate('gingerminds_media_manager_media_picker');
-        $view->vars['search_url'] = $this->urlGenerator->generate('gingerminds_media_manager_media_search');
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -113,6 +112,6 @@ final class MediaSelectType extends AbstractType
 
         $ids = array_map(static fn (MediaCategoryInterface $category): int => (int) $category->getId(), $this->categories->findByCodes($codes));
 
-        return $this->categories->findIdsWithDescendants($ids);
+        return array_map(intval(...), $this->categories->findIdsWithDescendants($ids));
     }
 }

@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Tests\Unit\DependencyInjection;
 
 use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
+use Gingerminds\CoreBundle\DependencyInjection\Compiler\ResourceRegistryPass;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\MediaManagerBundle\Basket\Entity\Basket;
 use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
+use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
+use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
 use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Entity\Media\Media;
@@ -33,7 +37,7 @@ final class BundleConfigurationTest extends TestCase
             [FileInterface::class => File::class, MediaCategoryInterface::class => MediaCategory::class, MediaInterface::class => Media::class, BasketInterface::class => Basket::class],
             $doctrine['resolve_target_entities'],
         );
-        self::assertSame(['GingermindsMediaManagerFile', 'GingermindsMediaManagerMedia', 'GingermindsMediaManagerBasket'], array_keys($doctrine['mappings']));
+        self::assertSame(['GingermindsMediaManagerBasket', 'GingermindsMediaManagerFile', 'GingermindsMediaManagerMedia'], array_keys($doctrine['mappings']));
         self::assertSame('Gingerminds\MediaManagerBundle\Basket\Entity', $doctrine['mappings']['GingermindsMediaManagerBasket']['prefix']);
         self::assertSame([new GingermindsMediaManagerBundle()->getPath() . '/src/Basket/Entity'], $this->merged($container, 'api_platform')['mapping']['paths']);
         self::assertSame('Gingerminds\MediaManagerBundle\Entity\File', $doctrine['mappings']['GingermindsMediaManagerFile']['prefix']);
@@ -44,19 +48,24 @@ final class BundleConfigurationTest extends TestCase
         );
     }
 
-    public function testTheMediaCategoriesAreACoreResource(): void
+    public function testTheMediaCategoriesAreRegisteredOnLoad(): void
     {
-        $resource = $this->merged($this->prepend([]), 'gingerminds_core')['resources']['media_category'];
+        self::assertArrayNotHasKey('resources', $this->merged($this->prepend([]), 'gingerminds_core'), 'Registered on load (ResourceRegistryPass), below the project configuration.');
 
-        self::assertSame(MediaCategory::class, $resource['entity']);
-        self::assertSame(MediaCategoryType::class, $resource['form']);
-        self::assertSame('media-categories', $resource['path']);
-        self::assertSame('media_categories', $resource['permission']);
-        self::assertSame('gingerminds_media_manager_media_category', $resource['route_prefix']);
-        self::assertSame('@GingermindsMediaManager/pages/media_category', $resource['template_prefix']);
+        self::assertSame([
+            'entity' => MediaCategory::class,
+            'controller' => MediaCategoryController::class,
+            'form' => MediaCategoryType::class,
+            'path' => 'media-categories',
+            'permission' => 'media_categories',
+            'route_prefix' => 'gingerminds_media_manager_media_category',
+            'translation_prefix' => 'media_category',
+            'translation_domain' => 'GingermindsMediaManager',
+            'template_prefix' => '@GingermindsMediaManager/pages/media_category',
+        ], $this->bundleResource($this->load([]), 'media_category'));
 
-        $resource = $this->merged($this->prepend([['resources' => ['media_category' => ['controller' => 'App\\Controller\\CategoryController']]]]), 'gingerminds_core')['resources']['media_category'];
-        self::assertSame('App\\Controller\\CategoryController', $resource['controller']);
+        $configs = [['resources' => ['media_category' => ['controller' => 'App\\Controller\\CategoryController']]]];
+        self::assertSame('App\\Controller\\CategoryController', $this->bundleResource($this->load($configs), 'media_category')['controller']);
     }
 
     public function testADisabledBasketIsNeitherMappedNorAnApiResource(): void
@@ -69,9 +78,9 @@ final class BundleConfigurationTest extends TestCase
         self::assertSame([], $container->getExtensionConfig('api_platform'));
     }
 
-    public function testTheMediasAreACoreResource(): void
+    public function testTheMediasAreRegisteredOnLoad(): void
     {
-        $resource = $this->merged($this->prepend([]), 'gingerminds_core')['resources']['media'];
+        $resource = $this->bundleResource($this->load([]), 'media');
 
         self::assertSame(Media::class, $resource['entity']);
         self::assertSame(MediaType::class, $resource['form']);
@@ -80,17 +89,35 @@ final class BundleConfigurationTest extends TestCase
         self::assertSame('gingerminds_media_manager_media', $resource['route_prefix']);
     }
 
-    public function testTheFilesAreACoreResourceWithoutCrudRoutes(): void
+    public function testTheFilesAreDeletedWithTheEditPermission(): void
     {
-        $container = $this->prepend([['resources' => ['file' => ['controller' => 'App\\Controller\\LibraryController']]]]);
-        $resource = $this->merged($container, 'gingerminds_core')['resources']['file'];
+        $resource = $this->bundleResource($this->load([]), 'file');
 
-        self::assertNull($resource['controller']);
+        self::assertSame(FileLibraryController::class, $resource['controller']);
         self::assertSame('files', $resource['permission']);
-        self::assertSame('gingerminds_media_manager_file', $resource['route_prefix']);
+        self::assertSame([ResourceVoter::DELETE => 'edit files'], $resource['permissions']);
+    }
 
-        new GingermindsMediaManagerBundle()->getContainerExtension()?->load([['resources' => ['file' => ['controller' => 'App\\Controller\\LibraryController']]]], $container);
-        self::assertSame('App\\Controller\\LibraryController', $container->getParameter('gingerminds_media_manager.resource.file.controller'));
+    public function testTheBasketIsAnEntityWithoutAdmin(): void
+    {
+        $container = $this->load([]);
+
+        self::assertSame(Basket::class, $container->getParameter('gingerminds_media_manager.resource.basket.entity'));
+        self::assertFalse($container->hasDefinition(ResourceRegistryPass::BUNDLE_RESOURCE_TAG . '.basket'));
+    }
+
+    public function testTheBasketCanBeDeletedOnceDownloaded(): void
+    {
+        self::assertFalse($this->load([])->getParameter('gingerminds_media_manager.basket.delete_after_download'));
+        self::assertTrue($this->load([['basket' => ['delete_after_download' => true]]])->getParameter('gingerminds_media_manager.basket.delete_after_download'));
+    }
+
+    public function testThePurgeIsADailyTaskWithTheScheduler(): void
+    {
+        $tags = $this->load([])->getDefinition('gingerminds_media_manager.command.purge_baskets')->getTag('scheduler.task');
+
+        self::assertSame('1 day', $tags[0]['frequency'] ?? null);
+        self::assertSame('every', $tags[0]['trigger'] ?? null);
     }
 
     public function testTheAdminAssetsArePrepended(): void
@@ -147,6 +174,28 @@ final class BundleConfigurationTest extends TestCase
         $extension->prepend($container);
 
         return $container;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $configs gingerminds_media_manager configurations
+     */
+    private function load(array $configs): ContainerBuilder
+    {
+        $container = $this->prepend($configs);
+        new GingermindsMediaManagerBundle()->getContainerExtension()?->load($configs, $container);
+
+        return $container;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function bundleResource(ContainerBuilder $container, string $name): array
+    {
+        $attributes = $container->getDefinition(ResourceRegistryPass::BUNDLE_RESOURCE_TAG . '.' . $name)->getTag(ResourceRegistryPass::BUNDLE_RESOURCE_TAG)[0];
+        unset($attributes['resource']);
+
+        return $attributes;
     }
 
     /**

@@ -12,6 +12,8 @@ use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -26,21 +28,24 @@ class FileStorage
     public function __construct(
         private readonly DiskRegistry $disks,
         private readonly PathGuard $paths,
-        private readonly MimeTypeNormalizer $mimeTypes,
+        private readonly MimeTypeGuesser $mimeTypes,
         private readonly FileRepository $files,
         private readonly ImageProcessor $images,
         private readonly string $fileClass,
         private readonly int $maxUploadSize,
         private readonly array $allowedMimes,
+        private readonly PathLocker $locker,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
     /**
      * Stores the file under the library root, renamed "name-1.ext", "name-2.ext"... when the name is taken.
      *
-     * @param string $directory relative to the library root
+     * @param string      $directory relative to the library root
+     * @param string|null $hash      sha256 of the content, when already known
      */
-    public function store(\SplFileInfo $file, string $directory = '', ?string $disk = null): FileInterface
+    public function store(\SplFileInfo $file, string $directory = '', ?string $disk = null, ?string $hash = null): FileInterface
     {
         $originalName = $file instanceof UploadedFile ? $file->getClientOriginalName() : $file->getFilename();
         $realPath = $file->getRealPath();
@@ -62,35 +67,52 @@ class FileStorage
         }
 
         $disk ??= $this->disks->defaultDisk();
-        $filesystem = $this->disks->get($disk);
-        $path = $this->availablePath($disk, $this->paths->inLibrary($directory), $this->paths->fileName($originalName));
+        $directory = $this->paths->inLibrary($directory);
+        $fileName = $this->paths->fileName($originalName);
 
-        $this->write($filesystem, $path, $realPath, $originalName);
-
-        $entity = new ($this->fileClass)($disk, $path, $mimeType, $originalName, $size, hash_file('sha256', $realPath) ?: null);
-
-        try {
-            $this->files->save($entity);
-        } catch (\Throwable $exception) {
-            $filesystem->delete($path);
-
-            throw $exception;
-        }
-
-        return $entity;
+        return $this->locker->synchronized([[$disk, $directory, $fileName]], fn (): FileInterface => $this->writeRow(
+            $disk,
+            $this->availablePath($disk, $directory, $fileName),
+            $realPath,
+            $originalName,
+            $mimeType,
+            $size,
+            $hash ?? (hash_file('sha256', $realPath) ?: null),
+        ));
     }
 
     /**
-     * The physical file is kept while another row still points to it.
+     * The rows first, in one flush, then the physical files no other row points to (and their
+     * presets): a failed flush (a reference added meanwhile) leaves every file in place. A physical
+     * file that cannot be deleted is only logged.
+     *
+     * @param list<FileInterface> $files
      */
-    public function delete(FileInterface $file): void
+    public function delete(array $files): void
     {
-        if ($this->files->countByPath($file->getDisk(), $file->getPath()) <= 1) {
-            $this->images->clear($file);
-            $this->disks->get($file->getDisk())->delete($file->getPath());
-        }
+        $this->files->removeAll($files);
 
-        $this->files->remove($file);
+        foreach ($files as $file) {
+            if ($this->files->countByPath($file->getDisk(), $file->getPath()) > 0) {
+                continue;
+            }
+
+            try {
+                $this->images->clear($file);
+                $this->disks->get($file->getDisk())->delete($file->getPath());
+            } catch (FilesystemException $exception) {
+                $this->logger->warning('The file "{path}" of the disk "{disk}" could not be deleted: {message}', [
+                    'path' => $file->getPath(),
+                    'disk' => $file->getDisk(),
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    public function exists(FileInterface $file): bool
+    {
+        return $this->disks->get($file->getDisk())->fileExists($file->getPath());
     }
 
     /**
@@ -104,7 +126,8 @@ class FileStorage
     }
 
     /**
-     * "name.ext", else "name-1.ext", "name-2.ext"... free on the disk and in `files`.
+     * "name.ext", else "name-1.ext", "name-2.ext"... free on the disk and in `files`. Call it inside
+     * PathLocker::synchronized(), up to the write of the path.
      *
      * @param string $directory on the disk
      */
@@ -121,6 +144,23 @@ class FileStorage
         } while ($filesystem->fileExists($candidate) || $this->files->pathExists($disk, $candidate));
 
         return $candidate;
+    }
+
+    private function writeRow(string $disk, string $path, string $realPath, string $originalName, string $mimeType, int $size, ?string $hash): FileInterface
+    {
+        $filesystem = $this->disks->get($disk);
+        $this->write($filesystem, $path, $realPath, $originalName);
+        $entity = new ($this->fileClass)($disk, $path, $mimeType, $originalName, $size, $hash);
+
+        try {
+            $this->files->save($entity);
+        } catch (\Throwable $exception) {
+            $filesystem->delete($path);
+
+            throw $exception;
+        }
+
+        return $entity;
     }
 
     private function write(FilesystemOperator $filesystem, string $path, string $realPath, string $originalName): void

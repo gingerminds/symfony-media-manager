@@ -8,23 +8,25 @@ use ApiPlatform\Metadata\ApiProperty;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Gingerminds\CoreBundle\Model\CacheableResourceInterface;
-use Gingerminds\CoreBundle\Model\CacheCascadeInterface;
-use Gingerminds\CoreBundle\Model\SearchableInterface;
-use Gingerminds\CoreBundle\Model\SortableInterface;
-use Gingerminds\CoreBundle\Model\Trait\CacheableResourceTrait;
+use Gingerminds\CoreBundle\Model\Cacheable;
+use Gingerminds\CoreBundle\Model\CacheCascade;
+use Gingerminds\CoreBundle\Model\Searchable;
+use Gingerminds\CoreBundle\Model\Sortable;
 use Gingerminds\CoreBundle\Model\Trait\TimestampableTrait;
+use Gingerminds\CoreBundle\Validator\NoTreeCycle;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\MappedSuperclass]
 #[UniqueEntity(fields: ['code'])]
-abstract class BaseMediaCategory implements MediaCategoryInterface, SortableInterface, SearchableInterface, CacheableResourceInterface, CacheCascadeInterface
+#[NoTreeCycle]
+#[Cacheable(key: 'media_category')]
+// The media embed their category.
+#[CacheCascade(['media'])]
+abstract class BaseMediaCategory implements MediaCategoryInterface
 {
-    use CacheableResourceTrait;
     use TimestampableTrait;
 
     public const string GROUP_LIST = 'media_category:list';
@@ -42,12 +44,16 @@ abstract class BaseMediaCategory implements MediaCategoryInterface, SortableInte
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_TREE])]
+    #[Sortable]
+    #[Searchable]
     protected ?string $code = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_TREE])]
+    #[Sortable]
+    #[Searchable]
     protected ?string $name = null;
 
     #[ORM\ManyToOne(targetEntity: MediaCategoryInterface::class, inversedBy: 'children')]
@@ -56,13 +62,14 @@ abstract class BaseMediaCategory implements MediaCategoryInterface, SortableInte
 
     #[ORM\Column(options: ['default' => 0])]
     #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_TREE])]
+    #[Sortable]
     protected int $position = 0;
 
     /**
      * @var Collection<int, MediaCategoryInterface>
      */
     #[ORM\OneToMany(targetEntity: MediaCategoryInterface::class, mappedBy: 'parent')]
-    #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending, 'id' => \SortDirection::Ascending])]
     #[Groups([self::GROUP_READ, self::GROUP_TREE])]
     protected Collection $children;
 
@@ -131,45 +138,6 @@ abstract class BaseMediaCategory implements MediaCategoryInterface, SortableInte
     public function hasChildren(): bool
     {
         return !$this->children->isEmpty();
-    }
-
-    public function contains(MediaCategoryInterface $category): bool
-    {
-        for ($current = $category; $current instanceof MediaCategoryInterface; $current = $current->getParent()) {
-            if ($current === $this) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    #[Assert\Callback]
-    public function validateParent(ExecutionContextInterface $context): void
-    {
-        if ($this->parent instanceof MediaCategoryInterface && $this->contains($this->parent)) {
-            $context->buildViolation('gingerminds_media_manager.media_category.parent_cycle')
-                ->atPath('parent')
-                ->addViolation();
-        }
-    }
-
-    public static function getSearchableFields(): array
-    {
-        return ['code', 'name'];
-    }
-
-    public static function getCacheKey(): string
-    {
-        return 'media_category';
-    }
-
-    /**
-     * The media embed their category.
-     */
-    public static function getCascadeCacheKeys(): array
-    {
-        return ['media'];
     }
 
     public function __toString(): string

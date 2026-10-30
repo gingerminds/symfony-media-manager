@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Gingerminds\MediaManagerBundle\Http\FileResponseFactory;
+use Gingerminds\MediaManagerBundle\Http\FileResponseFactoryInterface;
 use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 
 /*
@@ -26,4 +27,6 @@ return static function (ContainerConfigurator $container): void {
     $services->set('gingerminds_media_manager.http.file_response_factory', FileResponseFactory::class)
         ->args([service('gingerminds_media_manager.storage.disk_registry')]);
     $services->alias(FileResponseFactory::class, 'gingerminds_media_manager.http.file_response_factory');
+    // Alias it to your service to serve the files otherwise (X-Sendfile, bucket redirection...).
+    $services->alias(FileResponseFactoryInterface::class, 'gingerminds_media_manager.http.file_response_factory');
 };

@@ -24,18 +24,20 @@ final class MediaPickerTest extends ApiTestCase
         $photos = $this->fixtures->mediaCategory('photos');
         $landscapes = $this->fixtures->mediaCategory('landscapes', $photos);
         $mountains = $this->fixtures->mediaCategory('mountains', $landscapes);
+        $videos = $this->fixtures->mediaCategory('videos');
         $this->entityManager()->clear();
         $this->client->loginUser($this->fixtures->user('viewer@example.com', ['view medias']), 'admin');
 
         $crawler = $this->client->request('GET', '/admin/medias/picker');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('[data-controller="gm-media-picker"]'));
-        self::assertSame(
-            [['', ''], [(string) $photos->getId(), ''], [(string) $landscapes->getId(), (string) $photos->getId()], [(string) $mountains->getId(), $landscapes->getId() . ' ' . $photos->getId()]],
-            $crawler->filter('select option')->each(static fn (Crawler $option): array => [(string) $option->attr('value'), (string) $option->attr('data-ancestors')]),
-        );
-        self::assertSame('— — Mountains', $crawler->filter('select option')->last()->text());
+        self::assertCount(1, $crawler->filter('#gm-media-picker-modal[data-controller="gm-pick"] turbo-frame#gm-media-picker'));
+        self::assertSame(['', (string) $photos->getId(), (string) $landscapes->getId(), (string) $mountains->getId(), (string) $videos->getId()], $this->options($crawler));
+        self::assertSame('— — Mountains', $crawler->filter('select[name="category"] option')->eq(3)->text());
+
+        $allowed = $this->client->request('GET', '/admin/medias/picker?categories[]=' . $landscapes->getId() . '&categories[]=' . $videos->getId());
+        self::assertSame(['', (string) $landscapes->getId(), (string) $mountains->getId(), (string) $videos->getId()], $this->options($allowed), 'The allowed ones and their subcategories.');
+        self::assertCount(0, $this->client->request('GET', '/admin/medias/picker?categories[]=' . $photos->getId())->filter('select[name="category"]'), 'One allowed category locks the filter.');
     }
 
     public function testSearch(): void
@@ -48,22 +50,23 @@ final class MediaPickerTest extends ApiTestCase
         $this->fixtures->media($this->files->text('clip.txt', 'clip'), 'Clip', $videos);
         $this->client->loginUser($this->fixtures->user('viewer@example.com', ['view medias']), 'admin');
 
-        $data = $this->search('');
-        self::assertSame(['Alps', 'Clip', 'Tractor'], array_column($data['items'], 'name'));
-        self::assertSame(['id', 'code', 'name', 'category', 'file', 'thumbnailUrl'], array_keys($data['items'][0]));
-        self::assertSame('Landscapes', $data['items'][0]['category']);
-        self::assertNull($data['items'][1]['thumbnailUrl'], 'Neither an image nor a thumbnail.');
+        $crawler = $this->picker('');
+        self::assertSame(['Alps', 'Clip', 'Tractor'], $this->names($crawler));
+        $item = json_decode((string) $crawler->filter('[data-gm-pick-item-param]')->first()->attr('data-gm-pick-item-param'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertSame(['id', 'code', 'name', 'category', 'file', 'thumbnailUrl'], array_keys($item));
+        self::assertSame('Landscapes', $item['category']);
+        $clip = $crawler->filter('[data-pick-id]')->reduce(static fn (Crawler $card): bool => str_contains($card->text(), 'Clip'));
+        self::assertCount(0, $clip->filter('img'), 'Neither an image nor a thumbnail.');
 
-        self::assertSame(['Tractor'], array_column($this->search('search=red')['items'], 'name'), 'By code.');
-        self::assertSame(['Alps', 'Tractor'], array_column($this->search('category=' . $photos->getId())['items'], 'name'), 'With the subcategories.');
-        self::assertSame(['Alps', 'Tractor'], array_column($this->search('categories[]=' . $photos->getId())['items'], 'name'), 'Allowed categories.');
-        self::assertSame([], $this->search('categories[]=' . $photos->getId() . '&category=' . $videos->getId())['items'], 'Outside the allowed categories.');
+        self::assertSame(['Tractor'], $this->names($this->picker('search=red')), 'By code.');
+        self::assertSame(['Alps', 'Tractor'], $this->names($this->picker('category=' . $photos->getId())), 'With the subcategories.');
+        self::assertSame(['Alps', 'Tractor'], $this->names($this->picker('categories[]=' . $photos->getId())), 'Allowed categories.');
+        self::assertSame([], $this->names($this->picker('categories[]=' . $photos->getId() . '&category=' . $videos->getId())), 'Outside the allowed categories.');
 
-        $data = $this->search('per_page=2');
-        self::assertSame(['Alps', 'Clip'], array_column($data['items'], 'name'));
-        self::assertTrue($data['hasMore']);
-        self::assertSame(3, $data['total']);
-        self::assertFalse($this->search('per_page=2&page=2')['hasMore']);
+        $page = $this->picker('per_page=2');
+        self::assertSame(['Alps', 'Clip'], $this->names($page));
+        self::assertSame(['Tractor'], $this->names($this->picker('per_page=2&page=2')));
+        self::assertNotCount(0, $page->filter('turbo-frame#gm-media-picker .pagination a[href*="page=2"][href*="per_page=2"]'), 'The pages keep the state.');
     }
 
     public function testThePickerNeedsThePermission(): void
@@ -72,19 +75,29 @@ final class MediaPickerTest extends ApiTestCase
 
         $this->client->request('GET', '/admin/medias/picker');
         self::assertResponseStatusCodeSame(403);
+    }
 
-        $this->client->request('GET', '/admin/medias/search');
-        self::assertResponseStatusCodeSame(403);
+    private function picker(string $query): Crawler
+    {
+        $crawler = $this->client->request('GET', '/admin/medias/picker?' . $query);
+        self::assertResponseIsSuccessful();
+
+        return $crawler;
     }
 
     /**
-     * @return array<string, mixed>
+     * @return list<string>
      */
-    private function search(string $query): array
+    private function names(Crawler $crawler): array
     {
-        $this->client->request('GET', '/admin/medias/search?' . $query, server: ['HTTP_ACCEPT' => 'application/json']);
-        self::assertResponseIsSuccessful();
+        return $crawler->filter('[data-pick-id] .gm-file-card-name')->each(static fn (Crawler $name): string => $name->text());
+    }
 
-        return json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+    /**
+     * @return list<string>
+     */
+    private function options(Crawler $crawler): array
+    {
+        return $crawler->filter('select[name="category"] option')->each(static fn (Crawler $option): string => (string) $option->attr('value'));
     }
 }

@@ -6,8 +6,9 @@ namespace Gingerminds\MediaManagerBundle\Entity\Media;
 
 use Gingerminds\CoreBundle\Model\ResourceInterface;
 use Gingerminds\CoreBundle\Model\TimestampableInterface;
+use Gingerminds\CoreBundle\Model\TreeNodeInterface;
 
-interface MediaCategoryInterface extends ResourceInterface, TimestampableInterface, \Stringable
+interface MediaCategoryInterface extends ResourceInterface, TimestampableInterface, TreeNodeInterface, \Stringable
 {
     public function getId(): ?int;
 
@@ -25,19 +26,10 @@ interface MediaCategoryInterface extends ResourceInterface, TimestampableInterfa
 
     public function getParentId(): ?int;
 
-    public function getPosition(): int;
-
-    public function setPosition(int $position): void;
-
     /**
      * @return list<self> ordered by position
      */
     public function getChildren(): array;
 
     public function hasChildren(): bool;
-
-    /**
-     * Whether the category is this one or one of its descendants.
-     */
-    public function contains(self $category): bool;
 }

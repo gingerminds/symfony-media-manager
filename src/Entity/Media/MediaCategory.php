@@ -25,8 +25,8 @@ use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
     ],
     // `parent_id` is null rather than missing, as in Laravel.
     normalizationContext: ['groups' => [BaseMediaCategory::GROUP_READ], 'skip_null_values' => false],
+    order: ['position' => 'ASC'],
     paginationClientItemsPerPage: true,
-    provider: 'gingerminds_media_manager.api.provider.media_category',
 )]
 #[ORM\Entity(repositoryClass: MediaCategoryRepository::class)]
 #[ORM\Table(name: 'media_categories')]

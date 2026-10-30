@@ -6,6 +6,7 @@
 | `gingerminds:media:directory:move` | Moves or renames a folder of the library. |
 | `gingerminds:media:basket:purge` | Deletes the expired guest baskets. |
 | `gingerminds:media:files:hash` | Computes the hash of the files without one. |
+| `gingerminds:media:files:mime-types` | Replaces the Laravel mime types of the Office documents by the real ones. |
 | `gingerminds:media:files:index` | Creates the rows of the files on the disk missing from the database. |
 | `gingerminds:media:files:deduplicate` | Merges the files with the same content. |
 | `gingerminds:media:files:relocate` | Moves the files outside the library root into it. |
@@ -43,7 +44,8 @@ php bin/console gingerminds:media:directory:move news/2024 --name="2024 news"
 php bin/console gingerminds:media:basket:purge
 ```
 
-Deletes the guest baskets past their `expires_at`. Run it every day from a cron.
+Deletes the guest baskets past their `expires_at`. Scheduled once a day with `symfony/scheduler`
+(`messenger:consume scheduler_default`), else run it every day from a cron.
 
 ## Maintenance
 
@@ -54,6 +56,13 @@ works in batches and can run on a big library; the ones changing data have a `--
 
 Computes the sha256 of the files without one (imported rows), reading each file on its disk;
 `--force` hashes every file again. The files missing on their disk are listed.
+
+### `files:mime-types [--dry-run]`
+
+The Laravel media manager stored the Office documents as `application/<extension>`
+(`application/docx`...), a type no browser knows: replaces them by the real ones
+(`application/vnd.openxmlformats-officedocument.wordprocessingml.document`...), in the database
+only (one `UPDATE` per type).
 
 ### `files:index [--path=<folder>] [--dry-run]`
 

@@ -14,12 +14,9 @@ use Gingerminds\MediaManagerBundle\Menu\MediaManagerAdminMenuProvider;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
-use Gingerminds\MediaManagerBundle\Security\Voter\FileVoter;
-use Gingerminds\MediaManagerBundle\Security\Voter\MediaCategoryVoter;
-use Gingerminds\MediaManagerBundle\Security\Voter\MediaVoter;
 
 /*
- * Admin: menu, voters and form types.
+ * Admin: menu and form types (the permissions: core ResourceVoter).
  */
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
@@ -27,15 +24,6 @@ return static function (ContainerConfigurator $container): void {
     $services->set('gingerminds_media_manager.admin_menu.provider', MediaManagerAdminMenuProvider::class)
         ->args([service('gingerminds_core.resource_registry')])
         ->tag('gingerminds_core.admin_menu_provider');
-
-    $services->set('gingerminds_media_manager.security.voter.media_category', MediaCategoryVoter::class)
-        ->tag('security.voter');
-
-    $services->set('gingerminds_media_manager.security.voter.file', FileVoter::class)
-        ->tag('security.voter');
-
-    $services->set('gingerminds_media_manager.security.voter.media', MediaVoter::class)
-        ->tag('security.voter');
 
     $services->set('gingerminds_media_manager.form.type.media_category', MediaCategoryType::class)
         ->args([service('gingerminds_core.resource_registry')])

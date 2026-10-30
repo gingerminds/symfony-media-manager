@@ -23,13 +23,13 @@ final class ConfigurationTest extends TestCase
         self::assertSame('library', $config['library']['root']);
         self::assertSame(51200, $config['library']['max_upload_size']);
         self::assertSame(1000, $config['library']['max_directory_move']);
-        self::assertContains('application/xlsx', $config['library']['allowed_mimes']);
+        self::assertContains('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $config['library']['allowed_mimes']);
         self::assertSame('imagick', $config['images']['driver']);
         self::assertSame(['micro', 'thumbnail', 'card', 'hero'], array_keys($config['images']['presets']));
         self::assertSame(['w' => 150, 'h' => 150, 'fit' => 'crop', 'q' => 80], $config['images']['presets']['thumbnail']);
         self::assertSame(600, $config['files_rate_limit']);
-        self::assertSame(['enabled' => true, 'claim_strategy' => 'merge', 'ttl' => 30], $config['basket']);
-        self::assertSame(['entity' => null, 'controller' => null, 'form' => null], $config['resources']['media']);
+        self::assertSame(['enabled' => true, 'claim_strategy' => 'merge', 'delete_after_download' => false, 'ttl' => 30], $config['basket']);
+        self::assertSame(['entity' => null, 'controller' => null, 'form' => null, 'api' => true], $config['resources']['media']);
     }
 
     public function testCustomPresetsReplaceTheDefaultsAndKeepExtraGlideParameters(): void

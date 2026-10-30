@@ -2,6 +2,7 @@
     "name": "gingerminds/symfony-media-manager",
     "description": "Media library, file library and image processing for Gingerminds Symfony projects",
     "type": "symfony-bundle",
+    "keywords": ["symfony-ux"],
     "license": "MIT",
     "authors": [
         {
@@ -15,13 +16,15 @@
         "api-platform/symfony": "^4.4",
         "doctrine/doctrine-bundle": "^2.18 || ^3.0",
         "doctrine/orm": "^3.5",
-        "gingerminds/symfony-core": "^1.7",
+        "gingerminds/symfony-core": "^1.10",
         "league/flysystem-bundle": "^3.7",
         "league/glide": "^4.1",
+        "maennchen/zipstream-php": "^3.1",
         "symfony/asset-mapper": "^8.1",
         "symfony/doctrine-bridge": "^8.1",
         "symfony/form": "^8.1",
         "symfony/framework-bundle": "^8.1",
+        "symfony/lock": "^8.1",
         "symfony/mime": "^8.1",
         "symfony/property-access": "^8.1",
         "symfony/security-bundle": "^8.1",
@@ -45,11 +48,13 @@
         "symfony/browser-kit": "^8.1",
         "symfony/css-selector": "^8.1",
         "symfony/phpunit-bridge": "^8.1",
+        "symfony/scheduler": "^8.1",
         "symfony/yaml": "^8.1"
     },
     "suggest": {
         "ext-imagick": "Image driver of the presets (images.driver: imagick, default)",
-        "ext-gd": "Alternative image driver of the presets (images.driver: gd)"
+        "ext-gd": "Alternative image driver of the presets (images.driver: gd)",
+        "symfony/scheduler": "Daily purge of the expired guest baskets (schedule `default`), instead of a cron"
     },
     "autoload": {
         "psr-4": {

@@ -6,12 +6,11 @@ namespace Gingerminds\MediaManagerBundle\Entity\Media;
 
 use ApiPlatform\Metadata\ApiProperty;
 use Doctrine\ORM\Mapping as ORM;
-use Gingerminds\CoreBundle\Model\CacheableResourceInterface;
-use Gingerminds\CoreBundle\Model\EagerLoadableInterface;
-use Gingerminds\CoreBundle\Model\FilterableInterface;
-use Gingerminds\CoreBundle\Model\SearchableInterface;
-use Gingerminds\CoreBundle\Model\SortableInterface;
-use Gingerminds\CoreBundle\Model\Trait\CacheableResourceTrait;
+use Gingerminds\CoreBundle\Model\Cacheable;
+use Gingerminds\CoreBundle\Model\EagerLoad;
+use Gingerminds\CoreBundle\Model\Filter;
+use Gingerminds\CoreBundle\Model\Searchable;
+use Gingerminds\CoreBundle\Model\Sortable;
 use Gingerminds\CoreBundle\Model\Trait\TimestampableTrait;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -22,9 +21,9 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\MappedSuperclass]
 #[UniqueEntity(fields: ['code'])]
-abstract class BaseMedia implements MediaInterface, SortableInterface, SearchableInterface, FilterableInterface, EagerLoadableInterface, CacheableResourceInterface
+#[Cacheable(key: 'media')]
+abstract class BaseMedia implements MediaInterface
 {
-    use CacheableResourceTrait;
     use MediaApiFieldsTrait;
     use TimestampableTrait;
 
@@ -45,25 +44,34 @@ abstract class BaseMedia implements MediaInterface, SortableInterface, Searchabl
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
     #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_BASKET])]
+    #[Sortable]
+    #[Searchable]
     protected ?string $code = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     #[Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_BASKET])]
+    #[Sortable]
+    #[Searchable]
     protected ?string $name = null;
 
     // RESTRICT: a file is never deleted with the media, nor a media with its file.
     #[ORM\ManyToOne(targetEntity: FileInterface::class)]
     #[ORM\JoinColumn(name: 'file_id', nullable: false, onDelete: 'RESTRICT')]
     #[Assert\NotNull]
+    #[EagerLoad]
     protected ?FileInterface $file = null;
 
     #[ORM\ManyToOne(targetEntity: FileInterface::class)]
     #[ORM\JoinColumn(name: 'thumbnail_id', onDelete: 'RESTRICT')]
+    #[EagerLoad]
     protected ?FileInterface $thumbnail = null;
 
     #[ORM\ManyToOne(targetEntity: MediaCategoryInterface::class)]
     #[ORM\JoinColumn(name: 'media_category_id', onDelete: 'SET NULL')]
+    #[EagerLoad]
+    #[Sortable(paths: ['name'])]
+    #[Filter(label: 'media.field.category', multiple: true, resource: 'media_category')]
     protected ?MediaCategoryInterface $category = null;
 
     public function getId(): ?int
@@ -138,37 +146,6 @@ abstract class BaseMedia implements MediaInterface, SortableInterface, Searchabl
                 ->atPath('thumbnail')
                 ->addViolation();
         }
-    }
-
-    public static function getSearchableFields(): array
-    {
-        return ['code', 'name'];
-    }
-
-    /**
-     * `entity` is the bundle class: MediaController replaces it with the configured one.
-     */
-    public static function getFilters(): array
-    {
-        return [
-            'category' => [
-                'type' => 'select-entity',
-                'label' => 'media.field.category',
-                'entity' => MediaCategory::class,
-                'resource' => 'media_category',
-                'multiple' => true,
-            ],
-        ];
-    }
-
-    public static function getEagerLoads(): array
-    {
-        return ['file', 'thumbnail', 'category'];
-    }
-
-    public static function getCacheKey(): string
-    {
-        return 'media';
     }
 
     public function __toString(): string

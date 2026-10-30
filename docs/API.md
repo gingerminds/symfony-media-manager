@@ -1,8 +1,8 @@
 # API
 
 Public endpoints of the bundle, under the API prefix of the core (`/api`), in JSON-LD. The lists
-take the core list parameters: `page`, `itemsPerPage`, `sortBy`, `sort`, `filters[...]`,
-`filters[search]`.
+take the core list parameters: `page`, `itemsPerPage`, `order[x]=asc|desc`, `search=` and one
+parameter per filtered property.
 
 ## Files
 
@@ -39,10 +39,9 @@ See [Images](Images.md): cache headers, errors, rate limit.
   `/api/files/{file}` or `/api/files/{file}/{preset}`. For the preview of a media that is not an
   image, use `thumbnail_reference`.
 - `file_alt` is the alternative text of the file, set in the file library (null when empty).
-- Filters: `filters[search]` (code, name), `filters[category]` or the Laravel name
-  `filters[media_category_id]` (a category id, a list `[]=`, or `null` for the medias without
-  category). The category filter is exact, without the subcategories.
-- Sort: `sortBy=name|code|createdAt|category.name`.
+- Filters: `search=` (code, name), `category=` (a category id, a list `category[]=`, or `null` for
+  the medias without category). The category filter is exact, without the subcategories.
+- Sort: `order[name|code|category.name]=asc|desc`.
 
 ## Media categories
 

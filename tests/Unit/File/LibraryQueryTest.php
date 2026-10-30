@@ -28,7 +28,7 @@ final class LibraryQueryTest extends TestCase
         yield 'everything' => [[], ['image', 'video', 'audio', 'pdf', 'document', 'archive']];
         yield 'a family' => [['image/*'], ['image']];
         yield 'an exact type' => [['application/pdf'], ['pdf']];
-        yield 'several' => [['image/png', 'application/xlsx', 'application/zip'], ['image', 'document', 'archive']];
+        yield 'several' => [['image/png', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'], ['image', 'document', 'archive']];
         yield 'a family holding several types' => [['application/*'], ['pdf', 'document', 'archive']];
         yield 'a prefix of a type' => [['application/x-rar-compressed'], ['archive']];
         yield 'no type' => [['application/json'], []];

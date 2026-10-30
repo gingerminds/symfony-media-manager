@@ -12,7 +12,7 @@ basket is identified by its token only, a user basket belongs to its owner.
 | `DELETE /api/baskets/{token}` | Deletes the basket. 204. |
 | `POST /api/baskets/{token}/medias` | Adds medias: `{"media_ids": [1, 2, 3]}`, no duplicates. 422 for an unknown id. |
 | `DELETE /api/baskets/{token}/medias/{mediaId}` | Removes a media, returns the basket. |
-| `GET /api/baskets/{token}/download` | The ZIP of the files, then the basket is deleted. |
+| `GET /api/baskets/{token}/download` | The ZIP of the files (the basket is kept, unless `basket.delete_after_download`). |
 
 ```json
 {
@@ -51,14 +51,19 @@ The rules are in `BasketVoter` (`BASKET_VIEW`, `BASKET_MODIFY`, `BASKET_DOWNLOAD
 
 ## Download
 
-`GET /api/baskets/{token}/download` returns `basket.zip`: the file of each media, read on its own
-disk, under its original name (`photo (2).png` for a second `photo.png`). The basket is then
-**deleted**: downloading consumes it. 422 when the basket is empty or when none of its files exists.
+`GET /api/baskets/{token}/download` streams `basket.zip` (`maennchen/zipstream-php`, no temporary
+file, the download starts at once): the file of each media, read on its own disk, under its
+original name (`photo (2).png` for a second `photo.png`). 422 when the basket is
+empty or when none of its files exists. The basket is kept (a `GET` has no side effect: a download
+can be retried); empty it with `DELETE /api/baskets/{token}`. `basket.delete_after_download: true`
+deletes it once downloaded, as the Laravel media manager did.
 
 ## Expiration
 
 A guest basket expires `basket.ttl` days (30 by default, 0: never) after its last change; a user
-basket never expires (`expires_at` is null). An expired basket is a 404; delete them from a cron:
+basket never expires (`expires_at` is null). An expired basket is a 404. The command
+`gingerminds:media:basket:purge` deletes them: once a day with `symfony/scheduler` (a periodic
+task of the `default` schedule, run by `messenger:consume scheduler_default`), else from a cron:
 
 ```bash
 php bin/console gingerminds:media:basket:purge

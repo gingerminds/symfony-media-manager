@@ -54,6 +54,21 @@ final class FileStorageTest extends KernelTestCase
         self::assertSame(['library/fr/news/notes.txt', 'library/fr/news/notes-1.txt', 'library/fr/news/notes-2.txt'], $paths);
     }
 
+    public function testASecondFileOfTheSameNameNeverOverwritesTheFirst(): void
+    {
+        $filesystem = self::getContainer()->get('test.storage.default');
+        $filesystem->write('library/photo-1.txt', 'on the disk only');
+
+        $first = $this->storage->store($this->upload('photo.txt', 'first'));
+        $second = $this->storage->store($this->upload('photo.txt', 'second'));
+
+        self::assertSame('library/photo.txt', $first->getPath());
+        self::assertSame('library/photo-2.txt', $second->getPath());
+        self::assertSame('first', stream_get_contents($this->storage->readStream($first)));
+        self::assertSame('second', stream_get_contents($this->storage->readStream($second)));
+        self::assertSame('on the disk only', $filesystem->read('library/photo-1.txt'));
+    }
+
     public function testANotAllowedTypeIsRejected(): void
     {
         $this->expectException(FileUploadException::class);
@@ -88,10 +103,28 @@ final class FileStorageTest extends KernelTestCase
         $file = $this->storage->store($this->upload('notes.txt', 'content'));
         $id = $file->getId();
 
-        $this->storage->delete($file);
+        $this->storage->delete([$file]);
 
         self::assertNull($this->entityManager->find(File::class, $id));
         self::assertSame('library/notes.txt', $this->storage->store($this->upload('notes.txt', 'content'))->getPath());
+    }
+
+    public function testAPhysicalFileGoesWithTheLastRowPointingToIt(): void
+    {
+        $filesystem = self::getContainer()->get('test.storage.default');
+        $file = $this->storage->store($this->upload('shared.txt', 'shared'));
+        $legacy = new File('default', $file->getPath(), 'text/plain', 'shared.txt', 6);
+        $this->entityManager->persist($legacy);
+        $this->entityManager->flush();
+
+        $this->storage->delete([$legacy]);
+        self::assertTrue($filesystem->fileExists('library/shared.txt'), 'Still used by a row.');
+
+        $other = new File('default', $file->getPath(), 'text/plain', 'shared.txt', 6);
+        $this->entityManager->persist($other);
+        $this->entityManager->flush();
+        $this->storage->delete([$file, $other]);
+        self::assertFalse($filesystem->fileExists('library/shared.txt'), 'Both rows deleted at once.');
     }
 
     private function upload(string $originalName, string $content): UploadedFile

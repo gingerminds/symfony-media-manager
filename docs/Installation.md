@@ -24,14 +24,13 @@ return [
 ## 2. Routes
 
 ```yaml
-# config/routes/gingerminds_media_manager.yaml — admin routes of the library, the media picker
-# and the category reordering
+# config/routes/gingerminds_media_manager.yaml — write endpoints of the file library
 gingerminds_media_manager:
     resource: '@GingermindsMediaManagerBundle/config/routes.php'
 ```
 
-The CRUD routes of the medias and media categories (`/admin/medias`, `/admin/media-categories`)
-come from the core `gingerminds_crud` loader, the API routes (`/api/files`, `/api/media`,
+The routes of the resources (`/admin/medias` and its picker, `/admin/media-categories` and its
+reordering, the `/admin/files` pages) come from the core `gingerminds_crud` loader, the API routes (`/api/files`, `/api/media`,
 `/api/media_categories`, `/api/baskets`) from API Platform: nothing to add.
 
 ## 3. Storage
@@ -45,8 +44,7 @@ storage with that name (it replaces the bundle one) or map your own storages to 
 flysystem:
     storages:
         media.storage:
-            adapter: 'local'
-            options:
+            local:
                 directory: '%kernel.project_dir%/var/storage/media'
 
 # config/packages/gingerminds_media_manager.yaml
@@ -60,7 +58,21 @@ gingerminds_media_manager:
 Every file row keeps the name of its disk: see [Configuration](Configuration.md#storage), and
 [Coming from Laravel](FromLaravel.md) to keep the disks of an imported database.
 
-Keep the storage **private** (out of `public/`): the files are served by `GET /api/files/{id}`.
+Keep the storage **private** (out of `public/`): the files are served by `GET /api/files/{id}`,
+with the headers that keep an uploaded SVG from running scripts.
+
+### Locks
+
+Uploads, renames and moves lock the file names through the `framework.lock` store (`symfony/lock`,
+required by the bundle). Without configuration it is local to the server (`semaphore`, else
+`flock`), which is enough for one server, however many PHP workers. With several servers or
+containers sharing the database and the storage, use a shared store:
+
+```yaml
+# config/packages/lock.yaml (Flex recipe of symfony/lock)
+framework:
+    lock: '%env(LOCK_DSN)%'   # e.g. LOCK_DSN=redis://redis:6379
+```
 
 ## 4. Database
 
@@ -83,15 +95,34 @@ media_categories`; give them to your roles. See [File library](FileLibrary.md#pe
 
 ## 6. Admin assets
 
-Nothing to add: the core `admin_includes.head` slot loads the bundle stylesheet (compiled with the
-core one by the sass bundle, with your theme and the Bootstrap variables) and registers its
-Stimulus controllers. The bundle scripts are served by the asset mapper under
-`gingerminds-media-manager/`, their relative imports rewritten to versioned paths: no importmap
-entry is needed.
+The core `admin_includes.head` slot loads the bundle stylesheet (compiled with the core one by the
+sass bundle, with your theme and the Bootstrap variables).
+
+The bundle is a Symfony UX package (`assets/package.json`): on `composer require`, Flex adds its
+Stimulus controllers to `assets/controllers.json` (`gm-file-picker`, `gm-media-select`... loaded
+lazily by the core admin Stimulus app) and `sortablejs` to the importmap. Without Flex, add them
+yourself:
+
+```json
+{
+    "controllers": {
+        "@gingerminds/symfony-media-manager": {
+            "file-dialog": {"enabled": true, "fetch": "lazy"},
+            "file-filters": {"enabled": true, "fetch": "lazy"},
+            "file-picker": {"enabled": true, "fetch": "lazy"},
+            "file-selection": {"enabled": true, "fetch": "lazy"},
+            "file-upload": {"enabled": true, "fetch": "lazy"},
+            "media-select": {"enabled": true, "fetch": "lazy"},
+            "pick": {"enabled": true, "fetch": "lazy"}
+        }
+    }
+}
+```
 
 ## 7. Cron
 
-With the baskets enabled, purge the expired guest baskets every day:
+With the baskets enabled, purge the expired guest baskets every day: with `symfony/scheduler`, it
+is a task of the `default` schedule (`messenger:consume scheduler_default`), else a cron:
 
 ```cron
 0 3 * * * php bin/console gingerminds:media:basket:purge

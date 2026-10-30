@@ -71,6 +71,14 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js|assets)/
             security: false
+        api_login:
+            pattern: ^/api/login$
+            stateless: true
+            provider: gingerminds_users
+            custom_authenticators:
+                - gingerminds_core.security.api_login_authenticator
+            login_throttling:
+                limiter: gingerminds_core.security.api_login_rate_limiter
         api:
             pattern: ^/api
             stateless: true
@@ -115,7 +123,7 @@ gingerminds_media_manager:
     library:
         root: '%env(FILE_LIBRARY_ROOT)%'
         max_upload_size: '%env(int:FILE_LIBRARY_MAX_UPLOAD_SIZE)%'
-        allowed_mimes: ['text/plain', 'image/png', 'image/svg+xml', 'application/zip', 'application/docx']
+        allowed_mimes: ['text/plain', 'image/png', 'image/svg+xml', 'application/zip', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
         max_directory_move: 3
     images:
         presets:

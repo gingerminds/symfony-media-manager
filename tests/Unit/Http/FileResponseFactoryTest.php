@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Tests\Unit\Http;
 
+use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\Http\FileResponseFactory;
+use Gingerminds\MediaManagerBundle\Http\FileResponseHeaders;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
@@ -26,20 +28,54 @@ final class FileResponseFactoryTest extends TestCase
         $this->factory = new FileResponseFactory(new DiskRegistry(new ServiceLocator(['default' => fn (): Filesystem => $this->filesystem]), 'default'));
     }
 
-    public function testTheEtagMatchesTheLaravelOne(): void
+    public function testTheCacheHeadersComeFromTheRow(): void
     {
-        $response = $this->factory->create(new Request(), 'default', 'library/a.txt', 'text/plain');
+        $file = $this->file('text/plain', 'a.txt', 'hash-of-a');
+        $response = $this->factory->file(new Request(), $file);
 
-        self::assertSame('"' . md5('library/a.txt' . $this->filesystem->lastModified('library/a.txt')) . '"', $response->getEtag());
-        self::assertNull($response->headers->get('Content-Disposition'));
+        self::assertSame('"hash-of-a"', $response->getEtag());
+        self::assertSame('3', $response->headers->get('Content-Length'));
+        self::assertSame('text/plain', $response->headers->get('Content-Type'));
+
+        $withoutHash = $this->factory->file(new Request(), $this->file('text/plain', 'a.txt'));
+        self::assertNotNull($withoutHash->getEtag());
+    }
+
+    public function testANotModifiedResponseReadsNothing(): void
+    {
+        $file = $this->file('image/svg+xml', 'a.svg', 'hash-of-a', 'library/missing.svg');
+        $response = $this->factory->file(new Request(server: ['HTTP_IF_NONE_MATCH' => '"hash-of-a"']), $file);
+
+        self::assertSame(304, $response->getStatusCode());
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame(FileResponseHeaders::CONTENT_SECURITY_POLICY, $response->headers->get('Content-Security-Policy'));
+    }
+
+    public function testAPresetIsOnlyRenderedWhenTheBrowserDoesNotHaveIt(): void
+    {
+        $file = $this->file('image/png', 'a.png', 'hash-of-a');
+        $rendered = 0;
+        $render = function () use (&$rendered): string {
+            ++$rendered;
+            $this->filesystem->write('cache/a.png/rendered', 'webp');
+
+            return 'cache/a.png/rendered';
+        };
+
+        $response = $this->factory->preset(new Request(), $file, 'thumbnail', ['w' => 50, 'fm' => 'webp'], $render);
+        self::assertSame('image/webp', $response->headers->get('Content-Type'));
+        self::assertSame(1, $rendered);
+
+        $etag = (string) $response->getEtag();
+        self::assertNotSame($etag, $this->factory->preset(new Request(), $file, 'thumbnail', ['w' => 60, 'fm' => 'webp'], $render)->getEtag(), 'Another definition.');
+        self::assertSame(304, $this->factory->preset(new Request(server: ['HTTP_IF_NONE_MATCH' => $etag]), $file, 'thumbnail', ['w' => 50, 'fm' => 'webp'], $render)->getStatusCode());
+        self::assertSame(2, $rendered);
     }
 
     #[DataProvider('asciiFallbacks')]
     public function testTheContentDispositionHasAnAsciiFallback(string $name, string $expected): void
     {
-        $response = $this->factory->create(new Request(), 'default', 'library/a.txt', 'text/plain', $name);
-
-        self::assertSame($expected, $response->headers->get('Content-Disposition'));
+        self::assertSame($expected, $this->factory->file(new Request(), $this->file('text/plain', $name))->headers->get('Content-Disposition'));
     }
 
     /**
@@ -52,17 +88,41 @@ final class FileResponseFactoryTest extends TestCase
         yield 'nothing left' => ['😀', "inline; filename=file; filename*=utf-8''%F0%9F%98%80"];
     }
 
-    public function testNotModifiedSinceLastModified(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function scriptableTypes(): iterable
     {
-        $request = new Request(server: ['HTTP_IF_MODIFIED_SINCE' => gmdate('D, d M Y H:i:s', time() + 60) . ' GMT']);
+        yield 'svg' => ['image/svg+xml'];
+        yield 'text' => ['text/plain'];
+    }
 
-        self::assertSame(304, $this->factory->create($request, 'default', 'library/a.txt')->getStatusCode());
+    #[DataProvider('scriptableTypes')]
+    public function testTheContentIsNeitherSniffedNorRunInTheOrigin(string $mimeType): void
+    {
+        $response = $this->factory->file(new Request(), $this->file($mimeType, 'a.txt'));
+
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame(FileResponseHeaders::CONTENT_SECURITY_POLICY, $response->headers->get('Content-Security-Policy'));
+    }
+
+    public function testAPdfStaysViewableInTheBrowser(): void
+    {
+        $response = $this->factory->file(new Request(), $this->file('application/pdf', 'a.pdf'));
+
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertNull($response->headers->get('Content-Security-Policy'));
     }
 
     public function testAMissingFileIsNotFound(): void
     {
         $this->expectException(NotFoundHttpException::class);
 
-        $this->factory->create(new Request(), 'default', 'library/missing.txt');
+        $this->factory->file(new Request(), $this->file('text/plain', 'missing.txt', null, 'library/missing.txt'));
+    }
+
+    private function file(string $mimeType, string $name, ?string $hash = null, string $path = 'library/a.txt'): File
+    {
+        return new File('default', $path, $mimeType, $name, 3, $hash);
     }
 }

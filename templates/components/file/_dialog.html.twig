@@ -1,0 +1,78 @@
+{#
+ # Dialog of the browser (`browser.dialog`) in a modal opened by `gm-file-dialog`: new folder, rename a
+ # folder, move or delete the selection (`browser.selection`). Posted to FileLibraryActionController,
+ # back to the browser; closing it follows the cancel link, which drops the dialog from the URL.
+ # Moved to the body when shown: the link and the form target the browser frame.
+ #}
+{% trans_default_domain 'GingermindsMediaManager' %}
+{% import '@GingermindsMediaManager/components/file/_macros.html.twig' as m %}
+{% set dialog = browser.dialog %}
+{% set files = browser.selection.files ?? [] %}
+{% set paths = browser.selection.paths ?? [] %}
+{% set actions = {
+    mkdir: 'gingerminds_media_manager_file_directory_create',
+    rename: 'gingerminds_media_manager_file_directory_rename',
+    move: 'gingerminds_media_manager_file_move',
+    delete: 'gingerminds_media_manager_file_delete',
+} %}
+{% set titles = {mkdir: 'file.action.new_directory', rename: 'file.action.rename_directory', move: 'file.action.move', delete: 'file.action.delete'} %}
+{% set valid = dialog == 'mkdir' or (dialog == 'rename' ? (files is empty and paths|length == 1) : (files is not empty or paths is not empty)) %}
+<div class="modal fade gm-file-dialog" tabindex="-1" aria-labelledby="gm-file-dialog-title" aria-hidden="true"
+     data-controller="gm-file-dialog"
+     data-action="turbo:submit-start->gm-file-dialog#submitted">
+    {% set frame_attributes %}data-turbo-frame="gm-file-browser"{% if not browser.picker %} data-turbo-action="advance"{% endif %}{% endset %}
+    <a href="{{ m.url(browser) }}" hidden data-gm-file-dialog-target="cancel" {{ frame_attributes }}></a>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gm-file-dialog-title">{{ titles[dialog]|trans }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'file.action.close'|trans }}"></button>
+            </div>
+            {% if not valid %}
+                <div class="modal-body">
+                    <p class="text-muted mb-0">{{ (dialog == 'rename' ? 'file.message.rename_one' : 'file.message.nothing_selected')|trans }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ 'file.action.cancel'|trans }}</button>
+                </div>
+            {% else %}
+                <form method="post" action="{{ path(actions[dialog]) }}" {{ frame_attributes }}>
+                    <div class="modal-body">
+                        {{ m.post_inputs(browser) }}
+                        {% for file in files %}<input type="hidden" name="ids[]" value="{{ file.id }}">{% endfor %}
+                        {% for selected in paths %}<input type="hidden" name="paths[]" value="{{ selected }}">{% endfor %}
+
+                        {% if dialog == 'mkdir' %}
+                            <input type="hidden" name="parent" value="{{ browser.state.path }}">
+                            <label for="gm-file-dialog-name" class="form-label">{{ 'file.field.directory_name'|trans }}</label>
+                            <input type="text" id="gm-file-dialog-name" name="name" class="form-control" required data-gm-file-dialog-target="input">
+                        {% elseif dialog == 'rename' %}
+                            <input type="hidden" name="path" value="{{ paths|first }}">
+                            <label for="gm-file-dialog-name" class="form-label">{{ 'file.field.directory_name'|trans }}</label>
+                            <input type="text" id="gm-file-dialog-name" name="name" value="{{ paths|first|split('/')|last }}" class="form-control" required data-gm-file-dialog-target="input">
+                        {% else %}
+                            <ul class="small mb-3">
+                                {% for selected in paths %}<li><i class="bi bi-folder me-1"></i>{{ selected }}</li>{% endfor %}
+                                {% for file in files %}<li><i class="bi bi-file-earmark me-1"></i>{{ file.originalName }}</li>{% endfor %}
+                            </ul>
+                            {% if dialog == 'move' %}
+                                <div class="gm-file-chooser border rounded p-2">
+                                    {% include '@GingermindsMediaManager/components/file/_tree.html.twig' with {chooser: true} %}
+                                </div>
+                            {% else %}
+                                <p class="mb-0">
+                                    {% if files is not empty %}{{ 'file.message.confirm_delete'|trans({'%count%': files|length}) }}{% endif %}
+                                    {% if paths is not empty %}{{ 'file.message.confirm_delete_directories'|trans({'%count%': paths|length}) }}{% endif %}
+                                </p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ 'file.action.cancel'|trans }}</button>
+                        <button type="submit" class="btn {{ dialog == 'delete' ? 'btn-danger' : 'btn-primary' }}">{{ 'file.action.confirm'|trans }}</button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>

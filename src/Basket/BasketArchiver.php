@@ -6,12 +6,13 @@ namespace Gingerminds\MediaManagerBundle\Basket;
 
 use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
-use Gingerminds\MediaManagerBundle\Exception\ZipArchiveException;
 use Gingerminds\MediaManagerBundle\File\FileStorage;
 use League\Flysystem\FilesystemException;
+use ZipStream\ZipStream;
 
 /**
- * ZIP of the files of a basket, each read on its own disk, under its original name ("name (2).pdf" for a duplicate).
+ * ZIP of the files of a basket, streamed: each file is read on its own disk and written to the
+ * output, without temporary copy, under its original name ("name (2).pdf" for a duplicate).
  */
 class BasketArchiver
 {
@@ -21,71 +22,50 @@ class BasketArchiver
     }
 
     /**
-     * @return string|null the temporary ZIP file, null when no file could be read
+     * The files of the basket found on their disk, by entry name.
+     *
+     * @return array<string, FileInterface>
      */
-    public function archive(BasketInterface $basket): ?string
+    public function entries(BasketInterface $basket): array
     {
-        $path = (string) tempnam(sys_get_temp_dir(), 'gm-basket');
-        $zip = new \ZipArchive();
-
-        if (true !== $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE)) {
-            throw ZipArchiveException::couldNotCreate($path);
-        }
-
+        $entries = [];
         $names = [];
-        $copies = [];
 
-        try {
-            foreach ($basket->getMedias() as $media) {
-                $file = $media->getFile();
-                $copy = $file instanceof FileInterface ? $this->copy($file) : null;
+        foreach ($basket->getMedias() as $media) {
+            $file = $media->getFile();
 
-                if (null !== $copy) {
-                    $copies[] = $copy;
-                    $zip->addFile($copy, $this->entryName($file->getOriginalName(), $names));
-                }
+            if ($file instanceof FileInterface && $this->storage->exists($file)) {
+                $entries[$this->entryName($file->getOriginalName(), $names)] = $file;
             }
-
-            if ([] === $copies) {
-                $zip->close();
-                @unlink($path);
-
-                return null;
-            }
-
-            if (!$zip->close()) {
-                throw ZipArchiveException::couldNotClose($path);
-            }
-        } finally {
-            array_map(static fn (string $copy): bool => @unlink($copy), $copies);
         }
 
-        return $path;
+        return $entries;
     }
 
     /**
-     * Local copy of the file (the archive reads its entries when closed), null when it is missing.
+     * @param array<string, FileInterface> $entries
+     * @param resource                     $output
      */
-    private function copy(FileInterface $file): ?string
+    public function write(array $entries, $output): void
     {
-        try {
-            $stream = $this->storage->readStream($file);
-        } catch (FilesystemException) {
-            return null;
+        $zip = new ZipStream(outputStream: $output, sendHttpHeaders: false);
+
+        foreach ($entries as $name => $file) {
+            try {
+                $stream = $this->storage->readStream($file);
+            } catch (FilesystemException) {
+                // Deleted since entries(): left out.
+                continue;
+            }
+
+            $zip->addFileFromStream($name, $stream);
+
+            if (\is_resource($stream)) {
+                fclose($stream);
+            }
         }
 
-        $copy = (string) tempnam(sys_get_temp_dir(), 'gm-basket-file');
-        $target = fopen($copy, 'w');
-
-        if (false === $target) {
-            return null;
-        }
-
-        stream_copy_to_stream($stream, $target);
-        fclose($target);
-        fclose($stream);
-
-        return $copy;
+        $zip->finish();
     }
 
     /**

@@ -1,8 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import Sortable from 'sortablejs';
 
-import helpers from '../file_browser/helpers.js';
-import { showModal } from '../file_browser/modal.js';
+import helpers from '../lib/helpers.js';
+import { showModal } from '../lib/modal.js';
 
 /*
  * MediaSelectType widget (form/media_select_theme.html.twig): the picked medias, kept as comma
@@ -11,7 +11,7 @@ import { showModal } from '../file_browser/modal.js';
  * Dispatches `gm-media-select:change` (detail: {medias}).
  */
 
-// Picker modal of the page: {element, picker, field (the field picking)}.
+// Picker modal of the page: {element, pick (its gm-pick controller), field (the field picking)}.
 let modal = null;
 
 export default class MediaSelectController extends Controller {
@@ -51,13 +51,22 @@ export default class MediaSelectController extends Controller {
         this.buttonTarget.disabled = true;
 
         try {
-            const { element, picker } = await this.loadModal();
+            const { element, pick } = await this.loadModal();
             modal.field = this;
-            picker.start({ multiple: this.multipleValue, categories: this.categoriesValue, perPage: this.perPageValue, selected: this.medias });
+            pick.open(this.pickerUrl(), { multiple: this.multipleValue, selected: this.medias, allowEmpty: this.multipleValue });
             showModal(element);
         } finally {
             this.buttonTarget.disabled = false;
         }
+    }
+
+    // The picker of the modal for this field: its allowed categories, its page size.
+    pickerUrl() {
+        const url = new URL(this.urlValue, window.location.href);
+        this.categoriesValue.forEach((id) => url.searchParams.append('categories[]', id));
+        url.searchParams.set('per_page', this.perPageValue);
+
+        return url.toString();
     }
 
     // Kept until a navigation replaces the page body.
@@ -66,7 +75,7 @@ export default class MediaSelectController extends Controller {
             return modal;
         }
 
-        const response = await fetch(this.urlValue, { headers: { Accept: 'text/html' }, credentials: 'same-origin' });
+        const response = await fetch(this.pickerUrl(), { headers: { Accept: 'text/html' }, credentials: 'same-origin' });
 
         if (!response.ok) {
             throw new Error(`The media picker could not be loaded (${response.status}).`);
@@ -76,17 +85,16 @@ export default class MediaSelectController extends Controller {
         template.innerHTML = (await response.text()).trim();
         const element = template.content.firstElementChild;
         document.body.append(element);
-
-        let picker = null;
+        let pick = null;
 
         // Stimulus connects the new controller on the next mutation records.
-        for (let attempt = 0; attempt < 50 && !picker; attempt++) {
+        for (let attempt = 0; attempt < 50 && !pick; attempt++) {
             await new Promise((resolve) => requestAnimationFrame(resolve));
-            picker = this.application.getControllerForElementAndIdentifier(element, 'gm-media-picker');
+            pick = this.application.getControllerForElementAndIdentifier(element, 'gm-pick');
         }
 
-        modal = { element, picker, field: null };
-        element.addEventListener('gm-media-picker:pick', (event) => modal.field?.picked(event.detail.medias));
+        modal = { element, pick, field: null };
+        element.addEventListener('gm-pick:pick', (event) => modal.field?.picked(event.detail.items));
 
         return modal;
     }

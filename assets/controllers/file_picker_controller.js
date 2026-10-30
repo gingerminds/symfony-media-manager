@@ -1,8 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import Sortable from 'sortablejs';
 
-import helpers from '../file_browser/helpers.js';
-import { showModal } from '../file_browser/modal.js';
+import helpers from '../lib/helpers.js';
+import { showModal } from '../lib/modal.js';
 
 /*
  * FilePickerType widget (form/file_picker_theme.html.twig): the picked files, kept as comma
@@ -21,7 +21,6 @@ export default class FilePickerController extends Controller {
         url: String,
         multiple: Boolean,
         accept: Array,
-        types: Array,
         startPath: String,
         files: Array,
         previewUrl: String,
@@ -54,13 +53,29 @@ export default class FilePickerController extends Controller {
         this.buttonTarget.disabled = true;
 
         try {
-            const { element, browser } = await this.loadModal();
+            const { element, pick } = await this.loadModal();
             modal.field = this;
-            browser.startPicking({ accept: this.acceptValue, types: this.typesValue, multiple: this.multipleValue, startPath: this.startPathValue });
+            pick.open(this.browserUrl(), { multiple: this.multipleValue });
             showModal(element);
         } finally {
             this.buttonTarget.disabled = false;
         }
+    }
+
+    // The browser of the modal for this field: its accepted types, its start folder.
+    browserUrl() {
+        const url = new URL(this.urlValue, window.location.href);
+        this.acceptValue.forEach((pattern) => url.searchParams.append('accept[]', pattern));
+
+        if (this.multipleValue) {
+            url.searchParams.set('multiple', '1');
+        }
+
+        if (this.startPathValue) {
+            url.searchParams.set('path', this.startPathValue);
+        }
+
+        return url.toString();
     }
 
     // Kept until a navigation replaces the page body.
@@ -69,7 +84,7 @@ export default class FilePickerController extends Controller {
             return modal;
         }
 
-        const response = await fetch(this.urlValue, { headers: { Accept: 'text/html' }, credentials: 'same-origin' });
+        const response = await fetch(this.browserUrl(), { headers: { Accept: 'text/html' }, credentials: 'same-origin' });
 
         if (!response.ok) {
             throw new Error(`The file library could not be loaded (${response.status}).`);
@@ -79,18 +94,16 @@ export default class FilePickerController extends Controller {
         template.innerHTML = (await response.text()).trim();
         const element = template.content.firstElementChild;
         document.body.append(element);
-
-        const browserElement = element.querySelector('[data-controller~="gm-file-browser"]');
-        let browser = null;
+        let pick = null;
 
         // Stimulus connects the new controller on the next mutation records.
-        for (let attempt = 0; attempt < 50 && !browser; attempt++) {
+        for (let attempt = 0; attempt < 50 && !pick; attempt++) {
             await new Promise((resolve) => requestAnimationFrame(resolve));
-            browser = this.application.getControllerForElementAndIdentifier(browserElement, 'gm-file-browser');
+            pick = this.application.getControllerForElementAndIdentifier(element, 'gm-pick');
         }
 
-        modal = { element, browser, field: null };
-        element.addEventListener('gm-file-browser:pick', (event) => modal.field?.picked(event.detail.files));
+        modal = { element, pick, field: null };
+        element.addEventListener('gm-pick:pick', (event) => modal.field?.picked(event.detail.items));
 
         return modal;
     }

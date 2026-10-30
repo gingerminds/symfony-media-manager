@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle;
 
-use Gingerminds\CoreBundle\DependencyInjection\Compiler\OverriddenEntityPass;
+use Gingerminds\CoreBundle\Bundle\AbstractResourceBundle;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\MediaManagerBundle\Basket\Entity\Basket;
 use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
 use Gingerminds\MediaManagerBundle\Controller\File\FileLibraryController;
@@ -20,14 +21,9 @@ use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceSourceInterface;
 use Gingerminds\MediaManagerBundle\File\Reference\FileUsageResolverInterface;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaCategoryType;
 use Gingerminds\MediaManagerBundle\Form\Media\MediaType;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
-use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Exception\LogicException;
-use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service_locator;
@@ -35,58 +31,45 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service_l
 /**
  * Media library, file library and image processing on top of GingermindsCoreBundle.
  */
-final class GingermindsMediaManagerBundle extends AbstractBundle
+final class GingermindsMediaManagerBundle extends AbstractResourceBundle
 {
     /**
-     * Overridable entities of the bundle.
+     * Overridable entities and admin resources of the bundle (AbstractResourceBundle::resources()).
      */
     public const array RESOURCES = [
         'file' => [
             'entity' => File::class,
             'interface' => FileInterface::class,
+            'controller' => FileLibraryController::class,
+            'path' => 'files',
+            'permission' => 'files',
+            'permissions' => [ResourceVoter::DELETE => 'edit files'],
         ],
         'media_category' => [
             'entity' => MediaCategory::class,
             'interface' => MediaCategoryInterface::class,
-        ],
-        'media' => [
-            'entity' => Media::class,
-            'interface' => MediaInterface::class,
-        ],
-    ];
-
-    /**
-     * Overridable entity of the baskets, only mapped when `basket.enabled`.
-     */
-    public const array BASKET_RESOURCE = [
-        'entity' => Basket::class,
-        'interface' => BasketInterface::class,
-    ];
-
-    /**
-     * Admin resources, registered as `gingerminds_core` resources. Without `crud`, the controller
-     * has its own routes (config/routes.php) instead of the core CRUD ones.
-     */
-    public const array ADMIN_RESOURCES = [
-        'file' => [
-            'controller' => FileLibraryController::class,
-            'form' => null,
-            'path' => 'files',
-            'permission' => 'files',
-            'crud' => false,
-        ],
-        'media_category' => [
             'controller' => MediaCategoryController::class,
             'form' => MediaCategoryType::class,
             'path' => 'media-categories',
             'permission' => 'media_categories',
         ],
         'media' => [
+            'entity' => Media::class,
+            'interface' => MediaInterface::class,
             'controller' => MediaController::class,
             'form' => MediaType::class,
             'path' => 'medias',
             'permission' => 'medias',
         ],
+    ];
+
+    /**
+     * Overridable entity of the baskets, without admin, only declared when `basket.enabled`.
+     */
+    public const array BASKET_RESOURCE = [
+        'entity' => Basket::class,
+        'interface' => BasketInterface::class,
+        'admin' => false,
     ];
 
     public const string TRANSLATION_DOMAIN = 'GingermindsMediaManager';
@@ -119,7 +102,6 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
 
         $parameters = $container->parameters();
         $parameters->set('gingerminds_media_manager.storage.default_disk', $config['storage']['default_disk']);
-        $parameters->set('gingerminds_media_manager.storage.disks', $config['storage']['disks']);
         $parameters->set('gingerminds_media_manager.library.root', $config['library']['root']);
         $parameters->set('gingerminds_media_manager.library.max_upload_size', $config['library']['max_upload_size']);
         $parameters->set('gingerminds_media_manager.library.allowed_mimes', $config['library']['allowed_mimes']);
@@ -129,81 +111,43 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         $parameters->set('gingerminds_media_manager.images.default_format', $config['images']['default_format']);
         $parameters->set('gingerminds_media_manager.images.cache_prefix', $config['images']['cache_prefix']);
         $parameters->set('gingerminds_media_manager.images.presets', $config['images']['presets']);
-        $parameters->set('gingerminds_media_manager.files_rate_limit', $config['files_rate_limit']);
-        $parameters->set('gingerminds_media_manager.basket.enabled', $config['basket']['enabled']);
         $parameters->set('gingerminds_media_manager.basket.claim_strategy', $config['basket']['claim_strategy']);
         $parameters->set('gingerminds_media_manager.basket.ttl', $config['basket']['ttl']);
+        $parameters->set('gingerminds_media_manager.basket.delete_after_download', $config['basket']['delete_after_download']);
 
         if ($config['basket']['enabled']) {
             $container->import('../config/services/basket.php');
             // A media in a basket can still be deleted.
-            $container->services()->get('gingerminds_media_manager.media.usage_counter')->arg(1, [BasketInterface::class]);
+            $container->services()->get('gingerminds_media_manager.media.usage_counter')->arg(2, [BasketInterface::class]);
         }
 
         $container->services()->get('gingerminds_media_manager.storage.disk_registry')
             ->arg(0, service_locator(array_map(service(...), $config['storage']['disks'])));
 
-        foreach ($this->resources($config) as $name => $resource) {
-            $entity = $this->resourceValue($config, $name, 'entity');
-            $parameters->set('gingerminds_media_manager.resource.' . $name . '.entity', $entity);
-
-            if ($entity !== $resource['entity']) {
-                OverriddenEntityPass::registerOverriddenEntity($builder, $resource['entity']);
-            }
-        }
-
-        // The bundle routes (reorder, library) target the configured controller.
-        foreach (array_keys(self::ADMIN_RESOURCES) as $name) {
-            $parameters->set('gingerminds_media_manager.resource.' . $name . '.controller', $this->resourceValue($config, $name, 'controller'));
-        }
+        parent::loadExtension($config, $container, $builder);
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
+        parent::prependExtension($container, $builder);
+
         $config = $this->resolveConfig($builder);
-        $resolveTargetEntities = [];
-
-        foreach ($this->resources($config) as $name => $resource) {
-            $resolveTargetEntities[$resource['interface']] = $this->resourceValue($config, $name, 'entity');
-        }
-
-        $mappings = [
-            'GingermindsMediaManagerFile' => $this->mapping('Entity/File'),
-            'GingermindsMediaManagerMedia' => $this->mapping('Entity/Media'),
-        ];
 
         // Outside src/Entity: API Platform would find the basket resource there even when disabled.
         if ($config['basket']['enabled']) {
-            $mappings['GingermindsMediaManagerBasket'] = $this->mapping('Basket/Entity');
+            $builder->prependExtensionConfig('doctrine', ['orm' => ['mappings' => [
+                'GingermindsMediaManagerBasket' => [
+                    'type' => 'attribute',
+                    'is_bundle' => false,
+                    'dir' => $this->getPath() . '/src/Basket/Entity',
+                    'prefix' => 'Gingerminds\\MediaManagerBundle\\Basket\\Entity',
+                ],
+            ]]]);
             $builder->prependExtensionConfig('api_platform', ['mapping' => ['paths' => [$this->getPath() . '/src/Basket/Entity']]]);
-        }
-
-        $builder->prependExtensionConfig('doctrine', [
-            'orm' => [
-                'resolve_target_entities' => $resolveTargetEntities,
-                'mappings' => $mappings,
-            ],
-        ]);
-
-        $resources = [];
-
-        foreach (self::ADMIN_RESOURCES as $name => $resource) {
-            $resources[$name] = [
-                'entity' => $this->resourceValue($config, $name, 'entity'),
-                'controller' => ($resource['crud'] ?? true) ? $this->resourceValue($config, $name, 'controller') : null,
-                'form' => $this->resourceValue($config, $name, 'form'),
-                'path' => $resource['path'],
-                'permission' => $resource['permission'],
-                'route_prefix' => 'gingerminds_media_manager_' . $name,
-                'translation_prefix' => $name,
-                'translation_domain' => self::TRANSLATION_DOMAIN,
-                'template_prefix' => '@GingermindsMediaManager/pages/' . $name,
-            ];
         }
 
         // Prepended: the project configuration still overrides any key.
         $builder->prependExtensionConfig('gingerminds_core', [
-            'resources' => $resources,
             'admin_includes' => ['head' => ['@GingermindsMediaManager/admin/_head.html.twig']],
         ]);
 
@@ -237,60 +181,18 @@ final class GingermindsMediaManagerBundle extends AbstractBundle
         ]);
     }
 
-    /**
-     * @param array<string, mixed> $config
-     */
-    private function resourceValue(array $config, string $name, string $key): ?string
-    {
-        $defaults = 'basket' === $name ? self::BASKET_RESOURCE : (self::RESOURCES[$name] ?? []) + (self::ADMIN_RESOURCES[$name] ?? []);
-
-        return $config['resources'][$name][$key] ?? $defaults[$key] ?? null;
-    }
-
-    /**
-     * The bundle configuration needed while prepending: the other keys may hold env placeholders.
-     *
-     * @return array<string, mixed>
-     */
-    private function resolveConfig(ContainerBuilder $builder): array
-    {
-        $extension = $this->getContainerExtension();
-        $configuration = $extension instanceof ConfigurationExtensionInterface ? $extension->getConfiguration([], $builder) : null;
-
-        if (!$configuration instanceof ConfigurationInterface) {
-            throw new LogicException('The GingermindsMediaManagerBundle configuration cannot be resolved.');
-        }
-
-        $configs = array_map(
-            static fn (array $config): array => array_intersect_key($config, ['resources' => true, 'files_rate_limit' => true, 'basket' => true]),
-            $builder->getExtensionConfig($this->extensionAlias),
-        );
-
-        return new Processor()->processConfiguration($configuration, $builder->getParameterBag()->resolveValue($configs));
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function mapping(string $directory): array
-    {
-        return [
-            'type' => 'attribute',
-            'is_bundle' => false,
-            'dir' => $this->getPath() . '/src/' . $directory,
-            'prefix' => 'Gingerminds\\MediaManagerBundle\\' . str_replace('/', '\\', $directory),
-        ];
-    }
-
-    /**
-     * The overridable entities, the basket one when enabled.
-     *
-     * @param array<string, mixed> $config
-     *
-     * @return array<string, array{entity: class-string, interface: class-string}>
-     */
-    private function resources(array $config): array
+    protected function resources(array $config): array
     {
         return $config['basket']['enabled'] ? [...self::RESOURCES, 'basket' => self::BASKET_RESOURCE] : self::RESOURCES;
+    }
+
+    protected function entityDirectories(): array
+    {
+        return ['File', 'Media'];
+    }
+
+    protected function prependConfigKeys(): array
+    {
+        return ['resources', 'basket', 'files_rate_limit'];
     }
 }

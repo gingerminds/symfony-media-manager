@@ -6,12 +6,13 @@ namespace Gingerminds\MediaManagerBundle\Tests\Functional\Basket;
 
 use Gingerminds\MediaManagerBundle\Basket\Entity\Basket;
 use Gingerminds\MediaManagerBundle\Entity\Media\Media;
+use Gingerminds\MediaManagerBundle\Http\FileResponseHeaders;
 use Gingerminds\MediaManagerBundle\Media\MediaUsageCounter;
 use Gingerminds\MediaManagerBundle\Tests\Functional\ApiTestCase;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class BasketApiTest extends ApiTestCase
 {
@@ -48,6 +49,10 @@ final class BasketApiTest extends ApiTestCase
         $this->assertStatus(422);
         $this->api('POST', $url . '/medias', json: ['media_ids' => [999999]]);
         $this->assertStatus(422);
+        $this->api('POST', $url . '/medias', json: []);
+        $this->assertStatus(422);
+        $this->api('POST', '/api/baskets', json: ['anonymous_token' => 'not-a-token']);
+        $this->assertStatus(422);
 
         $this->api('DELETE', $url);
         $this->assertStatus(204);
@@ -73,7 +78,7 @@ final class BasketApiTest extends ApiTestCase
         $this->api('GET', $url, $other);
         $this->assertStatus(403);
         $this->api('GET', $url);
-        $this->assertStatus(403);
+        $this->assertStatus(401);
         $this->api('DELETE', $url, $other);
         $this->assertStatus(403);
     }
@@ -138,9 +143,11 @@ final class BasketApiTest extends ApiTestCase
 
         self::assertResponseIsSuccessful();
         $response = $this->client->getResponse();
-        self::assertInstanceOf(BinaryFileResponse::class, $response);
+        self::assertInstanceOf(StreamedResponse::class, $response);
         self::assertSame('attachment; filename=basket.zip', $response->headers->get('Content-Disposition'));
-        // The file is deleted once sent: the content is in the internal response.
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame(FileResponseHeaders::CONTENT_SECURITY_POLICY, $response->headers->get('Content-Security-Policy'));
+        // Streamed: the content is in the internal response.
         $path = (string) tempnam(sys_get_temp_dir(), 'gm-test-zip');
         file_put_contents($path, $this->client->getInternalResponse()->getContent());
         $zip = new \ZipArchive();
@@ -149,10 +156,10 @@ final class BasketApiTest extends ApiTestCase
         self::assertSame('notes', $zip->getFromName('notes.txt'));
         $zip->close();
         unlink($path);
-        self::assertFileDoesNotExist($response->getFile()->getPathname());
 
+        // Kept: basket.delete_after_download is off by default.
         $this->api('GET', $url);
-        $this->assertStatus(404);
+        $this->assertStatus(200);
     }
 
     public function testAnExpiredGuestBasketIsGoneAndPurged(): void

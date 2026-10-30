@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Media;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Gingerminds\MediaManagerBundle\Doctrine\AssociationFinder;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaInterface;
 
 /**
@@ -14,15 +15,11 @@ use Gingerminds\MediaManagerBundle\Entity\Media\MediaInterface;
 class MediaUsageCounter
 {
     /**
-     * @var list<array{class-string, string}>|null class and field
-     */
-    private ?array $associations = null;
-
-    /**
      * @param list<class-string> $ignored entities whose references do not count (e.g. the baskets)
      */
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly AssociationFinder $associations,
         private readonly array $ignored = [],
     ) {
     }
@@ -35,10 +32,14 @@ class MediaUsageCounter
 
         $count = 0;
 
-        foreach ($this->associations() as [$class, $field]) {
+        foreach ($this->associations->owningAssociationsTo(MediaInterface::class) as [$metadata, $field]) {
+            if (array_any($this->ignored, static fn (string $class): bool => is_a($metadata->getName(), $class, true))) {
+                continue;
+            }
+
             $count += (int) $this->entityManager->createQueryBuilder()
                 ->select('COUNT(o)')
-                ->from($class, 'o')
+                ->from($metadata->getName(), 'o')
                 ->join('o.' . $field, 'm')
                 ->where('m.id = :id')
                 ->setParameter('id', $media->getId())
@@ -47,35 +48,5 @@ class MediaUsageCounter
         }
 
         return $count;
-    }
-
-    /**
-     * Owning sides only, once per class hierarchy.
-     *
-     * @return list<array{class-string, string}>
-     */
-    private function associations(): array
-    {
-        if (null !== $this->associations) {
-            return $this->associations;
-        }
-
-        $this->associations = [];
-
-        foreach ($this->entityManager->getMetadataFactory()->getAllMetadata() as $metadata) {
-            $ignored = array_any($this->ignored, static fn (string $class): bool => is_a($metadata->getName(), $class, true));
-
-            if ($metadata->isMappedSuperclass || $metadata->isEmbeddedClass || $ignored) {
-                continue;
-            }
-
-            foreach ($metadata->associationMappings as $field => $mapping) {
-                if ($mapping->isOwningSide() && null === $mapping->inherited && is_a($mapping->targetEntity, MediaInterface::class, true)) {
-                    $this->associations[] = [$metadata->getName(), $field];
-                }
-            }
-        }
-
-        return $this->associations;
     }
 }

@@ -16,6 +16,10 @@ $resource = static function (NodeBuilder $children, string $name, string $baseCl
                 ->end()
                 ->scalarNode('controller')->defaultNull()->end()
                 ->scalarNode('form')->defaultNull()->end()
+                ->booleanNode('api')
+                    ->info('false stops exposing the entity through the API (the bundle #[ApiResource], inherited by an entity overriding it).')
+                    ->defaultTrue()
+                ->end()
             ->end()
         ->end();
 };
@@ -60,7 +64,7 @@ $library = static function (NodeBuilder $children): void {
                     ->min(1)
                 ->end()
                 ->arrayNode('allowed_mimes')
-                    ->info('Mime types accepted on upload, after normalization (Office documents are "application/<extension>").')
+                    ->info('Mime types accepted on upload, guessed from the content.')
                     ->scalarPrototype()->cannotBeEmpty()->end()
                     ->defaultValue([
                         'image/jpeg',
@@ -70,9 +74,9 @@ $library = static function (NodeBuilder $children): void {
                         'image/svg+xml',
                         'application/pdf',
                         'application/zip',
-                        'application/docx',
-                        'application/xlsx',
-                        'application/pptx',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                     ])
                     ->requiresAtLeastOneElement()
                 ->end()
@@ -160,6 +164,10 @@ $basket = static function (NodeBuilder $children): void {
                     ->values(['merge', 'replace', 'ignore'])
                     ->defaultValue('merge')
                 ->end()
+                ->booleanNode('delete_after_download')
+                    ->info('Delete the basket once downloaded (GET /api/baskets/{token}/download), as the Laravel media manager did.')
+                    ->defaultFalse()
+                ->end()
                 ->integerNode('ttl')
                     ->info('Days a guest basket lives after its last change (0: forever); a user basket never expires. Purge: gingerminds:media:basket:purge.')
                     ->defaultValue(30)
@@ -171,7 +179,7 @@ $basket = static function (NodeBuilder $children): void {
 
 $resources = static function (NodeBuilder $children) use ($resource): void {
     $node = $children->arrayNode('resources')
-        ->info('Overridable resources of the bundle, registered as gingerminds_core resources.')
+        ->info('Overridable resources of the bundle, registered as gingerminds_core admin resources.')
         ->addDefaultsIfNotSet()
         ->children();
     $resource($node, 'media', 'Media');

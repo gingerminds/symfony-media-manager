@@ -7,7 +7,7 @@ namespace Gingerminds\MediaManagerBundle\File\Maintenance;
 use Doctrine\ORM\EntityManagerInterface;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Exception\LibraryException;
-use Gingerminds\MediaManagerBundle\File\MimeTypeNormalizer;
+use Gingerminds\MediaManagerBundle\File\MimeTypeGuesser;
 use Gingerminds\MediaManagerBundle\File\PathGuard;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
@@ -25,7 +25,7 @@ class FileIndexer
         private readonly FileRepository $files,
         private readonly DiskRegistry $disks,
         private readonly PathGuard $paths,
-        private readonly MimeTypeNormalizer $mimeTypes,
+        private readonly MimeTypeGuesser $mimeTypes,
         private readonly EntityManagerInterface $entityManager,
         private readonly string $fileClass,
     ) {

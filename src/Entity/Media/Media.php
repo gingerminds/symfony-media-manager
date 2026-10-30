@@ -18,7 +18,6 @@ use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
     ],
     normalizationContext: ['groups' => [BaseMedia::GROUP_READ], 'skip_null_values' => false],
     paginationClientItemsPerPage: true,
-    provider: 'gingerminds_media_manager.api.provider.media',
 )]
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
 #[ORM\Table(name: 'medias')]

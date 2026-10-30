@@ -6,6 +6,7 @@ namespace Gingerminds\MediaManagerBundle\Tests\Unit\File;
 
 use Gingerminds\MediaManagerBundle\Exception\InvalidPathException;
 use Gingerminds\MediaManagerBundle\File\PathGuard;
+use Gingerminds\MediaManagerBundle\File\SlugFileNamer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\String\Slugger\AsciiSlugger;
@@ -85,6 +86,6 @@ final class PathGuardTest extends TestCase
 
     private function guard(string $root = 'library'): PathGuard
     {
-        return new PathGuard($root, new AsciiSlugger());
+        return new PathGuard($root, new SlugFileNamer(new AsciiSlugger()));
     }
 }

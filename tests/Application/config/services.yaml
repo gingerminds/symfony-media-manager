@@ -23,6 +23,10 @@ services:
         alias: gingerminds_media_manager.file.library
         public: true
 
+    test.library_directories:
+        alias: gingerminds_media_manager.file.library_directories
+        public: true
+
     test.file_reference_registry:
         alias: gingerminds_media_manager.file.reference_registry
         public: true
@@ -36,6 +40,4 @@ services:
 
     Gingerminds\MediaManagerBundle\Tests\Application\Reference\PageUsageResolver: ~
 
-    Gingerminds\MediaManagerBundle\Tests\Application\Controller\ArticleController:
-        arguments: ['@gingerminds_core.controller.context']
-        tags: [controller.service_arguments]
+    Gingerminds\MediaManagerBundle\Tests\Application\Controller\ArticleController: ~

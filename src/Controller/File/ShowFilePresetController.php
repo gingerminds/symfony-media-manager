@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Controller\File;
 
-use Gingerminds\MediaManagerBundle\Http\FileResponseFactory;
+use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Http\FileResponseFactoryInterface;
 use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
-use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use League\Glide\Filesystem\FileNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,16 +19,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ShowFilePresetController extends ShowFileController
 {
     public function __construct(
-        FileRepository $files,
-        FileResponseFactory $responses,
+        FileResponseFactoryInterface $responses,
         protected readonly ImageProcessor $images,
     ) {
-        parent::__construct($files, $responses);
+        parent::__construct($responses);
     }
 
-    public function __invoke(Request $request, string $id, string $preset = ''): Response
+    public function __invoke(Request $request, FileInterface $data, string $preset = ''): Response
     {
-        $file = $this->find($id);
+        $file = $data;
 
         if (!$file->isImage()) {
             throw new BadRequestHttpException('This file is not an image.');
@@ -39,15 +38,15 @@ class ShowFilePresetController extends ShowFileController
         }
 
         if (!$this->images->supports($file)) {
-            return $this->responses->create($request, $file->getDisk(), $file->getPath(), $file->getMimeType());
+            return $this->responses->file($request, $file);
         }
 
-        try {
-            $path = $this->images->process($file, $preset);
-        } catch (FileNotFoundException $exception) {
-            throw new NotFoundHttpException('Image not found.', $exception);
-        }
-
-        return $this->responses->create($request, $file->getDisk(), $path);
+        return $this->responses->preset($request, $file, $preset, $this->images->parameters($preset), function () use ($file, $preset): string {
+            try {
+                return $this->images->process($file, $preset);
+            } catch (FileNotFoundException $exception) {
+                throw new NotFoundHttpException('Image not found.', $exception);
+            }
+        });
     }
 }

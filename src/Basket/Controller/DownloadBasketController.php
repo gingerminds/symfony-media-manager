@@ -8,15 +8,17 @@ use Gingerminds\MediaManagerBundle\Basket\BasketArchiver;
 use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
 use Gingerminds\MediaManagerBundle\Basket\Repository\BasketRepository;
 use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Gingerminds\MediaManagerBundle\Http\FileResponseHeaders;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
- * `GET /api/baskets/{token}/download`: the files of the basket as a ZIP, then the basket is deleted.
+ * `GET /api/baskets/{token}/download`: the files of the basket as a streamed ZIP; the basket is kept, unless
+ * `basket.delete_after_download`.
  */
 final readonly class DownloadBasketController
 {
@@ -24,10 +26,11 @@ final readonly class DownloadBasketController
         private BasketRepository $baskets,
         private BasketArchiver $archiver,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private bool $deleteAfterDownload = false,
     ) {
     }
 
-    public function __invoke(string $token): BinaryFileResponse
+    public function __invoke(string $token): StreamedResponse
     {
         $basket = $this->baskets->findOneByToken($token);
 
@@ -43,16 +46,29 @@ final readonly class DownloadBasketController
             throw new UnprocessableEntityHttpException('The basket is empty.');
         }
 
-        $archive = $this->archiver->archive($basket);
+        $entries = $this->archiver->entries($basket);
 
-        if (null === $archive) {
+        if ([] === $entries) {
             throw new UnprocessableEntityHttpException('No file of the basket could be found.');
         }
 
-        $this->baskets->delete($basket);
+        if ($this->deleteAfterDownload) {
+            $this->baskets->delete($basket);
+        }
 
-        return new BinaryFileResponse($archive, headers: ['Content-Type' => 'application/zip'])
-            ->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, 'basket.zip')
-            ->deleteFileAfterSend();
+        $response = new StreamedResponse(function () use ($entries): void {
+            $output = fopen('php://output', 'w');
+
+            if (false !== $output) {
+                $this->archiver->write($entries, $output);
+                fclose($output);
+            }
+        }, headers: [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'basket.zip'),
+        ]);
+        FileResponseHeaders::apply($response, 'application/zip');
+
+        return $response;
     }
 }

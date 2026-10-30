@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Gingerminds\MediaManagerBundle\Doctrine\AssociationFinder;
+use Gingerminds\MediaManagerBundle\Doctrine\FileEventsListener;
 use Gingerminds\MediaManagerBundle\File\DirectoryMover;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\File\Reference\DoctrineAssociationReferenceSource;
 use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceRegistry;
@@ -22,8 +25,19 @@ use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
 
+    // FileStoredEvent, FileMovedEvent, FileDeletedEvent after each flush.
+    $files = $services->set('gingerminds_media_manager.doctrine.file_events_listener', FileEventsListener::class)
+        ->args([service('event_dispatcher')]);
+
+    foreach (['postPersist', 'preUpdate', 'postRemove', 'postFlush'] as $event) {
+        $files->tag('doctrine.event_listener', ['event' => $event]);
+    }
+
+    $services->set('gingerminds_media_manager.doctrine.association_finder', AssociationFinder::class)
+        ->args([service('doctrine.orm.entity_manager')]);
+
     $services->set('gingerminds_media_manager.file.reference.doctrine_associations', DoctrineAssociationReferenceSource::class)
-        ->args([service('doctrine.orm.entity_manager')])
+        ->args([service('doctrine.orm.entity_manager'), service('gingerminds_media_manager.doctrine.association_finder')])
         ->tag(FileReferenceSourceInterface::TAG);
 
     // Last resort: the owner itself.
@@ -42,7 +56,18 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.path_guard'),
             service('gingerminds_media_manager.image.processor'),
             service('doctrine.orm.entity_manager'),
+            service('gingerminds_media_manager.file.path_locker'),
         ]);
+
+    $services->set('gingerminds_media_manager.file.library_directories', LibraryDirectories::class)
+        ->args([
+            service('gingerminds_media_manager.storage.disk_registry'),
+            service('gingerminds_media_manager.file.path_guard'),
+            service(FileRepository::class),
+            service('gingerminds_media_manager.file.directory_mover'),
+            service('gingerminds_media_manager.file.path_locker'),
+        ]);
+    $services->alias(LibraryDirectories::class, 'gingerminds_media_manager.file.library_directories');
 
     $services->set('gingerminds_media_manager.file.library', FileLibrary::class)
         ->args([
@@ -53,15 +78,16 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.path_guard'),
             service('gingerminds_media_manager.image.processor'),
             service('doctrine.orm.entity_manager'),
-            service('gingerminds_media_manager.file.directory_mover'),
+            service('gingerminds_media_manager.file.library_directories'),
             param('gingerminds_media_manager.library.per_page'),
+            service('gingerminds_media_manager.file.path_locker'),
+            service('event_dispatcher'),
         ]);
     $services->alias(FileLibrary::class, 'gingerminds_media_manager.file.library');
 
     $services->set('gingerminds_media_manager.file.library_presenter', FileLibraryPresenter::class)
         ->args([
             service('router'),
-            service('gingerminds_media_manager.file.reference_registry'),
             service('gingerminds_media_manager.file.path_guard'),
             param('gingerminds_media_manager.images.presets'),
         ]);

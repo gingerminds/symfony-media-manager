@@ -8,13 +8,10 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use Gingerminds\MediaManagerBundle\Basket\Entity\BasketInterface;
 use Gingerminds\MediaManagerBundle\Basket\Repository\BasketRepository;
-use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
- * The basket of the `token` URI variable: 404 when unknown or expired, 403 when another user owns it.
+ * The basket of the `token` URI variable: 404 when unknown or expired (the operations check the owner).
  *
  * @implements ProviderInterface<BasketInterface>
  */
@@ -22,7 +19,6 @@ final readonly class BasketProvider implements ProviderInterface
 {
     public function __construct(
         private BasketRepository $baskets,
-        private AuthorizationCheckerInterface $authorizationChecker,
     ) {
     }
 
@@ -33,10 +29,6 @@ final readonly class BasketProvider implements ProviderInterface
 
         if (!$basket instanceof BasketInterface) {
             throw new NotFoundHttpException('Basket not found.');
-        }
-
-        if (!$this->authorizationChecker->isGranted(BasketVoter::VIEW, $basket)) {
-            throw new AccessDeniedHttpException('This basket belongs to another user.');
         }
 
         return $basket;

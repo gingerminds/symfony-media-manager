@@ -157,6 +157,33 @@ class FileRepository extends AbstractRepository
         return $this->count(['disk' => $disk, 'path' => $path]);
     }
 
+    /**
+     * @param list<FileInterface> $files
+     */
+    public function removeAll(array $files): void
+    {
+        foreach ($files as $file) {
+            $this->remove($file, false);
+        }
+
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @return int number of updated rows
+     */
+    public function replaceMimeType(string $from, string $to): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->update()
+            ->set('f.mimeType', ':to')
+            ->where('f.mimeType = :from')
+            ->setParameter('to', $to)
+            ->setParameter('from', $from)
+            ->getQuery()
+            ->execute();
+    }
+
     public function hasFilesUnder(string $disk, string $directory): bool
     {
         return null !== $this->createQueryBuilder('f')
@@ -190,12 +217,12 @@ class FileRepository extends AbstractRepository
     }
 
     /**
-     * @param string       $directory on the disk
-     * @param list<string> $usedIds   excluded by the orphans filter
+     * @param string                                      $directory         on the disk
+     * @param (\Closure(QueryBuilder, string): void)|null $excludeReferenced the orphans filter (FileReferenceRegistry)
      *
      * @return Paginator<FileInterface>
      */
-    public function paginateLibrary(string $disk, string $directory, LibraryQuery $query, array $usedIds, int $itemsPerPage): Paginator
+    public function paginateLibrary(string $disk, string $directory, LibraryQuery $query, ?\Closure $excludeReferenced, int $itemsPerPage): Paginator
     {
         $qb = $this->createQueryBuilder('f')
             ->where('f.disk = :disk')
@@ -229,8 +256,8 @@ class FileRepository extends AbstractRepository
             $qb->andWhere('f.createdAt <= :to')->setParameter('to', $query->createdTo);
         }
 
-        if ($query->orphans && [] !== $usedIds) {
-            $qb->andWhere('f.id NOT IN (:used)')->setParameter('used', $usedIds);
+        if ($query->orphans && $excludeReferenced instanceof \Closure) {
+            $excludeReferenced($qb, 'f');
         }
 
         if ($query->duplicates) {
@@ -275,7 +302,7 @@ class FileRepository extends AbstractRepository
 
     private function orderLibrary(QueryBuilder $qb, LibraryQuery $query): void
     {
-        $direction = 'desc' === strtolower($query->sort) ? 'DESC' : 'ASC';
+        $direction = 'desc' === strtolower($query->sort) ? \SortDirection::Descending : \SortDirection::Ascending;
         $sort = LibraryQuery::SORTS[$query->sortBy] ?? 'originalName';
 
         // Case insensitive names, as with the MySQL collations.

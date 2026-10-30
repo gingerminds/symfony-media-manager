@@ -12,7 +12,7 @@ use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\FilesystemOperator;
 
 /**
- * Moves directories of the library disk (FileLibrary::moveDirectories()). Everything on the disk
+ * Moves directories of the library disk (LibraryDirectories::moveDirectories()). Everything on the disk
  * follows, files missing from `files` too; the rows get their new paths and the presets are purged.
  */
 class DirectoryMover
@@ -23,12 +23,14 @@ class DirectoryMover
         private readonly PathGuard $paths,
         private readonly ImageProcessor $images,
         private readonly EntityManagerInterface $entityManager,
+        private readonly PathLocker $locker,
     ) {
     }
 
     /**
      * Every move is checked first and $maxFiles counts the files of all the directories; a directory
-     * that fails is moved back, the previous ones stay moved.
+     * that fails is moved back, the previous ones stay moved. The target names stay locked meanwhile,
+     * and the moved directories: nothing is written into them.
      *
      * @param list<string> $sources  existing directories on the disk, none inside another one
      * @param string       $parent   existing directory on the disk
@@ -38,6 +40,22 @@ class DirectoryMover
      * @return list<string> the new directories on the disk
      */
     public function move(array $sources, string $parent, ?string $name, int $maxFiles): array
+    {
+        $disk = $this->disks->defaultDisk();
+
+        return $this->locker->synchronized(
+            array_map(fn (string $source): array => [$disk, $parent, $this->targetName($source, $name)], $sources),
+            fn (): array => $this->moveLocked($sources, $parent, $name, $maxFiles),
+            array_map(static fn (string $source): array => [$disk, $source], $sources),
+        );
+    }
+
+    /**
+     * @param list<string> $sources
+     *
+     * @return list<string>
+     */
+    private function moveLocked(array $sources, string $parent, ?string $name, int $maxFiles): array
     {
         $moves = [];
         $targets = [];
@@ -71,7 +89,7 @@ class DirectoryMover
      */
     private function directoryTarget(string $source, string $parent, ?string $name, array $targets): string
     {
-        $target = $parent . '/' . (null === $name ? basename($source) : $this->paths->directoryName($name));
+        $target = $parent . '/' . $this->targetName($source, $name);
 
         if ($target === $source) {
             return $target;
@@ -86,6 +104,11 @@ class DirectoryMover
         }
 
         return $target;
+    }
+
+    private function targetName(string $source, ?string $name): string
+    {
+        return null === $name ? basename($source) : $this->paths->directoryName($name);
     }
 
     /**

@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'gingerminds:media:basket:purge', description: 'Delete the expired guest baskets (to run from a cron)')]
+#[AsCommand(name: 'gingerminds:media:basket:purge', description: 'Delete the expired guest baskets')]
 final class PurgeBasketsCommand extends Command
 {
     public function __construct(

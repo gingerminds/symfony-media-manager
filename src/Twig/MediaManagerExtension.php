@@ -6,29 +6,25 @@ namespace Gingerminds\MediaManagerBundle\Twig;
 
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
+use Twig\Attribute\AsTwigFunction;
 
-final class MediaManagerExtension extends AbstractExtension
+/**
+ * Twig runtime (#[AsTwigFunction]): built on the first call of its functions.
+ */
+final readonly class MediaManagerExtension
 {
     public const string FILE_ROUTE = 'gingerminds_media_manager_file';
     public const string FILE_PRESET_ROUTE = 'gingerminds_media_manager_file_preset';
 
     public function __construct(
-        private readonly UrlGeneratorInterface $urlGenerator,
+        private UrlGeneratorInterface $urlGenerator,
     ) {
-    }
-
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('gm_file_url', $this->fileUrl(...)),
-        ];
     }
 
     /**
      * Null without file, so templates can pass an optional relation.
      */
+    #[AsTwigFunction('gm_file_url')]
     public function fileUrl(FileInterface|string|null $file, ?string $preset = null, bool $absolute = false): ?string
     {
         $id = $file instanceof FileInterface ? $file->getId() : $file;

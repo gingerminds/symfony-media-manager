@@ -26,9 +26,15 @@ the admin falls back to the original files.
 | `GET /api/files/{id}` | The original file, inline, under its original name. |
 | `GET /api/files/{id}/{preset}` | The image rendered with the preset. |
 
-- Public, with a one day browser cache revalidated by `ETag` / `Last-Modified` (304).
+- Public, with a one day browser cache revalidated by `ETag` / `Last-Modified` (304). They come
+  from the row (the content hash, the dates; for a preset, with its definition): a 304 reads
+  nothing on the disk and renders no preset, a 200 opens the file only.
+- `X-Content-Type-Options: nosniff` and `Content-Security-Policy: default-src 'none'; style-src
+  'unsafe-inline'; sandbox` on every response (304 and basket ZIP included): an SVG with a script
+  opened directly cannot run it in the application origin, it still displays in an `<img>`. A PDF
+  gets `nosniff` only, so the browser PDF viewer keeps working.
 - 404 for an unknown file or preset, 400 for a preset of a file that is not an image; an SVG is
-  returned as is.
+  returned as is (Glide never renders it).
 - `files_rate_limit` requests per minute and per IP (600 by default, 0: no limit).
 - `{preset}` is documented in the OpenAPI as the list of the configured presets.
 

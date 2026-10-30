@@ -18,10 +18,8 @@ final readonly class LibraryQuery
         'audio' => ['audio/%'],
         'pdf' => ['application/pdf'],
         'document' => [
-            'text/%', 'application/rtf',
-            'application/doc', 'application/docx', 'application/dotx', 'application/odt',
-            'application/xls', 'application/xlsx', 'application/xltx', 'application/ods',
-            'application/ppt', 'application/pptx', 'application/potx', 'application/ppsx', 'application/odp',
+            'text/%', 'application/rtf', 'application/msword', 'application/vnd.ms-%',
+            'application/vnd.openxmlformats-officedocument.%', 'application/vnd.oasis.opendocument.%',
         ],
         'archive' => ['application/zip', 'application/gzip', 'application/x-7z-compressed', 'application/x-rar%', 'application/x-tar'],
     ];

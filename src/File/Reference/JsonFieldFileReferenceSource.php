@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\File\Reference;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 
 /**
@@ -42,7 +43,23 @@ class JsonFieldFileReferenceSource implements FileReferenceSourceInterface
         return $references;
     }
 
-    public function usedIds(): array
+    /**
+     * The field is read in PHP: a LIKE on a JSON column is not portable (PostgreSQL).
+     */
+    public function excludeReferenced(QueryBuilder $qb, string $alias): void
+    {
+        $ids = $this->usedIds();
+
+        if ([] !== $ids) {
+            $parameter = 'gm_json_' . spl_object_id($this);
+            $qb->andWhere(\sprintf('%s.id NOT IN (:%s)', $alias, $parameter))->setParameter($parameter, $ids);
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function usedIds(): array
     {
         $ids = [];
         $values = $this->entityManager->createQueryBuilder()

@@ -34,13 +34,10 @@ media_select:
     reorder: Glisser pour réordonner
     search: Rechercher un média (code, nom)…
     all_categories: Toutes les catégories
-    load_more: Charger plus
     select: Sélectionner
     none: Aucun média sélectionné
     selected: '%count% média(s) sélectionné(s)'
     empty: Aucun média
-    loading: Chargement…
-    error: Les médias n'ont pas pu être chargés.
     forbidden: Vous n'avez pas accès à la médiathèque.
 
 media_category:
@@ -55,9 +52,6 @@ media_category:
         parent: Catégorie parente
     placeholder:
         parent: — Aucune —
-    action:
-        add_child: Ajouter un enfant
-        move: Déplacer
     message:
         no_items: Aucune catégorie de média
     error:
@@ -97,12 +91,10 @@ file:
         from: Ajouté à partir du
         to: "Ajouté jusqu'au"
     field:
-        name: Nom
         type: Type
         size: Taille
         created_at: Ajouté le
         directory: Dossier
-        sort: Tri
         usages: Utilisations
         duplicates: Doublons
         directory_name: Nom du dossier
@@ -110,29 +102,24 @@ file:
         alt: Texte alternatif
     action:
         upload: Téléverser
+        rename_directory: Renommer le dossier
         new_directory: Nouveau dossier
         open: Ouvrir
         rename: Renommer
         move: Déplacer
-        move_here: Déplacer ici
         delete: Supprimer
         merge: Garder ce fichier et fusionner ses doublons
-        show: Afficher
-        clear_selection: Désélectionner
         select_page: Tout sélectionner
-        first: Première page
-        previous: Précédent
-        next: Suivant
-        last: Dernière page
         cancel: Annuler
         confirm: Confirmer
         save: Enregistrer
         close: Fermer
     message:
-        loading: Chargement…
+        rename_one: Sélectionnez un seul dossier, sans fichier, pour le renommer.
+        nothing_selected: Aucun fichier ni dossier sélectionné.
+        selected: '%count% élément(s) sélectionné(s)'
         empty: Aucun fichier
         drop: Déposez vos fichiers pour les téléverser dans ce dossier
-        selected: '%count% sélectionné(s)'
         total: '%count% fichier(s)'
         not_used: Ce fichier n'est utilisé nulle part.
         uploaded: « %name% » a été téléversé.
@@ -144,14 +131,17 @@ file:
         merged: Doublons fusionnés, %count% référence(s) mise(s) à jour.
         confirm_delete: Supprimer %count% fichier(s) ? Les fichiers utilisés seront conservés.
         confirm_merge: Les %count% doublon(s) seront remplacés par ce fichier partout où ils sont utilisés, puis supprimés.
-        move_to: Déplacer %count% fichier(s) vers « %path% »
         confirm_delete_directories: Supprimer %count% dossier(s) ? Seuls les dossiers vides seront supprimés.
         directories_deleted: '%count% dossier(s) supprimé(s).'
         directories_kept: 'Ces dossiers ne sont pas vides, ils n''ont pas été supprimés :'
         directories_moved: '%count% dossier(s) déplacé(s) vers « %path% ».'
         directory_renamed: Le dossier s'appelle maintenant « %name% ».
-        move_directories_to: Déplacer %count% dossier(s) vers « %path% »
         alt_saved: Le texte alternatif a été enregistré.
+    unit:
+        b: o
+        kb: Ko
+        mb: Mo
+        gb: Go
     picker:
         title: Bibliothèque de fichiers
         choose: Choisir un fichier
@@ -165,10 +155,8 @@ file:
         select: Sélectionner
         none: Aucun fichier sélectionné
         selected: '%count% fichier(s) sélectionné(s)'
-        use: Utiliser celui-ci
 
 error:
-    generic: Une erreur est survenue, réessayez.
     upload_failed: Le fichier n'a pas pu être envoyé.
     directory_not_found: Le dossier « %path% » n'existe pas.
     directory_exists: Le dossier « %path% » existe déjà.
@@ -181,5 +169,6 @@ error:
     mime_not_allowed: Le type de fichier « %mime% » n'est pas autorisé.
     too_large: Le fichier est trop lourd (%size% Ko, %max% Ko autorisés).
     could_not_store: Le fichier « %name% » n'a pas pu être enregistré.
+    rejected: 'Le fichier « %name% » a été refusé : %reason%'
     not_duplicates: Ces fichiers ne sont pas des doublons.
     alt_too_long: Le texte alternatif ne peut pas dépasser %max% caractères.

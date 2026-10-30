@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\File\Reference;
 
+use Doctrine\ORM\QueryBuilder;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 
 /**
@@ -21,9 +22,10 @@ interface FileReferenceSourceInterface
     public function references(array $ids): array;
 
     /**
-     * @return list<string> ids of the referenced files
+     * Restricts a query of the files (root alias $alias) to those this source does not reference,
+     * in the database as far as possible (`NOT EXISTS`).
      */
-    public function usedIds(): array;
+    public function excludeReferenced(QueryBuilder $qb, string $alias): void;
 
     /**
      * Points every reference to $old at $new, through the entities (cache invalidation).

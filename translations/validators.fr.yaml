@@ -1,6 +1,4 @@
 gingerminds_media_manager:
-    media_category:
-        parent_cycle: Une catégorie ne peut pas être rangée dans elle-même ni dans une de ses sous-catégories.
     media:
         thumbnail_not_image: La vignette doit être une image.
     media_select:

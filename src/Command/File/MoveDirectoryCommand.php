@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Command\File;
 
 use Gingerminds\MediaManagerBundle\Exception\TranslatableExceptionInterface;
-use Gingerminds\MediaManagerBundle\File\FileLibrary;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,7 +21,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class MoveDirectoryCommand extends Command
 {
     public function __construct(
-        private readonly FileLibrary $library,
+        private readonly LibraryDirectories $directories,
     ) {
         parent::__construct();
     }
@@ -42,7 +42,7 @@ final class MoveDirectoryCommand extends Command
         $name = $input->getOption('name');
 
         try {
-            $newPath = $this->library->moveDirectory($path, $parent, \is_string($name) && '' !== $name ? $name : null);
+            $newPath = $this->directories->moveDirectory($path, $parent, \is_string($name) && '' !== $name ? $name : null);
         } catch (TranslatableExceptionInterface $exception) {
             $io->error($exception->getMessage());
 

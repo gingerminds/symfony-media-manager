@@ -34,7 +34,7 @@ final class MediaAdminTest extends ApiTestCase
         $this->fixtures->media($this->files->text('notes.txt', 'notes'), 'Notes');
         $this->client->loginUser($this->fixtures->user('viewer@example.com', ['view medias']), 'admin');
 
-        $crawler = $this->client->request('GET', '/admin/medias?sortBy=name');
+        $crawler = $this->client->request('GET', '/admin/medias?order[name]=asc');
 
         self::assertResponseIsSuccessful();
         self::assertSame(['Brochure', 'Notes', 'Tractor'], $this->names($crawler));
@@ -45,10 +45,10 @@ final class MediaAdminTest extends ApiTestCase
         self::assertCount(0, $crawler->filter('a[href="/admin/medias/new"]'), 'No create button for a viewer.');
         self::assertCount(1, $crawler->filter('#gm-sidebar a[href="/admin/medias"]'));
 
-        $crawler = $this->client->request('GET', '/admin/medias?filters[category][]=' . $photos->getId());
+        $crawler = $this->client->request('GET', '/admin/medias?category[]=' . $photos->getId());
         self::assertSame(['Tractor'], $this->names($crawler));
 
-        $crawler = $this->client->request('GET', '/admin/medias?filters[search]=broch');
+        $crawler = $this->client->request('GET', '/admin/medias?search=broch');
         self::assertSame(['Brochure'], $this->names($crawler));
     }
 
@@ -134,7 +134,7 @@ final class MediaAdminTest extends ApiTestCase
             self::assertCount(1, $crawler->filter('#media_code.is-invalid'), \sprintf('Code "%s".', $code));
         }
 
-        $crawler = $this->client->request('GET', '/admin/medias?filters[search]=tract');
+        $crawler = $this->client->request('GET', '/admin/medias?search=tract');
         self::assertSame(['Tractor'], $this->names($crawler));
     }
 
