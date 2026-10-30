@@ -6,21 +6,17 @@ namespace Gingerminds\MediaManagerBundle\File\Reference;
 
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Mapping\ClassMetadata;
+use Gingerminds\MediaManagerBundle\Doctrine\AssociationFinder;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 
 /**
  * Every Doctrine association to a file, found in the mapping: none can be forgotten.
  */
-final class DoctrineAssociationReferenceSource implements FileReferenceSourceInterface
+final readonly class DoctrineAssociationReferenceSource implements FileReferenceSourceInterface
 {
-    /**
-     * @var list<array{ClassMetadata<object>, string}>|null class and field
-     */
-    private ?array $associations = null;
-
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private EntityManagerInterface $entityManager,
+        private AssociationFinder $associations,
     ) {
     }
 
@@ -32,7 +28,7 @@ final class DoctrineAssociationReferenceSource implements FileReferenceSourceInt
 
         $references = [];
 
-        foreach ($this->associations() as [$metadata, $field]) {
+        foreach ($this->associations->owningAssociationsTo(FileInterface::class) as [$metadata, $field]) {
             $rows = $this->entityManager->createQueryBuilder()
                 ->select('o', 'f.id AS fileId')
                 ->from($metadata->getName(), 'o')
@@ -54,7 +50,7 @@ final class DoctrineAssociationReferenceSource implements FileReferenceSourceInt
     {
         $ids = [];
 
-        foreach ($this->associations() as [$metadata, $field]) {
+        foreach ($this->associations->owningAssociationsTo(FileInterface::class) as [$metadata, $field]) {
             $rows = $this->entityManager->createQueryBuilder()
                 ->select('DISTINCT f.id')
                 ->from($metadata->getName(), 'o')
@@ -94,35 +90,5 @@ final class DoctrineAssociationReferenceSource implements FileReferenceSourceInt
         $this->entityManager->flush();
 
         return $updated;
-    }
-
-    /**
-     * Owning sides only, once per class hierarchy.
-     *
-     * @return list<array{ClassMetadata<object>, string}>
-     */
-    private function associations(): array
-    {
-        if (null !== $this->associations) {
-            return $this->associations;
-        }
-
-        $this->associations = [];
-
-        foreach ($this->entityManager->getMetadataFactory()->getAllMetadata() as $metadata) {
-            if ($metadata->isMappedSuperclass || $metadata->isEmbeddedClass) {
-                continue;
-            }
-
-            foreach ($metadata->associationMappings as $field => $mapping) {
-                if (!$mapping->isOwningSide() || null !== $mapping->inherited || !is_a($mapping->targetEntity, FileInterface::class, true)) {
-                    continue;
-                }
-
-                $this->associations[] = [$metadata, $field];
-            }
-        }
-
-        return $this->associations;
     }
 }

@@ -121,7 +121,7 @@ final class GingermindsMediaManagerBundle extends AbstractResourceBundle
         if ($config['basket']['enabled']) {
             $container->import('../config/services/basket.php');
             // A media in a basket can still be deleted.
-            $container->services()->get('gingerminds_media_manager.media.usage_counter')->arg(1, [BasketInterface::class]);
+            $container->services()->get('gingerminds_media_manager.media.usage_counter')->arg(2, [BasketInterface::class]);
         }
 
         $container->services()->get('gingerminds_media_manager.storage.disk_registry')

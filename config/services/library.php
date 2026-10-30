@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Gingerminds\MediaManagerBundle\Doctrine\AssociationFinder;
 use Gingerminds\MediaManagerBundle\File\DirectoryMover;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
@@ -22,8 +23,11 @@ use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
 
+    $services->set('gingerminds_media_manager.doctrine.association_finder', AssociationFinder::class)
+        ->args([service('doctrine.orm.entity_manager')]);
+
     $services->set('gingerminds_media_manager.file.reference.doctrine_associations', DoctrineAssociationReferenceSource::class)
-        ->args([service('doctrine.orm.entity_manager')])
+        ->args([service('doctrine.orm.entity_manager'), service('gingerminds_media_manager.doctrine.association_finder')])
         ->tag(FileReferenceSourceInterface::TAG);
 
     // Last resort: the owner itself.

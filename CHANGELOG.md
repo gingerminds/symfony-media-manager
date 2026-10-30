@@ -87,6 +87,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   flush, then the physical files no other row points to (and their presets), a failure on the disk
   being logged. A failed flush (a reference added meanwhile) no longer leaves rows without file.
   `FileLibrary::delete()` and `mergeDuplicates()` delete in one go.
+- `AssociationFinder` (`gingerminds_media_manager.doctrine.association_finder`): the owning
+  associations to an entity, read once from the Doctrine mapping, shared by
+  `DoctrineAssociationReferenceSource` and `MediaUsageCounter` (both take it as argument).
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.
