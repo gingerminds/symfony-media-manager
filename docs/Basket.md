@@ -51,8 +51,9 @@ The rules are in `BasketVoter` (`BASKET_VIEW`, `BASKET_MODIFY`, `BASKET_DOWNLOAD
 
 ## Download
 
-`GET /api/baskets/{token}/download` returns `basket.zip`: the file of each media, read on its own
-disk, under its original name (`photo (2).png` for a second `photo.png`). 422 when the basket is
+`GET /api/baskets/{token}/download` streams `basket.zip` (`maennchen/zipstream-php`, no temporary
+file, the download starts at once): the file of each media, read on its own disk, under its
+original name (`photo (2).png` for a second `photo.png`). 422 when the basket is
 empty or when none of its files exists. The basket is kept (a `GET` has no side effect: a download
 can be retried); empty it with `DELETE /api/baskets/{token}`. `basket.delete_after_download: true`
 deletes it once downloaded, as the Laravel media manager did.

@@ -80,6 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **BC break** `GET /api/baskets/{token}/download` keeps the basket (no side effect on a `GET`, a
   download can be retried): `basket.delete_after_download: true` deletes it once downloaded, as the
   Laravel media manager did.
+- The basket ZIP is streamed (`maennchen/zipstream-php`): no temporary copy of each file nor
+  temporary archive, the download starts at once. `BasketArchiver::archive()` becomes `entries()`
+  (the files found on their disk, by entry name) and `write()`; `ZipArchiveException` is removed.
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

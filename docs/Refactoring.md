@@ -20,7 +20,6 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 
 | Constat | Où | Correction | Effort |
 |---|---|---|---|
-| Le ZIP copie chaque fichier en temporaire avant de zipper | `src/Basket/BasketArchiver.php:69-89` | zip en `StreamedResponse` | M |
 | Suppression : disque avant base, un flush par fichier | `FileStorage.php:86-94` | suppression disque en `postFlush` ou via Messenger | S |
 | Filtre « orphelins » en `NOT IN` de tous les ids ; parcours complet de table | `src/File/FileLibrary.php:79`, `src/File/Reference/JsonFieldFileReferenceSource.php:45-63` | `NOT EXISTS` | M |
 | 4 allers-retours storage par réponse fichier | `FileResponseFactory` | ETag sur `hash` / `updatedAt` lu en base | M |

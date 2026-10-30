@@ -91,6 +91,11 @@ class FileStorage
         $this->files->remove($file);
     }
 
+    public function exists(FileInterface $file): bool
+    {
+        return $this->disks->get($file->getDisk())->fileExists($file->getPath());
+    }
+
     /**
      * @return resource
      *
