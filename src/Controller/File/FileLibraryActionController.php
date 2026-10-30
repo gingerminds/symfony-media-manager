@@ -4,37 +4,42 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Controller\File;
 
-use Gingerminds\CoreBundle\Controller\CrudContext;
-use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
+use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Write endpoints of the library browser: `edit files` and the CSRF token in the `X-CSRF-Token` header.
  */
+#[Route('/files', name: 'gingerminds_media_manager_file_')]
+#[IsGranted(ResourceVoter::EDIT, subject: new Expression('"file"'))]
+#[IsCsrfTokenValid(self::CSRF_TOKEN_ID, tokenKey: 'X-CSRF-Token', tokenSource: IsCsrfTokenValid::SOURCE_HEADER)]
 class FileLibraryActionController extends AbstractFileLibraryController
 {
     public function __construct(
-        CrudContext $context,
         FileLibrary $library,
         FileRepository $files,
         FileLibraryPresenter $presenter,
         protected readonly int $maxDirectoryMove,
     ) {
-        parent::__construct($context, $library, $files, $presenter);
+        parent::__construct($library, $files, $presenter);
     }
 
+    #[Route('/upload', name: 'upload', methods: ['POST'])]
     public function upload(Request $request): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
         $file = $request->files->get('file');
 
         if (!$file instanceof UploadedFile || !$file->isValid()) {
@@ -51,9 +56,9 @@ class FileLibraryActionController extends AbstractFileLibraryController
         });
     }
 
+    #[Route('/directories', name: 'directory_create', methods: ['POST'])]
     public function createDirectory(Request $request): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
         $payload = $request->getPayload();
 
         return $this->attempt(fn (): JsonResponse => new JsonResponse(
@@ -65,10 +70,9 @@ class FileLibraryActionController extends AbstractFileLibraryController
     /**
      * Empty directories only: the others are kept and returned; 422 when none could be deleted.
      */
+    #[Route('/directories', name: 'directory_delete', methods: ['DELETE'])]
     public function deleteDirectory(Request $request): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
-
         return $this->attempt(function () use ($request): JsonResponse {
             $result = $this->library->rmdirs($this->directoryPaths($request));
 
@@ -82,9 +86,9 @@ class FileLibraryActionController extends AbstractFileLibraryController
     /**
      * Moves `paths` under `parent`; with one path, `name` renames it.
      */
+    #[Route('/directories', name: 'directory_move', methods: ['PATCH'])]
     public function moveDirectory(Request $request): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
         $payload = $request->getPayload();
         $paths = $this->directoryPaths($request);
         $name = 1 === \count($paths) ? $payload->getString('name') : '';
@@ -98,9 +102,9 @@ class FileLibraryActionController extends AbstractFileLibraryController
     /**
      * Only the fields of the payload (`name`, `alt`) are updated.
      */
+    #[Route('/{id}', name: 'update', requirements: ['id' => Requirement::UUID], methods: ['PATCH'])]
     public function update(Request $request, string $id): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
         $file = $this->findFile($id);
         $payload = $request->getPayload();
 
@@ -117,9 +121,9 @@ class FileLibraryActionController extends AbstractFileLibraryController
         });
     }
 
+    #[Route('/move', name: 'move', methods: ['POST'])]
     public function move(Request $request): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
         $payload = $request->getPayload();
         $files = $this->findFiles($payload->all('ids'));
 
@@ -133,9 +137,9 @@ class FileLibraryActionController extends AbstractFileLibraryController
     /**
      * Used files are kept and returned with their usages; 422 when none could be deleted.
      */
+    #[Route('/delete', name: 'delete', methods: ['POST'])]
     public function delete(Request $request): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
         $files = $this->findFiles($request->getPayload()->all('ids'));
         $ids = array_map(static fn (FileInterface $file): string => $file->getId(), $files);
         $result = $this->library->delete($files);
@@ -156,9 +160,9 @@ class FileLibraryActionController extends AbstractFileLibraryController
      * Every reference to the duplicates (all the files with the same content without `ids`) now
      * points to the kept file.
      */
+    #[Route('/merge', name: 'merge', methods: ['POST'])]
     public function merge(Request $request): JsonResponse
     {
-        $this->denyUnlessCanEdit($request);
         $payload = $request->getPayload();
         $keep = $this->findFile($payload->getString('keep'));
         $duplicates = $payload->has('ids') ? $this->findFiles($payload->all('ids')) : $this->duplicatesOf($keep);
@@ -178,14 +182,5 @@ class FileLibraryActionController extends AbstractFileLibraryController
     private function directoryPaths(Request $request): array
     {
         return array_values(array_unique(array_filter($request->getPayload()->all('paths'), \is_string(...))));
-    }
-
-    private function denyUnlessCanEdit(Request $request): void
-    {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::EDIT, self::RESOURCE);
-
-        if (!$this->isCsrfTokenValid(self::CSRF_TOKEN_ID, $request->headers->get('X-CSRF-Token'))) {
-            throw new AccessDeniedHttpException('Invalid CSRF token.');
-        }
     }
 }

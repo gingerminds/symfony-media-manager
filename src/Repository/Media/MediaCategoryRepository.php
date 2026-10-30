@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Repository\Media;
 
-use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Gingerminds\CoreBundle\Repository\AbstractRepository;
-use Gingerminds\CoreBundle\Repository\ListQuery;
+use Gingerminds\CoreBundle\Repository\TreeRepositoryInterface;
+use Gingerminds\CoreBundle\Repository\TreeRepositoryTrait;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
-use Symfony\Component\Form\FormInterface;
 
 /**
  * @extends AbstractRepository<MediaCategoryInterface>
  */
-class MediaCategoryRepository extends AbstractRepository
+class MediaCategoryRepository extends AbstractRepository implements TreeRepositoryInterface
 {
+    use TreeRepositoryTrait;
+
     protected int $itemsPerPage = 200;
     protected int $maxItemsPerPage = 500;
 
@@ -49,55 +50,6 @@ class MediaCategoryRepository extends AbstractRepository
     }
 
     /**
-     * The whole tree, depth-first, each category with its depth.
-     *
-     * @return list<array{MediaCategoryInterface, int}>
-     */
-    public function findFlatTree(): array
-    {
-        $flatten = static function (array $categories, int $depth) use (&$flatten): iterable {
-            foreach ($categories as $category) {
-                yield [$category, $depth];
-                yield from $flatten($category->getChildren(), $depth + 1);
-            }
-        };
-
-        return iterator_to_array($flatten($this->findTree(), 0), false);
-    }
-
-    /**
-     * These categories and all their descendants.
-     *
-     * @param list<int> $ids
-     *
-     * @return list<int>
-     */
-    public function findIdsWithDescendants(array $ids): array
-    {
-        $children = [];
-        $existing = [];
-
-        foreach ($this->createQueryBuilder('c')->select('c.id', 'IDENTITY(c.parent) AS parent')->getQuery()->getArrayResult() as $row) {
-            $children[(int) $row['parent']][] = (int) $row['id'];
-            $existing[] = (int) $row['id'];
-        }
-
-        $result = [];
-        $pending = array_values(array_intersect($ids, $existing));
-
-        while ([] !== $pending) {
-            $id = array_pop($pending);
-
-            if (!isset($result[$id])) {
-                $result[$id] = true;
-                array_push($pending, ...($children[$id] ?? []));
-            }
-        }
-
-        return array_keys($result);
-    }
-
-    /**
      * @param list<string> $codes
      *
      * @return list<MediaCategoryInterface>
@@ -105,62 +57,5 @@ class MediaCategoryRepository extends AbstractRepository
     public function findByCodes(array $codes): array
     {
         return [] === $codes ? [] : array_values($this->findBy(['code' => $codes]));
-    }
-
-    /**
-     * Applies the order of one level of the tree: ids of other levels are ignored.
-     *
-     * @param list<int> $ids
-     */
-    public function reorder(?int $parentId, array $ids): void
-    {
-        $siblings = [];
-
-        foreach ($this->findBy(['parent' => $parentId]) as $category) {
-            $siblings[(int) $category->getId()] = $category;
-        }
-
-        foreach (array_values($ids) as $position => $id) {
-            if (isset($siblings[$id])) {
-                $siblings[$id]->setPosition($position);
-            }
-        }
-
-        $this->getEntityManager()->flush();
-    }
-
-    protected function configureListQueryBuilder(QueryBuilder $qb, ListQuery $query): void
-    {
-        if (null === $query->sortBy) {
-            $qb->addOrderBy(self::ALIAS . '.position');
-        }
-    }
-
-    /**
-     * A new category, or one moved to another parent, goes to the end of its level.
-     */
-    protected function beforeSave(object $entity, ?FormInterface $form): void
-    {
-        $original = $this->getEntityManager()->getUnitOfWork()->getOriginalEntityData($entity);
-
-        if ([] !== $original && ($original['parent'] ?? null) === $entity->getParent()) {
-            return;
-        }
-
-        $qb = $this->createQueryBuilder('c')->select('MAX(c.position)');
-        $parent = $entity->getParent();
-
-        if (null === $parent) {
-            $qb->where('c.parent IS NULL');
-        } else {
-            $qb->where('c.parent = :parent')->setParameter('parent', $parent);
-        }
-
-        if (null !== $entity->getId()) {
-            $qb->andWhere('c.id <> :id')->setParameter('id', $entity->getId());
-        }
-
-        $max = $qb->getQuery()->getSingleScalarResult();
-        $entity->setPosition(null === $max ? 0 : (int) $max + 1);
     }
 }

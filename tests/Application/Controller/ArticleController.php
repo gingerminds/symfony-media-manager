@@ -8,8 +8,4 @@ use Gingerminds\CoreBundle\Controller\AbstractCrudController;
 
 final class ArticleController extends AbstractCrudController
 {
-    protected function getResourceName(): string
-    {
-        return 'article';
-    }
 }

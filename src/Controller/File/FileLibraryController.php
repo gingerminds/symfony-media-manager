@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Controller\File;
 
-use Gingerminds\CoreBundle\Controller\CrudContext;
-use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\CoreBundle\Service\DisplayTimezone;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
@@ -15,13 +14,20 @@ use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\File\MimeTypePatterns;
 use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceRegistry;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
+use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Library management page and the read endpoints of the library browser (`view files`).
+ * Library management page and the read endpoints of the library browser (`view files`), routed
+ * under the `file` resource.
  */
+#[IsGranted(ResourceVoter::VIEW, subject: new Expression('"file"'))]
 class FileLibraryController extends AbstractFileLibraryController
 {
     /**
@@ -33,7 +39,6 @@ class FileLibraryController extends AbstractFileLibraryController
      * @param list<string> $allowedMimes
      */
     public function __construct(
-        CrudContext $context,
         FileLibrary $library,
         FileRepository $files,
         FileLibraryPresenter $presenter,
@@ -43,15 +48,14 @@ class FileLibraryController extends AbstractFileLibraryController
         protected readonly array $allowedMimes,
         protected readonly DisplayTimezone $displayTimezone = new DisplayTimezone(),
     ) {
-        parent::__construct($context, $library, $files, $presenter);
+        parent::__construct($library, $files, $presenter);
     }
 
+    #[Route('', name: 'index', methods: ['GET'])]
     public function index(): Response
     {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, self::RESOURCE);
-
         return $this->render('@GingermindsMediaManager/pages/file/index.html.twig', [
-            'resource' => $this->context->resources->get(self::RESOURCE),
+            'resource' => $this->getResourceRegistry()->get(self::RESOURCE),
             'browser' => $this->browserParameters(),
         ]);
     }
@@ -59,19 +63,17 @@ class FileLibraryController extends AbstractFileLibraryController
     /**
      * The library browser in a modal, to pick files for the FilePickerType fields of a form.
      */
+    #[Route('/picker', name: 'picker', methods: ['GET'])]
     public function picker(): Response
     {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, self::RESOURCE);
-
         return $this->render('@GingermindsMediaManager/components/file/_picker_modal.html.twig', [
             'browser' => $this->browserParameters(),
         ]);
     }
 
+    #[Route('/browse', name: 'browse', methods: ['GET'])]
     public function browse(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, self::RESOURCE);
-
         return $this->attempt(function () use ($request): JsonResponse {
             $query = $this->libraryQuery($request);
             $page = $this->library->files($query);
@@ -80,16 +82,15 @@ class FileLibraryController extends AbstractFileLibraryController
         });
     }
 
+    #[Route('/directories', name: 'directories', methods: ['GET'])]
     public function directories(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, self::RESOURCE);
-
         return $this->attempt(fn (): JsonResponse => new JsonResponse($this->directoryList($request->query->getString('path'))));
     }
 
+    #[Route('/{id}', name: 'show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
     public function show(string $id): JsonResponse
     {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, self::RESOURCE);
         $file = $this->findFile($id);
         $usages = $this->references->usages([$file])[$file->getId()] ?? [];
 
@@ -107,25 +108,26 @@ class FileLibraryController extends AbstractFileLibraryController
      */
     protected function browserParameters(): array
     {
-        $urlGenerator = $this->context->urlGenerator;
+        $csrfTokenManager = $this->container->get('security.csrf.token_manager');
+        \assert($csrfTokenManager instanceof CsrfTokenManagerInterface);
 
         return [
             'startPath' => $this->startPathProvider->getStartPath(),
-            'canEdit' => $this->isGranted(AbstractResourceVoter::EDIT, self::RESOURCE),
-            'csrfToken' => $this->context->csrfTokenManager->getToken(self::CSRF_TOKEN_ID)->getValue(),
+            'canEdit' => $this->isGranted(ResourceVoter::EDIT, self::RESOURCE),
+            'csrfToken' => $csrfTokenManager->getToken(self::CSRF_TOKEN_ID)->getValue(),
             'maxUploadSize' => $this->maxUploadSize * 1024,
             'allowedMimes' => $this->allowedMimes,
             'types' => array_keys(LibraryQuery::TYPES),
             'idPlaceholder' => self::ID_PLACEHOLDER,
             'urls' => [
-                'browse' => $urlGenerator->generate('gingerminds_media_manager_file_browse'),
-                'directories' => $urlGenerator->generate('gingerminds_media_manager_file_directories'),
-                'directory' => $urlGenerator->generate('gingerminds_media_manager_file_directory_create'),
-                'show' => $urlGenerator->generate('gingerminds_media_manager_file_show', ['id' => self::ID_PLACEHOLDER]),
-                'upload' => $urlGenerator->generate('gingerminds_media_manager_file_upload'),
-                'move' => $urlGenerator->generate('gingerminds_media_manager_file_move'),
-                'delete' => $urlGenerator->generate('gingerminds_media_manager_file_delete'),
-                'merge' => $urlGenerator->generate('gingerminds_media_manager_file_merge'),
+                'browse' => $this->generateUrl('gingerminds_media_manager_file_browse'),
+                'directories' => $this->generateUrl('gingerminds_media_manager_file_directories'),
+                'directory' => $this->generateUrl('gingerminds_media_manager_file_directory_create'),
+                'show' => $this->generateUrl('gingerminds_media_manager_file_show', ['id' => self::ID_PLACEHOLDER]),
+                'upload' => $this->generateUrl('gingerminds_media_manager_file_upload'),
+                'move' => $this->generateUrl('gingerminds_media_manager_file_move'),
+                'delete' => $this->generateUrl('gingerminds_media_manager_file_delete'),
+                'merge' => $this->generateUrl('gingerminds_media_manager_file_merge'),
             ],
         ];
     }

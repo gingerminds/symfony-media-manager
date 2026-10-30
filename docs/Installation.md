@@ -24,14 +24,13 @@ return [
 ## 2. Routes
 
 ```yaml
-# config/routes/gingerminds_media_manager.yaml — admin routes of the library, the media picker
-# and the category reordering
+# config/routes/gingerminds_media_manager.yaml — write endpoints of the file library
 gingerminds_media_manager:
     resource: '@GingermindsMediaManagerBundle/config/routes.php'
 ```
 
-The CRUD routes of the medias and media categories (`/admin/medias`, `/admin/media-categories`)
-come from the core `gingerminds_crud` loader, the API routes (`/api/files`, `/api/media`,
+The routes of the resources (`/admin/medias` and its picker, `/admin/media-categories` and its
+reordering, the `/admin/files` pages) come from the core `gingerminds_crud` loader, the API routes (`/api/files`, `/api/media`,
 `/api/media_categories`, `/api/baskets`) from API Platform: nothing to add.
 
 ## 3. Storage

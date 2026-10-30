@@ -40,7 +40,6 @@ final class MediaCategoryAdminTest extends ApiTestCase
         $crawler = $this->client->request('GET', '/admin/media-categories');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(0, $crawler->filter('.drag-handle'));
         self::assertCount(0, $crawler->filter('[data-controller="gm-sortable-tree"]'));
         self::assertCount(0, $crawler->filter('a[href^="/admin/media-categories/new"]'));
 
@@ -192,8 +191,9 @@ final class MediaCategoryAdminTest extends ApiTestCase
         $token = (string) $this->client->request('GET', '/admin/media-categories')
             ->filter('[data-gm-sortable-tree-csrf-token-value]')->attr('data-gm-sortable-tree-csrf-token-value');
 
+        // #[IsCsrfTokenValid]: the admin firewall handles the JSON requests.
         $this->reorder(['ids' => [$videos->getId(), $photos->getId()], 'parent_id' => null], 'invalid');
-        self::assertResponseStatusCodeSame(403);
+        self::assertResponseRedirects('/admin/login');
 
         $this->reorder(['ids' => [$clips->getId(), $videos->getId(), $photos->getId()], 'parent_id' => null], $token);
         self::assertResponseIsSuccessful();
@@ -208,7 +208,7 @@ final class MediaCategoryAdminTest extends ApiTestCase
      */
     private function names(Crawler $crawler): array
     {
-        return $crawler->filter('.sortable-item .fw-medium')->each(static fn (Crawler $name): string => $name->text());
+        return $crawler->filter('.sortable-item .tree-item-row > .flex-grow-1')->each(static fn (Crawler $name): string => $name->text());
     }
 
     private function delete(MediaCategory $category): void
@@ -225,6 +225,7 @@ final class MediaCategoryAdminTest extends ApiTestCase
     {
         $this->client->request('POST', '/admin/media-categories/reorder', server: [
             'CONTENT_TYPE' => 'application/json',
+            'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_CSRF_TOKEN' => $token,
         ], content: json_encode($payload, \JSON_THROW_ON_ERROR));
     }

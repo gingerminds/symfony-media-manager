@@ -29,7 +29,7 @@ final class ConfigurationTest extends TestCase
         self::assertSame(['w' => 150, 'h' => 150, 'fit' => 'crop', 'q' => 80], $config['images']['presets']['thumbnail']);
         self::assertSame(600, $config['files_rate_limit']);
         self::assertSame(['enabled' => true, 'claim_strategy' => 'merge', 'ttl' => 30], $config['basket']);
-        self::assertSame(['entity' => null, 'controller' => null, 'form' => null], $config['resources']['media']);
+        self::assertSame(['entity' => null, 'controller' => null, 'form' => null, 'api' => true], $config['resources']['media']);
     }
 
     public function testCustomPresetsReplaceTheDefaultsAndKeepExtraGlideParameters(): void

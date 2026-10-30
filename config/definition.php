@@ -16,6 +16,10 @@ $resource = static function (NodeBuilder $children, string $name, string $baseCl
                 ->end()
                 ->scalarNode('controller')->defaultNull()->end()
                 ->scalarNode('form')->defaultNull()->end()
+                ->booleanNode('api')
+                    ->info('false stops exposing the entity through the API (the bundle #[ApiResource], inherited by an entity overriding it).')
+                    ->defaultTrue()
+                ->end()
             ->end()
         ->end();
 };
@@ -171,7 +175,7 @@ $basket = static function (NodeBuilder $children): void {
 
 $resources = static function (NodeBuilder $children) use ($resource): void {
     $node = $children->arrayNode('resources')
-        ->info('Overridable resources of the bundle, registered as gingerminds_core resources.')
+        ->info('Overridable resources of the bundle, registered as gingerminds_core admin resources.')
         ->addDefaultsIfNotSet()
         ->children();
     $resource($node, 'media', 'Media');

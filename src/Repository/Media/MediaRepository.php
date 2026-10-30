@@ -8,7 +8,6 @@ use Doctrine\Persistence\ManagerRegistry;
 use Gingerminds\CoreBundle\Repository\AbstractRepository;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaInterface;
-use Symfony\Component\Form\FormInterface;
 
 /**
  * @extends AbstractRepository<MediaInterface>
@@ -51,8 +50,10 @@ class MediaRepository extends AbstractRepository
     /**
      * Without a name, the media is named after its file.
      */
-    protected function beforeSave(object $entity, ?FormInterface $form): void
+    protected function beforeSave(object $entity): void
     {
+        parent::beforeSave($entity);
+
         if (null === $entity->getName() && null !== $entity->getFile()) {
             $entity->setName($entity->getFile()->getOriginalName());
         }

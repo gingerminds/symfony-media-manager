@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Form\Media;
 
+use Gingerminds\CoreBundle\Model\TreeNodes;
 use Gingerminds\CoreBundle\Resource\ResourceRegistry;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
@@ -35,10 +36,7 @@ final class MediaCategoryChoiceType extends AbstractType
             'choice_label' => static fn (MediaCategoryInterface $choice): string => str_repeat('— ', self::depth($choice)) . $choice,
         ]);
         $resolver->setAllowedTypes('exclude', ['null', MediaCategoryInterface::class]);
-        $resolver->setDefault('choices', fn (Options $options): array => array_values(array_filter(
-            array_column($this->categories->findFlatTree(), 0),
-            static fn (MediaCategoryInterface $choice): bool => !$options['exclude'] instanceof MediaCategoryInterface || !$options['exclude']->contains($choice),
-        )));
+        $resolver->setDefault('choices', fn (Options $options): array => TreeNodes::parentChoices($this->categories->findTreeNodes(), $options['exclude'])[0]);
     }
 
     public function getParent(): string

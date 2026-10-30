@@ -55,9 +55,6 @@ media_category:
         parent: Catégorie parente
     placeholder:
         parent: — Aucune —
-    action:
-        add_child: Ajouter un enfant
-        move: Déplacer
     message:
         no_items: Aucune catégorie de média
     error:

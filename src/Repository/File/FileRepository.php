@@ -275,7 +275,7 @@ class FileRepository extends AbstractRepository
 
     private function orderLibrary(QueryBuilder $qb, LibraryQuery $query): void
     {
-        $direction = 'desc' === strtolower($query->sort) ? 'DESC' : 'ASC';
+        $direction = 'desc' === strtolower($query->sort) ? \SortDirection::Descending : \SortDirection::Ascending;
         $sort = LibraryQuery::SORTS[$query->sortBy] ?? 'originalName';
 
         // Case insensitive names, as with the MySQL collations.

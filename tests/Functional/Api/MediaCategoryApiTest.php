@@ -31,7 +31,7 @@ final class MediaCategoryApiTest extends ApiTestCase
             $this->fixtures->mediaCategory($code);
         }
 
-        $data = $this->api('GET', '/api/media_categories?itemsPerPage=2&sortBy=code&sort=desc');
+        $data = $this->api('GET', '/api/media_categories?itemsPerPage=2&order[code]=desc');
 
         self::assertSame(['charlie', 'bravo'], array_column($data['member'], 'code'));
     }

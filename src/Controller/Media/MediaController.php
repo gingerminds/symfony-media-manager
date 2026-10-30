@@ -5,18 +5,21 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Controller\Media;
 
 use Gingerminds\CoreBundle\Controller\AbstractCrudController;
-use Gingerminds\CoreBundle\Controller\CrudContext;
-use Gingerminds\CoreBundle\Repository\ListQuery;
-use Gingerminds\CoreBundle\Security\Voter\AbstractResourceVoter;
+use Gingerminds\CoreBundle\Model\TreeNodes;
+use Gingerminds\CoreBundle\Security\Voter\ResourceVoter;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaCategoryInterface;
 use Gingerminds\MediaManagerBundle\Entity\Media\MediaInterface;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
 use Gingerminds\MediaManagerBundle\Media\MediaPresenter;
 use Gingerminds\MediaManagerBundle\Media\MediaUsageCounter;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
+use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Deleting a media never deletes its files: they stay in the library.
@@ -25,42 +28,24 @@ class MediaController extends AbstractCrudController
 {
     public const int MAX_SEARCH_ITEMS = 100;
 
-    private ?string $categoryId = null;
-
     public function __construct(
-        CrudContext $context,
         protected readonly MediaCategoryRepository $categories,
         protected readonly MediaPresenter $presenter,
         protected readonly MediaUsageCounter $usages,
     ) {
-        parent::__construct($context);
-    }
-
-    protected function getResourceName(): string
-    {
-        return 'media';
-    }
-
-    /**
-     * `?category_id=` preselects the category.
-     */
-    public function new(Request $request): Response
-    {
-        $this->categoryId = $request->query->getString('category_id') ?: null;
-
-        return parent::new($request);
     }
 
     /**
      * The media picker modal of the MediaSelectType fields, loaded once per page.
      */
+    #[Route('/picker', name: 'picker', methods: ['GET'])]
+    #[IsGranted(ResourceVoter::VIEW, subject: new Expression(self::RESOURCE_SUBJECT))]
     public function picker(): Response
     {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, $this->getResource()->name);
-
         $categories = [];
 
-        foreach ($this->categories->findFlatTree() as [$category, $depth]) {
+        /** @var MediaCategoryInterface $category */
+        foreach (TreeNodes::flatten($this->categories->findTreeNodes()) as [$category, $depth]) {
             $ancestors = [];
 
             for ($parent = $category->getParent(); $parent instanceof MediaCategoryInterface; $parent = $parent->getParent()) {
@@ -77,20 +62,21 @@ class MediaController extends AbstractCrudController
      * Medias of the picker: `search` (code, name), `category` and the allowed `categories[]`, their
      * subcategories included, `page`, `per_page`. Admin endpoint: the public API may be scoped by the project.
      */
+    #[Route('/search', name: 'search', methods: ['GET'])]
+    #[IsGranted(ResourceVoter::VIEW, subject: new Expression(self::RESOURCE_SUBJECT))]
     public function search(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted(AbstractResourceVoter::VIEW, $this->getResource()->name);
         $query = $request->query;
-        $categoryIds = $this->categoryFilter($query->getInt('category'), array_values(array_map(intval(...), $query->all('categories'))));
-        $page = $this->getRepository()->paginate(new ListQuery(
-            page: max(1, $query->getInt('page', 1)),
-            itemsPerPage: min(self::MAX_SEARCH_ITEMS, max(1, $query->getInt('per_page', 24))),
-            sortBy: 'name',
-            filters: array_filter([
-                ListQuery::SEARCH_FILTER => $query->getString('search'),
-                'category' => $categoryIds,
-            ], static fn (mixed $value): bool => null !== $value && '' !== $value),
-        ));
+        $parameters = $this->getFilterParameters()->fromQuery($this->getResource()->entity, [
+            'search' => $query->getString('search'),
+            'category' => $this->categoryFilter($query->getInt('category'), array_values(array_map(intval(...), $query->all('categories')))),
+            'order' => ['name' => 'asc'],
+        ]);
+        $page = $this->getRepository()->paginate(
+            $parameters,
+            max(1, $query->getInt('page', 1)),
+            min(self::MAX_SEARCH_ITEMS, max(1, $query->getInt('per_page', 24))),
+        );
 
         return new JsonResponse([
             'items' => array_values(array_map(
@@ -110,13 +96,13 @@ class MediaController extends AbstractCrudController
      */
     private function categoryFilter(int $category, array $allowed): ?array
     {
-        $allowed = [] === array_filter($allowed) ? null : $this->categories->findIdsWithDescendants($allowed);
+        $allowed = [] === array_filter($allowed) ? null : array_map(intval(...), $this->categories->findIdsWithDescendants($allowed));
 
         if (0 === $category) {
             return $allowed;
         }
 
-        $ids = $this->categories->findIdsWithDescendants([$category]);
+        $ids = array_map(intval(...), $this->categories->findIdsWithDescendants([$category]));
 
         if (null !== $allowed) {
             $ids = array_values(array_intersect($ids, $allowed));
@@ -125,12 +111,18 @@ class MediaController extends AbstractCrudController
         return [] === $ids ? [0] : $ids;
     }
 
+    /**
+     * `?category_id=` preselects the category.
+     */
     protected function createEntity(): object
     {
         $entity = parent::createEntity();
+        $requestStack = $this->container->get('request_stack');
+        \assert($requestStack instanceof RequestStack);
+        $categoryId = $requestStack->getCurrentRequest()?->query->getString('category_id');
 
-        if (null !== $this->categoryId && $entity instanceof MediaInterface) {
-            $category = $this->context->doctrine->getRepository($this->context->resources->getEntityClass('media_category'))->find($this->categoryId);
+        if (null !== $categoryId && '' !== $categoryId && $entity instanceof MediaInterface) {
+            $category = $this->categories->find($categoryId);
             $entity->setCategory($category instanceof MediaCategoryInterface ? $category : null);
         }
 
@@ -144,16 +136,5 @@ class MediaController extends AbstractCrudController
         return $count > 0
             ? $this->trans('media.error.used', ['%count%' => $count], GingermindsMediaManagerBundle::TRANSLATION_DOMAIN)
             : null;
-    }
-
-    protected function getCommonParameters(): array
-    {
-        $parameters = parent::getCommonParameters();
-
-        if (isset($parameters['filter_configs']['category'])) {
-            $parameters['filter_configs']['category']['entity'] = $this->context->resources->getEntityClass('media_category');
-        }
-
-        return $parameters;
     }
 }

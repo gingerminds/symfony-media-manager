@@ -36,6 +36,4 @@ services:
 
     Gingerminds\MediaManagerBundle\Tests\Application\Reference\PageUsageResolver: ~
 
-    Gingerminds\MediaManagerBundle\Tests\Application\Controller\ArticleController:
-        arguments: ['@gingerminds_core.controller.context']
-        tags: [controller.service_arguments]
+    Gingerminds\MediaManagerBundle\Tests\Application\Controller\ArticleController: ~

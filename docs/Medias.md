@@ -47,9 +47,11 @@ a unique `code`, a `name`, a `parent` and a `position` among its siblings.
   of its descendants); a new or moved category goes to the end of its level;
 - a category with **subcategories** or **medias** cannot be deleted: move them first.
 
-`MediaCategoryRepository::findTree()` loads the whole tree in one query, `findFlatTree()` returns
-it depth first with the depth of each category, `findIdsWithDescendants()` the ids of categories
-and of all their descendants.
+`MediaCategoryController` and `MediaCategoryRepository` are the core admin tree
+(`AbstractTreeCrudController`, `TreeRepositoryTrait`): `findTreeNodes()` (with
+`TreeNodes::flatten()` for the depth of each category), `findIdsWithDescendants()` the ids of
+categories and of all their descendants. `findTree()` loads the roots with their children, for
+`GET /api/media_categories/tree`.
 
 ## API and cache
 

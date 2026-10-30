@@ -15,7 +15,7 @@ used file cannot be deleted. This page maps each concept; see also the core
 | `ResourceResolver` (`resources.media\|media_category`) | `resources.media\|media_category\|file\|basket` (`entity`, `controller`, `form`) | Registered as core resources, see [Configuration](Configuration.md#overriding-the-entities). |
 | `Media`, `MediaCategory`, `File`, `Basket` models | `BaseMedia`, `BaseMediaCategory`, `BaseFile`, `BaseBasket` mapped superclasses + entities | Overridable. |
 | `MediaController`, `MediaCategoryController`, Blade views | Core CRUD controllers, Twig templates | Media library menu section. |
-| Policies (`MediaPolicy`, `MediaCategoryPolicy`, `BasketPolicy`) | Voters (`MediaVoter`, `MediaCategoryVoter`, `FileVoter`, `BasketVoter`) | Same permission names, plus `view\|edit files`. |
+| Policies (`MediaPolicy`, `MediaCategoryPolicy`, `BasketPolicy`) | Core `ResourceVoter`, `BasketVoter` | Same permission names, plus `view\|edit files` (`edit files` deletes too). |
 | `FileUploadService` (`upload`, `replace`, `delete`) | `FileLibrary`, `FileStorage` | No `replace()`: a new file is uploaded to the library and picked. |
 | `<x-...::form.inputs.file>` (upload field) | [`FilePickerType`](Forms.md#filepickertype) | Picks in the library, no direct upload. |
 | `<x-...::form.inputs.media-select>` + `medias.search` | [`MediaSelectType`](Forms.md#mediaselecttype) + `GET /admin/medias/search` | `category-codes` → `categories`, `per-page` → `per_page`. |
@@ -48,7 +48,8 @@ used file cannot be deleted. This page maps each concept; see also the core
 - **Deleting**: a media keeps its files (Laravel deleted them); a used file, a used media, a
   category with subcategories or medias cannot be deleted (Laravel cascaded or set to null).
 - **API**: `file` is always the file id (Laravel sent the path of a non-image file); `code` and
-  `media_category_id` are new fields; `filters[media_category_id]` still works.
+  `media_category_id` are new fields; the lists take the core parameters (`category=`, `search=`,
+  `order[name]=`) instead of `filters[...]`.
 - **Media**: `code` is new, required and unique; the name defaults to the file name.
 - **Media select**: a category includes its subcategories; no language hint (project specific).
 - **Media categories**: `code` is unique.

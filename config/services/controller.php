@@ -13,6 +13,7 @@ use Gingerminds\MediaManagerBundle\Controller\Media\MediaController;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
+use Psr\Container\ContainerInterface;
 
 /*
  * Controllers.
@@ -34,24 +35,26 @@ return static function (ContainerConfigurator $container): void {
         ->tag('controller.service_arguments')
         ->public();
 
-    $services->set('gingerminds_media_manager.controller.admin.media_category', MediaCategoryController::class)
-        ->args([service('gingerminds_core.controller.context')])
-        ->tag('controller.service_arguments');
+    // AbstractController: services read from their locator.
+    $admin = static fn (string $id, string $class): ServiceConfigurator => $services->set($id, $class)
+        ->public()
+        ->tag('controller.service_arguments')
+        ->tag('container.service_subscriber')
+        ->call('setContainer', [service(ContainerInterface::class)]);
+
+    $admin('gingerminds_media_manager.controller.admin.media_category', MediaCategoryController::class);
     $services->alias(MediaCategoryController::class, 'gingerminds_media_manager.controller.admin.media_category')->public();
 
-    $services->set('gingerminds_media_manager.controller.admin.media', MediaController::class)
+    $admin('gingerminds_media_manager.controller.admin.media', MediaController::class)
         ->args([
-            service('gingerminds_core.controller.context'),
             service(MediaCategoryRepository::class),
             service('gingerminds_media_manager.media.presenter'),
             service('gingerminds_media_manager.media.usage_counter'),
-        ])
-        ->tag('controller.service_arguments');
+        ]);
     $services->alias(MediaController::class, 'gingerminds_media_manager.controller.admin.media')->public();
 
-    $services->set('gingerminds_media_manager.controller.admin.file_library', FileLibraryController::class)
+    $admin('gingerminds_media_manager.controller.admin.file_library', FileLibraryController::class)
         ->args([
-            service('gingerminds_core.controller.context'),
             service('gingerminds_media_manager.file.library'),
             service(FileRepository::class),
             service('gingerminds_media_manager.file.library_presenter'),
@@ -60,19 +63,16 @@ return static function (ContainerConfigurator $container): void {
             param('gingerminds_media_manager.library.max_upload_size'),
             param('gingerminds_media_manager.library.allowed_mimes'),
             service('gingerminds_core.display_timezone'),
-        ])
-        ->tag('controller.service_arguments');
+        ]);
     $services->alias(FileLibraryController::class, 'gingerminds_media_manager.controller.admin.file_library')->public();
 
     // Decorate this service to change the write actions of the library.
-    $services->set('gingerminds_media_manager.controller.admin.file_library_action', FileLibraryActionController::class)
+    $admin('gingerminds_media_manager.controller.admin.file_library_action', FileLibraryActionController::class)
         ->args([
-            service('gingerminds_core.controller.context'),
             service('gingerminds_media_manager.file.library'),
             service(FileRepository::class),
             service('gingerminds_media_manager.file.library_presenter'),
             param('gingerminds_media_manager.library.max_directory_move'),
-        ])
-        ->tag('controller.service_arguments')
-        ->public();
+        ]);
+    $services->alias(FileLibraryActionController::class, 'gingerminds_media_manager.controller.admin.file_library_action')->public();
 };

@@ -4,31 +4,31 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Controller\File;
 
-use Gingerminds\CoreBundle\Controller\ControllerTrait;
-use Gingerminds\CoreBundle\Controller\CrudContext;
+use Gingerminds\CoreBundle\Controller\ResourceControllerTrait;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Exception\TranslatableExceptionInterface;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Shared by the library page (reads) and the library actions (writes).
  */
-abstract class AbstractFileLibraryController
+abstract class AbstractFileLibraryController extends AbstractController
 {
-    use ControllerTrait;
+    use ResourceControllerTrait;
 
     public const string CSRF_TOKEN_ID = 'gm-file-library';
 
     protected const string RESOURCE = 'file';
 
     public function __construct(
-        protected readonly CrudContext $context,
         protected readonly FileLibrary $library,
         protected readonly FileRepository $files,
         protected readonly FileLibraryPresenter $presenter,
@@ -45,7 +45,10 @@ abstract class AbstractFileLibraryController
         try {
             return $action();
         } catch (TranslatableExceptionInterface $exception) {
-            return $this->error($exception->trans($this->context->translator));
+            $translator = $this->container->get('translator');
+            \assert($translator instanceof TranslatorInterface);
+
+            return $this->error($exception->trans($translator));
         }
     }
 

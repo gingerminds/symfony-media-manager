@@ -61,10 +61,10 @@ final class MediaApiTest extends ApiTestCase
         $this->fixtures->media($this->files->text('clip.txt', 'clip'), 'Clip', $videos);
         $this->fixtures->media($this->files->text('notes.txt', 'notes'), 'Notes');
 
-        self::assertSame(['Tractor'], $this->names('/api/media?filters[category]=' . $photos->getId()));
-        self::assertSame(['Clip'], $this->names('/api/media?filters[media_category_id][]=' . $videos->getId()), 'Laravel filter name.');
-        self::assertSame(['Notes'], $this->names('/api/media?filters[media_category_id]=null'));
-        self::assertSame(['Tractor'], $this->names('/api/media?filters[search]=tract'));
+        self::assertSame(['Tractor'], $this->names('/api/media?category=' . $photos->getId()));
+        self::assertSame(['Clip'], $this->names('/api/media?category[]=' . $videos->getId()));
+        self::assertSame(['Notes'], $this->names('/api/media?category=null'));
+        self::assertSame(['Tractor'], $this->names('/api/media?search=tract'));
     }
 
     public function testAChangeIsSeenByTheNextRequest(): void

@@ -80,7 +80,9 @@ final class FileLibraryAdminTest extends ApiTestCase
 
         $this->client->request('POST', '/admin/files/directories', server: ['HTTP_X_CSRF_TOKEN' => 'invalid'], content: '{"parent": "", "name": "docs"}');
 
-        self::assertResponseStatusCodeSame(403);
+        // #[IsCsrfTokenValid]: the admin firewall handles the JSON requests.
+        self::assertResponseRedirects('/admin/login');
+        self::assertSame([], $this->library->directories(''));
     }
 
     public function testBrowse(): void

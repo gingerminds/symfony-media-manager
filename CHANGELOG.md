@@ -19,6 +19,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **BC break** — requires `gingerminds/symfony-core` ^1.10:
+  - the bundle extends the core `AbstractResourceBundle`: the file, media and media category admin
+    resources are registered on load (below the project `gingerminds_core.resources`), the basket
+    is an overridable entity without admin, `resources.*.api: false` removes an entity from the
+    API;
+  - an entity overriding a bundle one inherits its `#[ApiResource]` (no copy to keep in sync);
+  - `#[Cacheable]`, `#[CacheCascade]`, `#[Sortable]`, `#[Searchable]`, `#[EagerLoad]` and
+    `#[Filter]` on the entities instead of the removed core interfaces;
+  - `GET /api/media` and `GET /api/media_categories`: API Platform Doctrine provider and core list
+    contract (`order[name]=asc`, `search=`, `category=`, `category[]=`, `category=null`); the
+    Laravel `filters[media_category_id]` alias is removed with `MediaProvider`; the media list
+    can no longer be sorted on `createdAt`;
+  - media categories: core admin tree (`AbstractTreeCrudController`, `TreeRepositoryTrait`,
+    `TreeNodeInterface`, `#[NoTreeCycle]`, `components/list/_tree.html.twig`);
+    `MediaCategoryRepository::reorder()` / `findFlatTree()`, `MediaCategoryInterface::contains()`
+    and the bundle `_tree.html.twig` partial are removed;
+  - file, media and media category permissions checked by the core `ResourceVoter` (`FileVoter`,
+    `MediaVoter` and `MediaCategoryVoter` removed): the file resource maps `DELETE` to `edit files`;
+  - the controllers extend Symfony's `AbstractController` (no `CrudContext`), their routes are
+    `#[Route]` attributes with the same names and paths; `#[IsGranted]` and `#[IsCsrfTokenValid]`
+    replace the manual checks of the library writes and of the reordering;
+  - `config/routes.php` only imports `FileLibraryActionController`.
 - `PATCH /admin/files/{id}` updates the sent fields only (`name` and/or `alt`): the action
   `FileLibraryActionController::rename()` is now `update()` and the route
   `gingerminds_media_manager_file_rename` is now `gingerminds_media_manager_file_update`.
@@ -30,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- No Doctrine deprecation on the order of the media category children (`\SortDirection` instead
+  of `'ASC'`).
 - File library and media picker modals: centered, the media picker as wide as the library one.
   Opened over another modal (a form in a modal), they go above it with their backdrop instead of
   showing it through.

@@ -92,15 +92,14 @@ gingerminds_media_manager:
 ## Overriding the entities
 
 `resources.file|media|media_category|basket.entity` replaces a bundle entity by a project one,
-extending the bundle mapped superclass. The bundle class is then removed from the Doctrine mapping
-and from the API resources: the project class declares its table, its repository and, when the
-bundle class has one, its `#[ApiResource]` (copy it from the bundle class).
+extending the bundle mapped superclass. The bundle class is then removed from the Doctrine mapping:
+the project class declares its table and its repository, and inherits the `#[ApiResource]` of the
+bundle class. `resources.*.api: false` removes an entity from the API.
 
 ```php
 use Gingerminds\MediaManagerBundle\Entity\Media\BaseMedia;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaRepository;
 
-#[ApiResource(/* copied from Gingerminds\MediaManagerBundle\Entity\Media\Media */)]
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
 #[ORM\Table(name: 'medias')]
 class Media extends BaseMedia
