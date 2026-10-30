@@ -21,6 +21,14 @@ final class FileUploadException extends \RuntimeException implements Translatabl
             ->translated('error.too_large', ['%size%' => $sizeInKb, '%max%' => $maxSizeInKb]);
     }
 
+    /**
+     * Refused by a FileUploadingEvent listener (an antivirus...).
+     */
+    public static function rejected(string $name, string $reason): self
+    {
+        return new self(\sprintf('The file "%s" was refused: %s', $name, $reason))->translated('error.rejected', ['%name%' => $name, '%reason%' => $reason]);
+    }
+
     public static function couldNotStore(string $name, ?\Throwable $previous = null): self
     {
         return new self(\sprintf('The file "%s" could not be stored.', $name), previous: $previous)->translated('error.could_not_store', ['%name%' => $name]);

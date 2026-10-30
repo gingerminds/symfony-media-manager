@@ -7,6 +7,7 @@ namespace Gingerminds\MediaManagerBundle\File;
 use Doctrine\ORM\EntityManagerInterface;
 use Gingerminds\CoreBundle\Pagination\Paginator;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
+use Gingerminds\MediaManagerBundle\Event\FileUploadingEvent;
 use Gingerminds\MediaManagerBundle\Exception\FileInUseException;
 use Gingerminds\MediaManagerBundle\Exception\FileUploadException;
 use Gingerminds\MediaManagerBundle\Exception\LibraryException;
@@ -15,6 +16,7 @@ use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\FilesystemOperator;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The file library: directories on the library disk, files from the `files` table. Paths are
@@ -33,6 +35,7 @@ class FileLibrary
         private readonly DirectoryMover $directoryMover,
         private readonly int $itemsPerPage,
         private readonly PathLocker $locker,
+        private readonly ?EventDispatcherInterface $events = null,
     ) {
     }
 
@@ -208,7 +211,10 @@ class FileLibrary
                 return new UploadResult($existing, true);
             }
 
-            return new UploadResult($this->storage->store($file, $this->paths->relative($this->existingDirectory($directory)), hash: $hash));
+            $directory = $this->paths->relative($this->existingDirectory($directory));
+            $this->events?->dispatch(new FileUploadingEvent($file, $directory));
+
+            return new UploadResult($this->storage->store($file, $directory, hash: $hash));
         });
     }
 

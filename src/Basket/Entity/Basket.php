@@ -36,20 +36,20 @@ use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
         ),
         new Get(
             uriTemplate: '/baskets/{token}',
-            uriVariables: ['token' => new Link(fromClass: Basket::class, identifiers: ['token'])],
+            uriVariables: ['token' => new Link(identifiers: ['token'])],
             openapi: new Operation(summary: 'Get a basket', description: 'Guest baskets are public, user baskets need their owner.'),
             security: self::SECURITY_VIEW,
             securityMessage: self::SECURITY_MESSAGE,
         ),
         new Delete(
             uriTemplate: '/baskets/{token}',
-            uriVariables: ['token' => new Link(fromClass: Basket::class, identifiers: ['token'])],
+            uriVariables: ['token' => new Link(identifiers: ['token'])],
             security: self::SECURITY_DELETE,
             securityMessage: self::SECURITY_MESSAGE,
         ),
         new Post(
             uriTemplate: '/baskets/{token}/medias',
-            uriVariables: ['token' => new Link(fromClass: Basket::class, identifiers: ['token'])],
+            uriVariables: ['token' => new Link(identifiers: ['token'])],
             status: 200,
             openapi: new Operation(summary: 'Add medias to a basket', description: 'The medias already in the basket are not duplicated.'),
             denormalizationContext: [SerializerContextBuilderInterface::ASSIGN_OBJECT_TO_POPULATE => false],
@@ -60,7 +60,7 @@ use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
         ),
         new Delete(
             uriTemplate: '/baskets/{token}/medias/{mediaId}',
-            uriVariables: ['token' => new Link(fromClass: Basket::class, identifiers: ['token']), 'mediaId'],
+            uriVariables: ['token' => new Link(identifiers: ['token']), 'mediaId'],
             status: 200,
             openapi: new Operation(summary: 'Remove a media from a basket', description: 'Returns the basket.'),
             security: self::SECURITY_MODIFY,
@@ -70,7 +70,7 @@ use Gingerminds\MediaManagerBundle\Basket\Security\BasketVoter;
         ),
         new Get(
             uriTemplate: '/baskets/{token}/download',
-            uriVariables: ['token' => new Link(fromClass: Basket::class, identifiers: ['token'])],
+            uriVariables: ['token' => new Link(identifiers: ['token'])],
             controller: 'gingerminds_media_manager.basket.controller.download',
             openapi: new Operation(
                 summary: 'Download a basket as a ZIP',

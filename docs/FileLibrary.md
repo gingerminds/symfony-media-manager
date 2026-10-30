@@ -138,8 +138,23 @@ services:
 - **Writes** (upload, folders, rename, move, delete, merge): decorate the
   `gingerminds_media_manager.controller.admin.file_library_action` service
   (`FileLibraryActionController`).
+- **Naming rule**: alias `FileNamerInterface` to your service (the default `SlugFileNamer` gives
+  `mon-fichier-ete.pdf` for `Mon Fichier été.PDF`); a name with a `/`, `.` or `..` is refused.
+- **Serving the files**: alias `Gingerminds\MediaManagerBundle\Http\FileResponseFactoryInterface`
+  to your service (X-Sendfile, a redirection to a signed bucket URL...).
+- **Events** (`Gingerminds\MediaManagerBundle\Event`):
+
+| Event | When |
+|---|---|
+| `FileUploadingEvent` | Before a new content is stored (`file`, `directory`): throw `FileUploadException::rejected($name, $reason)` to refuse it (antivirus). |
+| `FileStoredEvent` | A file row created (upload, `files:index`), after the flush. |
+| `FileMovedEvent` | The path of a file changed (`previousPath`): moved, renamed, its folder moved, relocated. |
+| `FileDeletedEvent` | A file row deleted, after the flush (its physical file goes with its last row). |
+
+  The last three come from the Doctrine flush of the rows, whoever writes them; they are dispatched
+  once the flush is done.
 - **Services**: `FileLibrary` (library operations), `FileStorage` (store, read, delete on the
-  disks), `FileReferenceRegistry` (usages, `isUsed()`, `excludeReferenced()`, `replace()`), `DiskRegistry`.
+  disks), `FileReferenceRegistry` (`usages()`, `excludeReferenced()`, `replace()`), `DiskRegistry`.
 - In Twig, `gm_file_url(file, preset = null, absolute = false)` gives the URL of a file or of a
   preset.
 

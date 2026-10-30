@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Controller\File;
 
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
-use Gingerminds\MediaManagerBundle\Http\FileResponseFactory;
+use Gingerminds\MediaManagerBundle\Http\FileResponseFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 class ShowFileController
 {
     public function __construct(
-        protected readonly FileResponseFactory $responses,
+        protected readonly FileResponseFactoryInterface $responses,
     ) {
     }
 

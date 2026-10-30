@@ -16,19 +16,10 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 |---|---|---|---|
 | Picker des médias en JSON : recherche `GET /admin/medias/search`, résultats construits en JS (`innerHTML`) | `assets/controllers/media_picker_controller.js`, `MediaController::search()` | même rendu serveur que la bibliothèque (Turbo frame) | M |
 
-## 5. Doublons à remonter dans le core
+## 7. Code mort — à trancher
 
-- `assets/file_browser/modal.js` (empilement des modales Bootstrap) : à déplacer dans le core s'il sert ailleurs [H].
+- Collections de médias (`AbstractMediaLink`, `MediaLinkInterface`, `MediaCollectionSyncer`, `MediaCollectionTransformer`, options `collection` / `link_factory` du `MediaSelectType`) : portées de Laravel et documentées (`docs/Forms.md`), mais utilisées ni par le cms ni par le skeleton.
 
-## 6. Surchargeabilité
+## Plus tard
 
-| Blocage | Où | Piste | Effort |
-|---|---|---|---|
-| Aucun événement avant / après upload, suppression, déplacement, renommage (antivirus, purge CDN, optimisation d'image) | `FileStorage`, `FileLibrary` | événements dispatchés | M |
-| `FileResponseFactory`, `PathGuard` (politique de nommage), `DiskRegistry` : `final readonly`, sans interface, injectés par type concret | `src/Http/FileResponseFactory.php:17`, `src/File/PathGuard.php:13` | interfaces + `#[AsAlias]` (X-Sendfile, redirection S3, règle de nommage) | S/M |
-| `#[ApiResource]` sur les entités concrètes, `fromClass: Basket::class` en dur | `src/Entity/File/File.php`, `src/Basket/Entity/Basket.php:36-70` | ressource déclarée par config, même mécanisme que le core | M |
-
-
-## 7. Code mort
-
-Paramètre `gingerminds_media_manager.files_rate_limit` jamais lu (`GingermindsMediaManagerBundle.php:132`) ; `storage.disks` et `basket.enabled` lus seulement par les tests ; `FileReferenceRegistry::isUsed()` sans appelant ; `AbstractMediaLink`, `MediaCollectionSyncer`, `MediaCollectionTransformer` sans usage (ni cms ni skeleton) ; `LibraryStartPathProviderInterface` à une seule implémentation (à garder si documenté, cf. `TODO.md` « Dossiers par site »).
+- `LibraryStartPathProviderInterface` (une seule implémentation) : gardé, documenté, pour les dossiers par site (`TODO.md`).

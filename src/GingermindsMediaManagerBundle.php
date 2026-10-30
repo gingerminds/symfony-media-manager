@@ -102,7 +102,6 @@ final class GingermindsMediaManagerBundle extends AbstractResourceBundle
 
         $parameters = $container->parameters();
         $parameters->set('gingerminds_media_manager.storage.default_disk', $config['storage']['default_disk']);
-        $parameters->set('gingerminds_media_manager.storage.disks', $config['storage']['disks']);
         $parameters->set('gingerminds_media_manager.library.root', $config['library']['root']);
         $parameters->set('gingerminds_media_manager.library.max_upload_size', $config['library']['max_upload_size']);
         $parameters->set('gingerminds_media_manager.library.allowed_mimes', $config['library']['allowed_mimes']);
@@ -112,8 +111,6 @@ final class GingermindsMediaManagerBundle extends AbstractResourceBundle
         $parameters->set('gingerminds_media_manager.images.default_format', $config['images']['default_format']);
         $parameters->set('gingerminds_media_manager.images.cache_prefix', $config['images']['cache_prefix']);
         $parameters->set('gingerminds_media_manager.images.presets', $config['images']['presets']);
-        $parameters->set('gingerminds_media_manager.files_rate_limit', $config['files_rate_limit']);
-        $parameters->set('gingerminds_media_manager.basket.enabled', $config['basket']['enabled']);
         $parameters->set('gingerminds_media_manager.basket.claim_strategy', $config['basket']['claim_strategy']);
         $parameters->set('gingerminds_media_manager.basket.ttl', $config['basket']['ttl']);
         $parameters->set('gingerminds_media_manager.basket.delete_after_download', $config['basket']['delete_after_download']);

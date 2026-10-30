@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Gingerminds\MediaManagerBundle\Doctrine\AssociationFinder;
+use Gingerminds\MediaManagerBundle\Doctrine\FileEventsListener;
 use Gingerminds\MediaManagerBundle\File\DirectoryMover;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
@@ -22,6 +23,14 @@ use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
  */
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
+
+    // FileStoredEvent, FileMovedEvent, FileDeletedEvent after each flush.
+    $files = $services->set('gingerminds_media_manager.doctrine.file_events_listener', FileEventsListener::class)
+        ->args([service('event_dispatcher')]);
+
+    foreach (['postPersist', 'preUpdate', 'postRemove', 'postFlush'] as $event) {
+        $files->tag('doctrine.event_listener', ['event' => $event]);
+    }
 
     $services->set('gingerminds_media_manager.doctrine.association_finder', AssociationFinder::class)
         ->args([service('doctrine.orm.entity_manager')]);
@@ -61,6 +70,7 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.directory_mover'),
             param('gingerminds_media_manager.library.per_page'),
             service('gingerminds_media_manager.file.path_locker'),
+            service('event_dispatcher'),
         ]);
     $services->alias(FileLibrary::class, 'gingerminds_media_manager.file.library');
 

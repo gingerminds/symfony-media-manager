@@ -51,9 +51,6 @@ final class FileReferenceRegistryTest extends KernelTestCase
         self::assertEquals([new FileUsage('Page', 'Home', '/pages/' . $page->getId())], $usages[$block->getId()]);
         self::assertSame([], $usages[$unused->getId()]);
 
-        self::assertTrue($this->registry->isUsed($block));
-        self::assertFalse($this->registry->isUsed($unused));
-
         $qb = $this->entityManager->createQueryBuilder()->select('f')->from(File::class, 'f');
         $this->registry->excludeReferenced($qb, 'f');
         self::assertSame([$unused->getId()], array_map(static fn (File $file): string => $file->getId(), $qb->getQuery()->getResult()));
@@ -82,6 +79,6 @@ final class FileReferenceRegistryTest extends KernelTestCase
         self::assertSame($new->getId(), $article?->cover?->getId());
         self::assertSame([$new->getId()], $article->attachments->map(static fn ($file): string => $file->getId())->getValues());
         self::assertSame(['file' => $new->getId(), 'files' => [$other->getId(), $new->getId()]], $page?->content);
-        self::assertFalse($this->registry->isUsed($old));
+        self::assertSame([], $this->registry->usages([$old])[$old->getId()]);
     }
 }

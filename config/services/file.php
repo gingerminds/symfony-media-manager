@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Gingerminds\MediaManagerBundle\File\FileNamerInterface;
 use Gingerminds\MediaManagerBundle\File\FileStorage;
 use Gingerminds\MediaManagerBundle\File\MimeTypeGuesser;
 use Gingerminds\MediaManagerBundle\File\PathGuard;
 use Gingerminds\MediaManagerBundle\File\PathLocker;
+use Gingerminds\MediaManagerBundle\File\SlugFileNamer;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Symfony\Component\Mime\MimeTypes;
 
@@ -17,8 +19,13 @@ use Symfony\Component\Mime\MimeTypes;
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
 
+    // Alias FileNamerInterface to your service for another naming rule.
+    $services->set('gingerminds_media_manager.file.namer', SlugFileNamer::class)
+        ->args([service('slugger')]);
+    $services->alias(FileNamerInterface::class, 'gingerminds_media_manager.file.namer');
+
     $services->set('gingerminds_media_manager.file.path_guard', PathGuard::class)
-        ->args([param('gingerminds_media_manager.library.root'), service('slugger')]);
+        ->args([param('gingerminds_media_manager.library.root'), service(FileNamerInterface::class)]);
     $services->alias(PathGuard::class, 'gingerminds_media_manager.file.path_guard');
 
     // Store of framework.lock (semaphore or flock by default: one server only).

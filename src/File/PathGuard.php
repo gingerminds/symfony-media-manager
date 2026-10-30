@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\File;
 
 use Gingerminds\MediaManagerBundle\Exception\InvalidPathException;
-use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
- * Normalizes user given paths and confines them to the library root.
+ * Normalizes user given paths and confines them to the library root; the names come from the
+ * FileNamerInterface.
  */
 final readonly class PathGuard
 {
     public function __construct(
         private string $libraryRoot,
-        private SluggerInterface $slugger,
+        private FileNamerInterface $namer,
     ) {
     }
 
@@ -56,13 +56,13 @@ final readonly class PathGuard
     }
 
     /**
-     * "Actualités 2026" becomes "actualites-2026".
+     * A single segment: a namer returning "a/b" or ".." is refused.
      */
     public function directoryName(string $name): string
     {
-        $name = strtolower($this->slugger->slug($name)->toString());
+        $name = $this->namer->directoryName($name);
 
-        if ('' === $name) {
+        if ('' === $name || $name !== $this->normalize($name) || str_contains($name, '/')) {
             throw InvalidPathException::forbiddenCharacters($name);
         }
 
@@ -84,13 +84,16 @@ final readonly class PathGuard
     }
 
     /**
-     * "Mon Fichier été.PDF" becomes "mon-fichier-ete.pdf".
+     * A single segment: a namer returning "a/b" or ".." is refused.
      */
     public function fileName(string $originalName): string
     {
-        $extension = strtolower((string) preg_replace('/[^a-z0-9]/i', '', pathinfo($originalName, \PATHINFO_EXTENSION)));
-        $name = strtolower($this->slugger->slug(pathinfo($originalName, \PATHINFO_FILENAME))->toString());
+        $name = $this->namer->fileName($originalName);
 
-        return ('' === $name ? 'file' : $name) . ('' === $extension ? '' : '.' . $extension);
+        if ('' === $name || $name !== $this->normalize($name) || str_contains($name, '/')) {
+            throw InvalidPathException::forbiddenCharacters($name);
+        }
+
+        return $name;
     }
 }

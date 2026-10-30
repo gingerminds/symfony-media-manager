@@ -14,9 +14,8 @@ final class BundleBootTest extends ApiTestCase
         $kernel = self::getContainer()->get('kernel');
 
         self::assertArrayHasKey('GingermindsMediaManagerBundle', $kernel->getBundles());
-        self::assertSame(['default' => 'gingerminds_media_manager.storage.default'], self::getContainer()->getParameter('gingerminds_media_manager.storage.disks'));
         self::assertSame('webp', self::getContainer()->getParameter('gingerminds_media_manager.images.default_format'));
-        self::assertTrue(self::getContainer()->getParameter('gingerminds_media_manager.basket.enabled'));
+        self::assertTrue(self::getContainer()->has('gingerminds_media_manager.basket.voter'));
     }
 
     public function testDefaultStorageIsAvailable(): void

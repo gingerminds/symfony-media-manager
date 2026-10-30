@@ -20,7 +20,6 @@ final class BasketDisabledTest extends KernelTestCase
         self::bootKernel(['environment' => 'test_no_basket']);
         $container = self::getContainer();
 
-        self::assertFalse($container->getParameter('gingerminds_media_manager.basket.enabled'));
         self::assertSame([], array_filter(
             array_map(static fn ($route): string => $route->getPath(), $container->get(RouterInterface::class)->getRouteCollection()->all()),
             static fn (string $path): bool => str_contains($path, 'basket'),

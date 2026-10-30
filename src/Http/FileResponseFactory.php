@@ -20,7 +20,7 @@ use Symfony\Component\String\UnicodeString;
  * and the security headers of FileResponseHeaders, 304 included. The cache headers come from the
  * row (hash, dates): a 304 reads nothing on the disk, a 200 only opens the file.
  */
-final readonly class FileResponseFactory
+final readonly class FileResponseFactory implements FileResponseFactoryInterface
 {
     private const int MAX_AGE = 86400;
 

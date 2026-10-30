@@ -172,5 +172,6 @@ error:
     mime_not_allowed: The file type "%mime%" is not allowed.
     too_large: The file is too large (%size% KB, %max% KB allowed).
     could_not_store: The file "%name%" could not be stored.
+    rejected: 'The file "%name%" was refused: %reason%'
     not_duplicates: These files are not duplicates.
     alt_too_long: The alternative text cannot exceed %max% characters.

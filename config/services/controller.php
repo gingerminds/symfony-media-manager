@@ -11,6 +11,7 @@ use Gingerminds\MediaManagerBundle\Controller\File\ShowFilePresetController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaCategoryController;
 use Gingerminds\MediaManagerBundle\Controller\Media\MediaController;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
+use Gingerminds\MediaManagerBundle\Http\FileResponseFactoryInterface;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
 use Psr\Container\ContainerInterface;
@@ -22,12 +23,12 @@ return static function (ContainerConfigurator $container): void {
     $services = $container->services();
 
     $services->set('gingerminds_media_manager.controller.file.show', ShowFileController::class)
-        ->args([service('gingerminds_media_manager.http.file_response_factory')])
+        ->args([service(FileResponseFactoryInterface::class)])
         ->tag('controller.service_arguments')
         ->public();
 
     $services->set('gingerminds_media_manager.controller.file.show_preset', ShowFilePresetController::class)
-        ->args([service('gingerminds_media_manager.http.file_response_factory'), service('gingerminds_media_manager.image.processor')])
+        ->args([service(FileResponseFactoryInterface::class), service('gingerminds_media_manager.image.processor')])
         ->tag('controller.service_arguments')
         ->public();
 

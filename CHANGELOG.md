@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- File events (`Gingerminds\MediaManagerBundle\Event`): `FileUploadingEvent` before a new content
+  is stored (a listener refuses it with `FileUploadException::rejected()`, e.g. an antivirus),
+  `FileStoredEvent`, `FileMovedEvent` (`previousPath`) and `FileDeletedEvent`, dispatched after the
+  flush of the rows by `FileEventsListener` (Doctrine), whoever writes them.
+- `FileNamerInterface` (default `SlugFileNamer`, `gingerminds_media_manager.file.namer`): the
+  naming rule of the files and folders, used by `PathGuard`, which still refuses a name that is not
+  a single segment.
+- `FileResponseFactoryInterface`, the service the file controllers take: alias it to serve the
+  files otherwise (X-Sendfile, bucket redirection).
+
 - Alternative text of the files: nullable `alt` column on `BaseFile` (`FileInterface::getAlt()` /
   `setAlt()`, 255 characters max, blank saved as null), edited in the detail panel of the file
   library for the images, exposed as `alt` by the library endpoints and as `file_alt` by the media
@@ -103,6 +113,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   the disk and renders no preset, a 200 only opens the file (404 when it is missing), instead of
   four storage calls. The ETags change once (they were `md5(path . lastModified)`).
   `ImageProcessor::parameters()` gives the definition of a preset.
+- Basket API: the `token` links no longer name the bundle `Basket` class (`fromClass`), so an
+  entity overriding it keeps working operations.
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.
@@ -120,6 +132,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - File library: the `from` / `to` creation date filters are whole days of the core
   `display_timezone`, compared as UTC bounds (`FileLibraryController` takes the core
   `DisplayTimezone` service). Requires the core `DisplayTimezone` (dates stored in UTC).
+
+### Removed
+
+- **BC break** The `gingerminds_media_manager.storage.disks`, `.basket.enabled` and `.files_rate_limit`
+  container parameters (read by nothing: the configuration keys stay) and
+  `FileReferenceRegistry::isUsed()` (no caller: `usages()`).
 
 ### Fixed
 

@@ -13,7 +13,7 @@ interface FileInterface extends ResourceInterface, \Stringable
     public function getId(): string;
 
     /**
-     * Name of the storage disk (`gingerminds_media_manager.storage.disks`).
+     * Name of the storage disk (`gingerminds_media_manager.storage.disks` configuration).
      */
     public function getDisk(): string;
 

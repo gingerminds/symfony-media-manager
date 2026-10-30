@@ -47,17 +47,6 @@ class FileReferenceRegistry
         return $usages;
     }
 
-    public function isUsed(FileInterface $file): bool
-    {
-        foreach ($this->sources as $source) {
-            if ([] !== $source->references([$file->getId()])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * Restricts a query of the files (root alias $alias) to the files used nowhere.
      */
