@@ -95,15 +95,35 @@ media_categories`; give them to your roles. See [File library](FileLibrary.md#pe
 
 ## 6. Admin assets
 
-Nothing to add: the core `admin_includes.head` slot loads the bundle stylesheet (compiled with the
-core one by the sass bundle, with your theme and the Bootstrap variables) and registers its
-Stimulus controllers. The bundle scripts are served by the asset mapper under
-`gingerminds-media-manager/`, their relative imports rewritten to versioned paths: no importmap
-entry is needed.
+The core `admin_includes.head` slot loads the bundle stylesheet (compiled with the core one by the
+sass bundle, with your theme and the Bootstrap variables).
+
+The bundle is a Symfony UX package (`assets/package.json`): on `composer require`, Flex adds its
+Stimulus controllers to `assets/controllers.json` (`gm-file-picker`, `gm-media-select`... loaded
+lazily by the core admin Stimulus app) and `sortablejs` to the importmap. Without Flex, add them
+yourself:
+
+```json
+{
+    "controllers": {
+        "@gingerminds/symfony-media-manager": {
+            "file-dialog": {"enabled": true, "fetch": "lazy"},
+            "file-filters": {"enabled": true, "fetch": "lazy"},
+            "file-pick": {"enabled": true, "fetch": "lazy"},
+            "file-picker": {"enabled": true, "fetch": "lazy"},
+            "file-selection": {"enabled": true, "fetch": "lazy"},
+            "file-upload": {"enabled": true, "fetch": "lazy"},
+            "media-picker": {"enabled": true, "fetch": "lazy"},
+            "media-select": {"enabled": true, "fetch": "lazy"}
+        }
+    }
+}
+```
 
 ## 7. Cron
 
-With the baskets enabled, purge the expired guest baskets every day:
+With the baskets enabled, purge the expired guest baskets every day: with `symfony/scheduler`, it
+is a task of the `default` schedule (`messenger:consume scheduler_default`), else a cron:
 
 ```cron
 0 3 * * * php bin/console gingerminds:media:basket:purge

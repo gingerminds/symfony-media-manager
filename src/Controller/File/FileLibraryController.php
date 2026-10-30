@@ -141,7 +141,7 @@ class FileLibraryController extends AbstractFileLibraryController
             'directories' => 1 === $page->getPage() && !isset($state['search']) ? $this->library->directories($path) : [],
             'files' => $page,
             'usages' => array_map(\count(...), $this->references->usages($files)),
-            'pick_data' => $picker ? array_combine(array_map(static fn (FileInterface $file): string => $file->getId(), $files), array_map(fn (FileInterface $file): array => $this->presenter->file($file), $files)) : [],
+            'pick_data' => $picker ? array_column(array_map($this->presenter->file(...), $files), null, 'id') : [],
             'detail' => $picker ? null : $this->detail($state['file'] ?? null),
             'dialog' => $dialog,
             'selection' => null === $dialog ? null : [

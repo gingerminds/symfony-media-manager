@@ -32,14 +32,12 @@ final class FileLibraryAdminTest extends ApiTestCase
         $this->filesystem = self::getContainer()->get('test.storage.default');
     }
 
-    public function testTheAdminLayoutLoadsTheBundleAssets(): void
+    public function testTheAdminLayoutLoadsTheBundleStylesheet(): void
     {
-        $script = $this->client->request('GET', '/admin/login')->filter('head script[type="module"]')->last()->text();
+        $crawler = $this->client->request('GET', '/admin/login');
 
-        self::assertStringContainsString("app.register('gm-file-upload'", $script);
-        self::assertStringContainsString("app.register('gm-file-picker'", $script);
-        self::assertStringContainsString('/assets/gingerminds-media-manager/controllers/file_upload_controller-', $script);
-        self::assertCount(1, $this->client->getCrawler()->filter('head link[rel="stylesheet"][href*="gingerminds-media-manager/styles/media-manager"]'));
+        self::assertCount(1, $crawler->filter('head link[rel="stylesheet"][href*="gingerminds-media-manager/styles/media-manager"]'));
+        self::assertStringNotContainsString('gingerminds-media-manager/controllers/', $crawler->filter('head script[type="module"]')->last()->text(), 'Controllers loaded by controllers.json.');
     }
 
     public function testAViewerBrowsesWithoutWriteActions(): void

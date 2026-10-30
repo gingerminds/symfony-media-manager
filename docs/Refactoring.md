@@ -15,7 +15,6 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 | Constat | Où | Natif | Effort |
 |---|---|---|---|
 | Picker des médias en JSON : recherche `GET /admin/medias/search`, résultats construits en JS (`innerHTML`) | `assets/controllers/media_picker_controller.js`, `MediaController::search()` | même rendu serveur que la bibliothèque (Turbo frame) | M |
-| `RelativeImportCompiler` + enregistrement inline des contrôleurs Stimulus | `src/AssetMapper/RelativeImportCompiler.php`, `templates/admin/_head.html.twig` | package UX (`symfony.controllers`) ou entrypoint importmap [H] | M |
 
 ## 4. Bugs et mauvais code
 

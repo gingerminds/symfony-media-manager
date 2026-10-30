@@ -2,6 +2,7 @@
     "name": "gingerminds/symfony-media-manager",
     "description": "Media library, file library and image processing for Gingerminds Symfony projects",
     "type": "symfony-bundle",
+    "keywords": ["symfony-ux"],
     "license": "MIT",
     "authors": [
         {

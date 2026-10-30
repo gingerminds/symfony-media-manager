@@ -1,0 +1,70 @@
+{
+    "name": "@gingerminds/symfony-media-manager",
+    "description": "Stimulus controllers of gingerminds/symfony-media-manager (file library, file and media pickers)",
+    "license": "MIT",
+    "version": "1.0.0",
+    "keywords": [
+        "symfony-ux"
+    ],
+    "type": "module",
+    "symfony": {
+        "controllers": {
+            "file-dialog": {
+                "main": "controllers/file_dialog_controller.js",
+                "name": "gm-file-dialog",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "file-filters": {
+                "main": "controllers/file_filters_controller.js",
+                "name": "gm-file-filters",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "file-pick": {
+                "main": "controllers/file_pick_controller.js",
+                "name": "gm-file-pick",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "file-picker": {
+                "main": "controllers/file_picker_controller.js",
+                "name": "gm-file-picker",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "file-selection": {
+                "main": "controllers/file_selection_controller.js",
+                "name": "gm-file-selection",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "file-upload": {
+                "main": "controllers/file_upload_controller.js",
+                "name": "gm-file-upload",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "media-picker": {
+                "main": "controllers/media_picker_controller.js",
+                "name": "gm-media-picker",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "media-select": {
+                "main": "controllers/media_select_controller.js",
+                "name": "gm-media-select",
+                "fetch": "lazy",
+                "enabled": true
+            }
+        },
+        "importmap": {
+            "@hotwired/stimulus": "^3.0.0",
+            "sortablejs": "^1.15.0"
+        }
+    },
+    "peerDependencies": {
+        "@hotwired/stimulus": "^3.0.0",
+        "sortablejs": "^1.15.0"
+    }
+}

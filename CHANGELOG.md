@@ -66,6 +66,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `breadcrumb()` / `usages()`,
   `FileLibraryController::ID_PLACEHOLDER` (now `FilePickerType::ID_PLACEHOLDER`) and the
   `assets/file_browser/` scripts (`helpers.js` and `modal.js` move to `assets/lib/`).
+- **BC break** The bundle is a Symfony UX package (`assets/package.json`, `symfony-ux` keyword):
+  Flex adds its Stimulus controllers to the project `assets/controllers.json` (lazy, same `gm-*`
+  names) and AssetMapper resolves their relative imports. `RelativeImportCompiler` and the inline
+  registration of the controllers in `templates/admin/_head.html.twig` are removed (the head only
+  links the stylesheet). A project without Flex adds the controllers itself (Installation.md).
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

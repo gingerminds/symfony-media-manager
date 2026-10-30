@@ -62,11 +62,11 @@ class FileLibraryActionController extends AbstractFileLibraryController
             return $this->uploadError($file->getClientOriginalName() . ' : ' . $this->transException($exception));
         }
 
+        $name = $file->getClientOriginalName();
+        $existing = ltrim($this->presenter->file($result->file)['directory'] . '/' . $result->file->getOriginalName(), '/');
         $this->addFlash(
             $result->duplicate ? 'info' : 'success',
-            $result->duplicate
-                ? $this->message('duplicate', ['%name%' => $file->getClientOriginalName(), '%existing%' => ltrim($this->presenter->file($result->file)['directory'] . '/' . $result->file->getOriginalName(), '/')])
-                : $this->message('uploaded', ['%name%' => $file->getClientOriginalName()]),
+            $result->duplicate ? $this->message('duplicate', ['%name%' => $name, '%existing%' => $existing]) : $this->message('uploaded', ['%name%' => $name]),
         );
 
         return new JsonResponse(
@@ -109,7 +109,8 @@ class FileLibraryActionController extends AbstractFileLibraryController
 
             if ([] !== $input->paths) {
                 $moved = $this->library->moveDirectories($input->paths, $input->target, null, $this->maxDirectoryMove);
-                $this->addFlash('success', $this->message('directories_moved', ['%count%' => \count($moved), '%path%' => '' === $input->target ? $this->trans('file.root', [], GingermindsMediaManagerBundle::TRANSLATION_DOMAIN) : $input->target]));
+                $target = '' === $input->target ? $this->trans('file.root', [], GingermindsMediaManagerBundle::TRANSLATION_DOMAIN) : $input->target;
+                $this->addFlash('success', $this->message('directories_moved', ['%count%' => \count($moved), '%path%' => $target]));
             }
         });
     }
