@@ -12,7 +12,8 @@ use Gingerminds\MediaManagerBundle\Twig\MediaManagerExtension;
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
 
+    // #[AsTwigFunction] methods (autoconfigured).
     $services->set('gingerminds_media_manager.twig.extension', MediaManagerExtension::class)
         ->args([service('router')])
-        ->tag('twig.extension');
+        ->autoconfigure();
 };

@@ -49,6 +49,10 @@ final class BasketApiTest extends ApiTestCase
         $this->assertStatus(422);
         $this->api('POST', $url . '/medias', json: ['media_ids' => [999999]]);
         $this->assertStatus(422);
+        $this->api('POST', $url . '/medias', json: []);
+        $this->assertStatus(422);
+        $this->api('POST', '/api/baskets', json: ['anonymous_token' => 'not-a-token']);
+        $this->assertStatus(422);
 
         $this->api('DELETE', $url);
         $this->assertStatus(204);
@@ -74,7 +78,7 @@ final class BasketApiTest extends ApiTestCase
         $this->api('GET', $url, $other);
         $this->assertStatus(403);
         $this->api('GET', $url);
-        $this->assertStatus(403);
+        $this->assertStatus(401);
         $this->api('DELETE', $url, $other);
         $this->assertStatus(403);
     }

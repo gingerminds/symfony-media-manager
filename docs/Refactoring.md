@@ -14,19 +14,14 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 
 | Constat | Où | Natif | Effort |
 |---|---|---|---|
-| Admin des fichiers en SPA JSON : ≈ 1 400 lignes de JS, `innerHTML` et échappement manuel, 12 routes JSON | `assets/file_browser/*`, `templates/components/file/_browser.html.twig:17-25`, `FileLibraryController` / `FileLibraryActionController` | Twig + Turbo Frames + `symfony/ux-dropzone` ; pagination de la bibliothèque (`LibraryQuery`, `FileRepository::paginateLibrary`) alignée sur le contrat des listes du core au passage | L |
-| Payloads parsés à la main ; processeur aiguillé sur une chaîne `$action` qui avale les exceptions | `FileLibraryActionController.php:57-180`, `src/Basket/ApiPlatform/BasketProcessor.php:55,126-135` | DTO + `#[MapRequestPayload]` ; `input:` et un processeur par opération | M |
-| `Uuid::isValid()` + `find()` écrits deux fois | `ShowFileController.php:33`, `AbstractFileLibraryController.php:57` | `#[MapEntity]` / value resolver | S |
-| Taille et MIME validés à la main | `FileStorage::store()` | `Assert\File` + `#[MapUploadedFile]` | S |
-| Purge des paniers par cron | `src/Basket/Command/PurgeBasketsCommand.php` | Symfony Scheduler | S |
-| Services câblés à la main (591 lignes) ; extension Twig non paresseuse | `config/services/*.php`, `src/Twig/MediaManagerExtension.php` | `#[AsTwigFunction]` comme le core | S/M |
+| Admin des fichiers en SPA JSON : ≈ 1 400 lignes de JS, `innerHTML` et échappement manuel, 12 routes JSON | `assets/file_browser/*`, `templates/components/file/_browser.html.twig:17-25`, `FileLibraryController` / `FileLibraryActionController` | Twig + Turbo Frames + `symfony/ux-dropzone` (plus de payloads JSON parsés à la main ni de `findFile()`) ; pagination de la bibliothèque (`LibraryQuery`, `FileRepository::paginateLibrary`) alignée sur le contrat des listes du core au passage | L |
 | `RelativeImportCompiler` + enregistrement inline des contrôleurs Stimulus | `src/AssetMapper/RelativeImportCompiler.php`, `templates/admin/_head.html.twig` | package UX (`symfony.controllers`) ou entrypoint importmap [H] | M |
 
 ## 4. Bugs et mauvais code
 
 | Constat | Où | Correction | Effort |
 |---|---|---|---|
-| MIME inventé (`application/docx`) stocké puis renvoyé comme `Content-Type` | `src/File/MimeTypeNormalizer.php:23-37`, `ShowFileController.php:30`, `LibraryQuery.php:22` | stocker le vrai MIME, filtrer par famille, migrer les données | M |
+| MIME inventé (`application/docx`) stocké puis renvoyé comme `Content-Type` | `src/File/MimeTypeNormalizer.php:23-37`, `ShowFileController.php:30`, `LibraryQuery.php:22` | stocker le vrai MIME, filtrer par famille, migrer les données ; puis taille et MIME validés par `Assert\File` dans `FileStorage::store()` au lieu du code à la main | M |
 | `GET /download` supprime le panier (effet de bord sur un GET) | `src/Basket/Controller/DownloadBasketController.php:52` | suppression par DELETE ou TTL | S |
 | Le ZIP copie chaque fichier en temporaire avant de zipper | `src/Basket/BasketArchiver.php:69-89` | zip en `StreamedResponse` | M |
 | Suppression : disque avant base, un flush par fichier | `FileStorage.php:86-94` | suppression disque en `postFlush` ou via Messenger | S |

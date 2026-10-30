@@ -46,11 +46,13 @@
         "symfony/browser-kit": "^8.1",
         "symfony/css-selector": "^8.1",
         "symfony/phpunit-bridge": "^8.1",
+        "symfony/scheduler": "^8.1",
         "symfony/yaml": "^8.1"
     },
     "suggest": {
         "ext-imagick": "Image driver of the presets (images.driver: imagick, default)",
-        "ext-gd": "Alternative image driver of the presets (images.driver: gd)"
+        "ext-gd": "Alternative image driver of the presets (images.driver: gd)",
+        "symfony/scheduler": "Daily purge of the expired guest baskets (schedule `default`), instead of a cron"
     },
     "autoload": {
         "psr-4": {

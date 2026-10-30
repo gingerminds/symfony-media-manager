@@ -43,7 +43,8 @@ php bin/console gingerminds:media:directory:move news/2024 --name="2024 news"
 php bin/console gingerminds:media:basket:purge
 ```
 
-Deletes the guest baskets past their `expires_at`. Run it every day from a cron.
+Deletes the guest baskets past their `expires_at`. Scheduled once a day with `symfony/scheduler`
+(`messenger:consume scheduler_default`), else run it every day from a cron.
 
 ## Maintenance
 

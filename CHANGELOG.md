@@ -41,6 +41,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     `#[Route]` attributes with the same names and paths; `#[IsGranted]` and `#[IsCsrfTokenValid]`
     replace the manual checks of the library writes and of the reordering;
   - `config/routes.php` only imports `FileLibraryActionController`.
+- **BC break** Basket API: one processor per operation (`CreateBasketProcessor`,
+  `AddMediasProcessor`, `RemoveMediaProcessor`, the API Platform remove processor for `DELETE`)
+  instead of `BasketProcessor` and its `$action`; the payloads are input DTOs validated by API
+  Platform (`CreateBasketInput`, `AddMediasInput`: a `422` with `violations`, also for an invalid
+  `anonymous_token`, ignored until now); the owner is checked by the `security` of the operations
+  (`BasketVoter`), an anonymous request on a user basket is a `401` (was `403`).
+- `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
+  `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
+  routing.
+- `gingerminds:media:basket:purge` is a daily `#[AsPeriodicTask]` when `symfony/scheduler` is
+  installed (`messenger:consume scheduler_default`); a cron still works.
+- `gm_file_url()`: `MediaManagerExtension` is a Twig runtime (`#[AsTwigFunction]`), built on its
+  first call.
 - `PATCH /admin/files/{id}` updates the sent fields only (`name` and/or `alt`): the action
   `FileLibraryActionController::rename()` is now `update()` and the route
   `gingerminds_media_manager_file_rename` is now `gingerminds_media_manager_file_update`.

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Controller\File;
 
+use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Http\FileResponseFactory;
 use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
-use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use League\Glide\Filesystem\FileNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,16 +19,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ShowFilePresetController extends ShowFileController
 {
     public function __construct(
-        FileRepository $files,
         FileResponseFactory $responses,
         protected readonly ImageProcessor $images,
     ) {
-        parent::__construct($files, $responses);
+        parent::__construct($responses);
     }
 
-    public function __invoke(Request $request, string $id, string $preset = ''): Response
+    public function __invoke(Request $request, FileInterface $data, string $preset = ''): Response
     {
-        $file = $this->find($id);
+        $file = $data;
 
         if (!$file->isImage()) {
             throw new BadRequestHttpException('This file is not an image.');

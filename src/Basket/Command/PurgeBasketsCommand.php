@@ -10,8 +10,11 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Scheduler\Attribute\AsPeriodicTask;
 
-#[AsCommand(name: 'gingerminds:media:basket:purge', description: 'Delete the expired guest baskets (to run from a cron)')]
+#[AsCommand(name: 'gingerminds:media:basket:purge', description: 'Delete the expired guest baskets')]
+// With symfony/scheduler (`messenger:consume scheduler_default`), else from a cron.
+#[AsPeriodicTask(frequency: '1 day')]
 final class PurgeBasketsCommand extends Command
 {
     public function __construct(

@@ -58,7 +58,9 @@ disk, under its original name (`photo (2).png` for a second `photo.png`). The ba
 ## Expiration
 
 A guest basket expires `basket.ttl` days (30 by default, 0: never) after its last change; a user
-basket never expires (`expires_at` is null). An expired basket is a 404; delete them from a cron:
+basket never expires (`expires_at` is null). An expired basket is a 404. The command
+`gingerminds:media:basket:purge` deletes them: once a day with `symfony/scheduler` (a periodic
+task of the `default` schedule, run by `messenger:consume scheduler_default`), else from a cron:
 
 ```bash
 php bin/console gingerminds:media:basket:purge
