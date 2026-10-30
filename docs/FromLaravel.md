@@ -88,6 +88,7 @@ Same tables and columns, with:
 
 ```bash
 php bin/console gingerminds:media:files:relocate --dry-run   # then without --dry-run: uploads/... into the library
+php bin/console gingerminds:media:files:mime-types           # "application/docx"... become the real mime types
 php bin/console gingerminds:media:files:hash                 # hashes of the imported rows
 php bin/console gingerminds:media:files:deduplicate --dry-run
 php bin/console gingerminds:media:files:deduplicate          # merges the duplicates, references updated

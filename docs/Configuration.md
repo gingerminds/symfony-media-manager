@@ -15,8 +15,10 @@ gingerminds_media_manager:
     library:
         root: library                    # directory of the library on the disks
         max_upload_size: 51200           # KB
-        allowed_mimes: [image/jpeg, image/png, image/gif, image/webp, image/svg+xml,
-                        application/pdf, application/zip, application/docx, application/xlsx, application/pptx]
+        allowed_mimes: [image/jpeg, image/png, image/gif, image/webp, image/svg+xml, application/pdf, application/zip,
+                        application/vnd.openxmlformats-officedocument.wordprocessingml.document,      # docx
+                        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,            # xlsx
+                        application/vnd.openxmlformats-officedocument.presentationml.presentation]    # pptx
         max_directory_move: 1000         # files of a folder moved from the admin, 0: no limit
         per_page: 48                     # files per page of the library browser
     images:
@@ -56,9 +58,9 @@ gingerminds_media_manager:
 - `root` is relative (no leading slash, no `..`): every upload goes under it, the library never
   reads outside. Files outside it (imported databases) are moved in by
   [`files:relocate`](Commands.md#maintenance).
-- `allowed_mimes` are checked on upload, **after normalization**: the content is guessed (never the
-  extension), Office documents become `application/<extension>` (`application/docx`,
-  `application/xlsx`...) once their zip content is checked.
+- `allowed_mimes` are checked on upload against the type guessed from the content (never the
+  extension), the one stored and served: an Office document guess is checked against its zip
+  content (a plain zip is `application/zip`).
 - `image/svg+xml` is allowed by default: an SVG may contain scripts, so every file is served with a
   sandboxing `Content-Security-Policy` and `nosniff` ([Images](Images.md#urls)). Serve the storage
   through the bundle only, never from `public/` or a bucket URL, where these headers are missing.

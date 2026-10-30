@@ -47,6 +47,22 @@ final class FileMaintenanceCommandsTest extends KernelTestCase
         self::assertSame(hash('sha256', 'notes'), $this->find($notes->getId())?->getHash());
     }
 
+    public function testTheLaravelMimeTypesAreReplaced(): void
+    {
+        $report = new File('default', 'library/report.docx', 'application/docx', 'report.docx', 3);
+        $notes = $this->row('library/notes.txt');
+        $this->entityManager->persist($report);
+        $this->entityManager->flush();
+
+        $tester = $this->command('files:mime-types', ['--dry-run' => true]);
+        self::assertStringContainsString('1 file(s) to update (dry run)', $tester->getDisplay());
+        self::assertSame('application/docx', $this->find($report->getId())?->getMimeType());
+
+        $this->command('files:mime-types')->assertCommandIsSuccessful();
+        self::assertSame('application/vnd.openxmlformats-officedocument.wordprocessingml.document', $this->find($report->getId())?->getMimeType());
+        self::assertSame('text/plain', $this->find($notes->getId())?->getMimeType());
+    }
+
     public function testIndex(): void
     {
         $this->files->text('known.txt', 'known');

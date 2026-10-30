@@ -71,6 +71,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   names) and AssetMapper resolves their relative imports. `RelativeImportCompiler` and the inline
   registration of the controllers in `templates/admin/_head.html.twig` are removed (the head only
   links the stylesheet). A project without Flex adds the controllers itself (Installation.md).
+- **BC break** The files keep the mime type guessed from their content: `MimeTypeNormalizer`
+  (Office documents stored as `application/docx`, `application/xlsx`... and served with these
+  unknown `Content-Type`) becomes `MimeTypeGuesser`, which only checks an OOXML guess against its
+  zip content. `library.allowed_mimes` takes the real types (its default too), the `document` type
+  filter matches them. `gingerminds:media:files:mime-types [--dry-run]` replaces the Laravel types
+  of an imported database.
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

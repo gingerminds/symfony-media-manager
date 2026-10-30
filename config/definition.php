@@ -64,7 +64,7 @@ $library = static function (NodeBuilder $children): void {
                     ->min(1)
                 ->end()
                 ->arrayNode('allowed_mimes')
-                    ->info('Mime types accepted on upload, after normalization (Office documents are "application/<extension>").')
+                    ->info('Mime types accepted on upload, guessed from the content.')
                     ->scalarPrototype()->cannotBeEmpty()->end()
                     ->defaultValue([
                         'image/jpeg',
@@ -74,9 +74,9 @@ $library = static function (NodeBuilder $children): void {
                         'image/svg+xml',
                         'application/pdf',
                         'application/zip',
-                        'application/docx',
-                        'application/xlsx',
-                        'application/pptx',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                     ])
                     ->requiresAtLeastOneElement()
                 ->end()

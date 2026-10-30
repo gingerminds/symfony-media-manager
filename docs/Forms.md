@@ -19,7 +19,7 @@ $builder
     ])
     ->add('attachments', FilePickerType::class, [
         'multiple' => true,
-        'accept' => ['application/pdf', 'application/docx'],
+        'accept' => ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     ])
     // ids in a JSON field (content blocks...)
     ->add('gallery', FilePickerType::class, [

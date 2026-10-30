@@ -20,7 +20,6 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 
 | Constat | Où | Correction | Effort |
 |---|---|---|---|
-| MIME inventé (`application/docx`) stocké puis renvoyé comme `Content-Type` | `src/File/MimeTypeNormalizer.php:23-37`, `ShowFileController.php:30`, `LibraryQuery.php:22` | stocker le vrai MIME, filtrer par famille, migrer les données ; puis taille et MIME validés par `Assert\File` dans `FileStorage::store()` au lieu du code à la main | M |
 | `GET /download` supprime le panier (effet de bord sur un GET) | `src/Basket/Controller/DownloadBasketController.php:52` | suppression par DELETE ou TTL | S |
 | Le ZIP copie chaque fichier en temporaire avant de zipper | `src/Basket/BasketArchiver.php:69-89` | zip en `StreamedResponse` | M |
 | Suppression : disque avant base, un flush par fichier | `FileStorage.php:86-94` | suppression disque en `postFlush` ou via Messenger | S |

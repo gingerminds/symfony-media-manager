@@ -7,6 +7,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Gingerminds\MediaManagerBundle\Command\File\DeduplicateFilesCommand;
 use Gingerminds\MediaManagerBundle\Command\File\HashFilesCommand;
 use Gingerminds\MediaManagerBundle\Command\File\IndexFilesCommand;
+use Gingerminds\MediaManagerBundle\Command\File\MimeTypesCommand;
 use Gingerminds\MediaManagerBundle\Command\File\MoveDirectoryCommand;
 use Gingerminds\MediaManagerBundle\Command\File\OrphanFilesCommand;
 use Gingerminds\MediaManagerBundle\Command\File\RelocateFilesCommand;
@@ -34,6 +35,10 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->tag('console.command');
 
+    $services->set('gingerminds_media_manager.command.mime_types', MimeTypesCommand::class)
+        ->args([service(FileRepository::class)])
+        ->tag('console.command');
+
     $services->set('gingerminds_media_manager.command.move_directory', MoveDirectoryCommand::class)
         ->args([service('gingerminds_media_manager.file.library')])
         ->tag('console.command');
@@ -47,7 +52,7 @@ return static function (ContainerConfigurator $container): void {
             service(FileRepository::class),
             service('gingerminds_media_manager.storage.disk_registry'),
             service('gingerminds_media_manager.file.path_guard'),
-            service('gingerminds_media_manager.file.mime_type_normalizer'),
+            service('gingerminds_media_manager.file.mime_type_guesser'),
             service('doctrine.orm.entity_manager'),
             param('gingerminds_media_manager.resource.file.entity'),
         ]);

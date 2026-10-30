@@ -26,7 +26,7 @@ class FileStorage
     public function __construct(
         private readonly DiskRegistry $disks,
         private readonly PathGuard $paths,
-        private readonly MimeTypeNormalizer $mimeTypes,
+        private readonly MimeTypeGuesser $mimeTypes,
         private readonly FileRepository $files,
         private readonly ImageProcessor $images,
         private readonly string $fileClass,

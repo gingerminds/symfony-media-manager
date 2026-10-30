@@ -157,6 +157,21 @@ class FileRepository extends AbstractRepository
         return $this->count(['disk' => $disk, 'path' => $path]);
     }
 
+    /**
+     * @return int number of updated rows
+     */
+    public function replaceMimeType(string $from, string $to): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->update()
+            ->set('f.mimeType', ':to')
+            ->where('f.mimeType = :from')
+            ->setParameter('to', $to)
+            ->setParameter('from', $from)
+            ->getQuery()
+            ->execute();
+    }
+
     public function hasFilesUnder(string $disk, string $directory): bool
     {
         return null !== $this->createQueryBuilder('f')
