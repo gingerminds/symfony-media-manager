@@ -29,7 +29,8 @@ class DirectoryMover
 
     /**
      * Every move is checked first and $maxFiles counts the files of all the directories; a directory
-     * that fails is moved back, the previous ones stay moved. The target names stay locked meanwhile.
+     * that fails is moved back, the previous ones stay moved. The target names stay locked meanwhile,
+     * and the moved directories: nothing is written into them.
      *
      * @param list<string> $sources  existing directories on the disk, none inside another one
      * @param string       $parent   existing directory on the disk
@@ -45,6 +46,7 @@ class DirectoryMover
         return $this->locker->synchronized(
             array_map(fn (string $source): array => [$disk, $parent, $this->targetName($source, $name)], $sources),
             fn (): array => $this->moveLocked($sources, $parent, $name, $maxFiles),
+            array_map(static fn (string $source): array => [$disk, $source], $sources),
         );
     }
 

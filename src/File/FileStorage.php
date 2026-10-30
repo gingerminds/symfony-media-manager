@@ -39,9 +39,10 @@ class FileStorage
     /**
      * Stores the file under the library root, renamed "name-1.ext", "name-2.ext"... when the name is taken.
      *
-     * @param string $directory relative to the library root
+     * @param string      $directory relative to the library root
+     * @param string|null $hash      sha256 of the content, when already known
      */
-    public function store(\SplFileInfo $file, string $directory = '', ?string $disk = null): FileInterface
+    public function store(\SplFileInfo $file, string $directory = '', ?string $disk = null, ?string $hash = null): FileInterface
     {
         $originalName = $file instanceof UploadedFile ? $file->getClientOriginalName() : $file->getFilename();
         $realPath = $file->getRealPath();
@@ -73,6 +74,7 @@ class FileStorage
             $originalName,
             $mimeType,
             $size,
+            $hash ?? (hash_file('sha256', $realPath) ?: null),
         ));
     }
 
@@ -120,11 +122,11 @@ class FileStorage
         return $candidate;
     }
 
-    private function writeRow(string $disk, string $path, string $realPath, string $originalName, string $mimeType, int $size): FileInterface
+    private function writeRow(string $disk, string $path, string $realPath, string $originalName, string $mimeType, int $size, ?string $hash): FileInterface
     {
         $filesystem = $this->disks->get($disk);
         $this->write($filesystem, $path, $realPath, $originalName);
-        $entity = new ($this->fileClass)($disk, $path, $mimeType, $originalName, $size, hash_file('sha256', $realPath) ?: null);
+        $entity = new ($this->fileClass)($disk, $path, $mimeType, $originalName, $size, $hash);
 
         try {
             $this->files->save($entity);

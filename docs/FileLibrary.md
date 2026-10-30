@@ -36,7 +36,10 @@ sha256 `hash`) and a physical file on its disk, under `library.root`.
   `photo.jpg` and `photo-1.jpg`, never one file for two rows. Several rows may still share a path
   (imported Laravel uploads), so `(disk, path)` is not unique: the physical file is deleted with
   its last row;
-- the content is hashed: uploading a known content returns the existing file instead.
+- a directory being moved is locked: an upload, a move or a new directory into it (or below)
+  waits for the end of the move instead of being left behind and deleted with the old directory;
+- the content is hashed: uploading a known content returns the existing file instead, also when
+  two uploads of that content run at the same time (locked by hash).
 
 ## Usages and references
 

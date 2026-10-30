@@ -52,6 +52,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Two simultaneous uploads of one content give one file: the hash is looked up and the file
+  stored under a lock of the content (`PathLocker::content()`), and hashed once
+  (`FileStorage::store()` takes the known hash).
+- An upload, a file move or a new directory into a directory being moved waits for the end of the
+  move: it was left in the old directory and deleted with it (row without physical file).
+  `PathLocker` locks the moved directories exclusively and shares the directories written into
+  (and their parents); `FileLibrary::mkdir()` is locked too.
 - No Doctrine deprecation on the order of the media category children (`\SortDirection` instead
   of `'ASC'`).
 - File library and media picker modals: centered, the media picker as wide as the library one.

@@ -87,13 +87,18 @@ class FileLibrary
      */
     public function mkdir(string $parent, string $name): string
     {
-        $directory = $this->existingDirectory($parent) . '/' . $this->paths->directoryName($name);
+        $parent = $this->existingDirectory($parent);
+        $name = $this->paths->directoryName($name);
+        $directory = $parent . '/' . $name;
 
-        if ($this->filesystem()->directoryExists($directory)) {
-            throw LibraryException::directoryExists($this->paths->relative($directory));
-        }
+        // Locked as a target name: not created in a directory being moved.
+        $this->locker->synchronized([[$this->disks->defaultDisk(), $parent, $name]], function () use ($directory): void {
+            if ($this->filesystem()->directoryExists($directory)) {
+                throw LibraryException::directoryExists($this->paths->relative($directory));
+            }
 
-        $this->filesystem()->createDirectory($directory);
+            $this->filesystem()->createDirectory($directory);
+        });
 
         return $this->paths->relative($directory);
     }
@@ -192,13 +197,16 @@ class FileLibrary
             throw FileUploadException::couldNotStore($file->getFilename());
         }
 
-        $existing = $this->files->findOneByHash($hash);
+        // Two uploads of one content: the second one finds the row of the first one.
+        return $this->locker->content($hash, function () use ($file, $directory, $hash): UploadResult {
+            $existing = $this->files->findOneByHash($hash);
 
-        if ($existing instanceof FileInterface) {
-            return new UploadResult($existing, true);
-        }
+            if ($existing instanceof FileInterface) {
+                return new UploadResult($existing, true);
+            }
 
-        return new UploadResult($this->storage->store($file, $this->paths->relative($this->existingDirectory($directory))));
+            return new UploadResult($this->storage->store($file, $this->paths->relative($this->existingDirectory($directory)), hash: $hash));
+        });
     }
 
     /**

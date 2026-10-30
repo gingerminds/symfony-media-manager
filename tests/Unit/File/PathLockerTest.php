@@ -55,4 +55,25 @@ final class PathLockerTest extends TestCase
 
         self::assertTrue($this->locks->createLock($this->locker->resource('default', 'library', 'a.txt'))->acquire());
     }
+
+    public function testAMovedDirectoryBlocksTheWritesUnderIt(): void
+    {
+        $this->locker->synchronized([], function (): void {
+            self::assertFalse($this->locks->createLock($this->locker->directoryResource('default', 'library/docs'))->acquireRead());
+            self::assertTrue($this->locks->createLock($this->locker->directoryResource('default', 'library'))->acquireRead(), 'Shared parent.');
+        }, [['default', 'library/docs']]);
+
+        $this->locker->synchronized([['default', 'library/docs/old', 'a.txt']], function (): void {
+            self::assertTrue($this->locks->createLock($this->locker->directoryResource('default', 'library/docs/old'))->acquireRead(), 'Concurrent writes.');
+            self::assertFalse($this->locks->createLock($this->locker->directoryResource('default', 'library/docs'))->acquire(), 'No move of a parent.');
+        });
+    }
+
+    public function testAContentIsUploadedOnceAtATime(): void
+    {
+        $this->locker->content('abc', function (): void {
+            self::assertFalse($this->locks->createLock('gingerminds_media_manager.path.content.abc')->acquire());
+            self::assertTrue($this->locks->createLock('gingerminds_media_manager.path.content.def')->acquire());
+        });
+    }
 }

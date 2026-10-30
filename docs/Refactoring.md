@@ -9,8 +9,6 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 | Constat | Où | Correction | Effort |
 |---|---|---|---|
 | Aucun contrôle d'accès sur `GET /api/files/{id}`, pas de fichier privé — **reporté par décision** | `src/Entity/File/File.php:17-37` | `security:` ou voter ; disque privé + `UriSigner` | M |
-| Deux uploads simultanés du même contenu créent un doublon (contrôle du hash hors verrou) | `FileLibrary` / `FileStorage` | hash sous le verrou, ou `files:deduplicate` | S |
-| Upload pendant le déplacement d'un dossier non couvert | `DirectoryMover` | verrou sur le dossier | S |
 
 ## 3. Réimplémentations de ce que Symfony fait déjà
 
@@ -19,7 +17,7 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 | Admin des fichiers en SPA JSON : ≈ 1 400 lignes de JS, `innerHTML` et échappement manuel, 12 routes JSON | `assets/file_browser/*`, `templates/components/file/_browser.html.twig:17-25`, `FileLibraryController` / `FileLibraryActionController` | Twig + Turbo Frames + `symfony/ux-dropzone` ; pagination de la bibliothèque (`LibraryQuery`, `FileRepository::paginateLibrary`) alignée sur le contrat des listes du core au passage | L |
 | Payloads parsés à la main ; processeur aiguillé sur une chaîne `$action` qui avale les exceptions | `FileLibraryActionController.php:57-180`, `src/Basket/ApiPlatform/BasketProcessor.php:55,126-135` | DTO + `#[MapRequestPayload]` ; `input:` et un processeur par opération | M |
 | `Uuid::isValid()` + `find()` écrits deux fois | `ShowFileController.php:33`, `AbstractFileLibraryController.php:57` | `#[MapEntity]` / value resolver | S |
-| Taille et MIME validés à la main ; hash calculé deux fois par upload | `FileStorage.php:54-62,70`, `FileLibrary.php:188` | `Assert\File` + `#[MapUploadedFile]` | S |
+| Taille et MIME validés à la main | `FileStorage::store()` | `Assert\File` + `#[MapUploadedFile]` | S |
 | Purge des paniers par cron | `src/Basket/Command/PurgeBasketsCommand.php` | Symfony Scheduler | S |
 | Services câblés à la main (591 lignes) ; extension Twig non paresseuse | `config/services/*.php`, `src/Twig/MediaManagerExtension.php` | `#[AsTwigFunction]` comme le core | S/M |
 | `RelativeImportCompiler` + enregistrement inline des contrôleurs Stimulus | `src/AssetMapper/RelativeImportCompiler.php`, `templates/admin/_head.html.twig` | package UX (`symfony.controllers`) ou entrypoint importmap [H] | M |
