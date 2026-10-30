@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\File\FileStorage;
 use Gingerminds\MediaManagerBundle\File\PathGuard;
+use Gingerminds\MediaManagerBundle\File\PathLocker;
 use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
@@ -26,6 +27,7 @@ class FileRelocator
         private readonly PathGuard $paths,
         private readonly ImageProcessor $images,
         private readonly EntityManagerInterface $entityManager,
+        private readonly PathLocker $locker,
     ) {
     }
 
@@ -81,13 +83,24 @@ class FileRelocator
     {
         $disk = $rows[0]->getDisk();
         $from = $rows[0]->getPath();
-        $filesystem = $this->disks->get($disk);
 
-        if (!$filesystem->fileExists($from)) {
+        if (!$this->disks->get($disk)->fileExists($from)) {
             return null;
         }
 
-        $to = $this->storage->availablePath($disk, $this->paths->root(), basename($from));
+        return $this->locker->synchronized([[$disk, $this->paths->root(), basename($from)]], fn (): string => $this->moveTo(
+            $rows,
+            $this->storage->availablePath($disk, $this->paths->root(), basename($from)),
+        ));
+    }
+
+    /**
+     * @param non-empty-list<FileInterface> $rows
+     */
+    private function moveTo(array $rows, string $to): string
+    {
+        $from = $rows[0]->getPath();
+        $filesystem = $this->disks->get($rows[0]->getDisk());
         array_map($this->images->clear(...), $rows);
         $filesystem->move($from, $to);
 

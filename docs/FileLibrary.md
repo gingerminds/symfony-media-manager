@@ -31,6 +31,11 @@ sha256 `hash`) and a physical file on its disk, under `library.root`.
   (`library.max_upload_size`);
 - the file name is slugged (`Rapport final.PDF` gives `rapport-final.pdf`), `-1`, `-2`... when the
   name is taken; the original name is kept as the display name;
+- choosing the free name, writing the file and saving its row happen under a `symfony/lock` lock
+  (renames, moves and `files:relocate` too): two simultaneous uploads of `photo.jpg` give
+  `photo.jpg` and `photo-1.jpg`, never one file for two rows. Several rows may still share a path
+  (imported Laravel uploads), so `(disk, path)` is not unique: the physical file is deleted with
+  its last row;
 - the content is hashed: uploading a known content returns the existing file instead.
 
 ## Usages and references

@@ -34,6 +34,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Opened over another modal (a form in a modal), they go above it with their backdrop instead of
   showing it through.
 
+### Security
+
+- Every response serving a file content (`GET /api/files/{id}`, `GET /api/files/{id}/{preset}`,
+  304 included, basket ZIP) sends `X-Content-Type-Options: nosniff` and
+  `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox`
+  (`FileResponseHeaders`): an uploaded SVG opened directly no longer runs its scripts in the
+  application origin, it still displays in an `<img>`. A PDF keeps `nosniff` only, the browser PDF
+  viewers refusing a sandboxed document. `ImageProcessor::process()` rejects an SVG (`image/svg`
+  included) instead of handing it to Glide.
+- Uploads, renames, moves, `files:relocate` and directory moves choose their free path ("name-1.ext"...),
+  write it and save the rows under a `symfony/lock` lock (`PathLocker`, keyed on the disk, the
+  directory and the name without its "-N" suffixes): two simultaneous uploads of `photo.jpg` no
+  longer write the same physical file. Requires `symfony/lock` (store of `framework.lock`).
+
 ### Added
 
 - `GingermindsMediaManagerBundle` skeleton (`gingerminds_media_manager` configuration: named

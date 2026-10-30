@@ -54,6 +54,21 @@ final class FileStorageTest extends KernelTestCase
         self::assertSame(['library/fr/news/notes.txt', 'library/fr/news/notes-1.txt', 'library/fr/news/notes-2.txt'], $paths);
     }
 
+    public function testASecondFileOfTheSameNameNeverOverwritesTheFirst(): void
+    {
+        $filesystem = self::getContainer()->get('test.storage.default');
+        $filesystem->write('library/photo-1.txt', 'on the disk only');
+
+        $first = $this->storage->store($this->upload('photo.txt', 'first'));
+        $second = $this->storage->store($this->upload('photo.txt', 'second'));
+
+        self::assertSame('library/photo.txt', $first->getPath());
+        self::assertSame('library/photo-2.txt', $second->getPath());
+        self::assertSame('first', stream_get_contents($this->storage->readStream($first)));
+        self::assertSame('second', stream_get_contents($this->storage->readStream($second)));
+        self::assertSame('on the disk only', $filesystem->read('library/photo-1.txt'));
+    }
+
     public function testANotAllowedTypeIsRejected(): void
     {
         $this->expectException(FileUploadException::class);

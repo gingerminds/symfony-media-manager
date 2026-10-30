@@ -32,6 +32,7 @@ class FileLibrary
         private readonly EntityManagerInterface $entityManager,
         private readonly DirectoryMover $directoryMover,
         private readonly int $itemsPerPage,
+        private readonly PathLocker $locker,
     ) {
     }
 
@@ -316,23 +317,45 @@ class FileLibrary
 
     /**
      * Moves the files on their disk, then saves their paths; the files are moved back if the save fails.
+     * The target names stay locked until the save.
      *
      * @param list<FileInterface> $files
      * @param string              $directory on the disk
      */
     private function relocate(array $files, string $directory, ?string $fileName = null): void
     {
+        $moves = [];
+
+        foreach ($files as $file) {
+            $name = $fileName ?? basename($file->getPath());
+
+            if ($directory . '/' . $name !== $file->getPath()) {
+                $moves[] = [$file, $name];
+            }
+        }
+
+        if ([] === $moves) {
+            return;
+        }
+
+        $this->locker->synchronized(
+            array_map(static fn (array $move): array => [$move[0]->getDisk(), $directory, $move[1]], $moves),
+            function () use ($moves, $directory): void {
+                $this->moveFiles($moves, $directory);
+            },
+        );
+    }
+
+    /**
+     * @param list<array{FileInterface, string}> $moves file, wanted name
+     */
+    private function moveFiles(array $moves, string $directory): void
+    {
         $moved = [];
 
         try {
-            foreach ($files as $file) {
+            foreach ($moves as [$file, $name]) {
                 $from = $file->getPath();
-                $name = $fileName ?? basename($from);
-
-                if ($directory . '/' . $name === $from) {
-                    continue;
-                }
-
                 $to = $this->storage->availablePath($file->getDisk(), $directory, $name);
                 $this->images->clear($file);
                 $this->disks->get($file->getDisk())->move($from, $to);

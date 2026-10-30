@@ -32,6 +32,7 @@ class FileStorage
         private readonly string $fileClass,
         private readonly int $maxUploadSize,
         private readonly array $allowedMimes,
+        private readonly PathLocker $locker,
     ) {
     }
 
@@ -62,22 +63,17 @@ class FileStorage
         }
 
         $disk ??= $this->disks->defaultDisk();
-        $filesystem = $this->disks->get($disk);
-        $path = $this->availablePath($disk, $this->paths->inLibrary($directory), $this->paths->fileName($originalName));
+        $directory = $this->paths->inLibrary($directory);
+        $fileName = $this->paths->fileName($originalName);
 
-        $this->write($filesystem, $path, $realPath, $originalName);
-
-        $entity = new ($this->fileClass)($disk, $path, $mimeType, $originalName, $size, hash_file('sha256', $realPath) ?: null);
-
-        try {
-            $this->files->save($entity);
-        } catch (\Throwable $exception) {
-            $filesystem->delete($path);
-
-            throw $exception;
-        }
-
-        return $entity;
+        return $this->locker->synchronized([[$disk, $directory, $fileName]], fn (): FileInterface => $this->writeRow(
+            $disk,
+            $this->availablePath($disk, $directory, $fileName),
+            $realPath,
+            $originalName,
+            $mimeType,
+            $size,
+        ));
     }
 
     /**
@@ -104,7 +100,8 @@ class FileStorage
     }
 
     /**
-     * "name.ext", else "name-1.ext", "name-2.ext"... free on the disk and in `files`.
+     * "name.ext", else "name-1.ext", "name-2.ext"... free on the disk and in `files`. Call it inside
+     * PathLocker::synchronized(), up to the write of the path.
      *
      * @param string $directory on the disk
      */
@@ -121,6 +118,23 @@ class FileStorage
         } while ($filesystem->fileExists($candidate) || $this->files->pathExists($disk, $candidate));
 
         return $candidate;
+    }
+
+    private function writeRow(string $disk, string $path, string $realPath, string $originalName, string $mimeType, int $size): FileInterface
+    {
+        $filesystem = $this->disks->get($disk);
+        $this->write($filesystem, $path, $realPath, $originalName);
+        $entity = new ($this->fileClass)($disk, $path, $mimeType, $originalName, $size, hash_file('sha256', $realPath) ?: null);
+
+        try {
+            $this->files->save($entity);
+        } catch (\Throwable $exception) {
+            $filesystem->delete($path);
+
+            throw $exception;
+        }
+
+        return $entity;
     }
 
     private function write(FilesystemOperator $filesystem, string $path, string $realPath, string $originalName): void
