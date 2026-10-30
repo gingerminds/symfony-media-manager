@@ -55,7 +55,7 @@ export default class FilePickerController extends Controller {
         try {
             const { element, pick } = await this.loadModal();
             modal.field = this;
-            pick.open(this.browserUrl(), this.multipleValue);
+            pick.open(this.browserUrl(), { multiple: this.multipleValue });
             showModal(element);
         } finally {
             this.buttonTarget.disabled = false;
@@ -99,11 +99,11 @@ export default class FilePickerController extends Controller {
         // Stimulus connects the new controller on the next mutation records.
         for (let attempt = 0; attempt < 50 && !pick; attempt++) {
             await new Promise((resolve) => requestAnimationFrame(resolve));
-            pick = this.application.getControllerForElementAndIdentifier(element, 'gm-file-pick');
+            pick = this.application.getControllerForElementAndIdentifier(element, 'gm-pick');
         }
 
         modal = { element, pick, field: null };
-        element.addEventListener('gm-file-pick:pick', (event) => modal.field?.picked(event.detail.files));
+        element.addEventListener('gm-pick:pick', (event) => modal.field?.picked(event.detail.items));
 
         return modal;
     }

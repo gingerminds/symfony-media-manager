@@ -178,14 +178,14 @@
                                 {% endfor %}
                                 {% for file in browser.files %}
                                     {% set usages = browser.usages[file.id] ?? 0 %}
-                                    <div class="gm-file-card{{ file.id == (state.file ?? null) ? ' is-active' }}" data-file-id="{{ file.id }}">
+                                    <div class="gm-file-card{{ file.id == (state.file ?? null) ? ' is-active' }}" data-file-id="{{ file.id }}"{% if picker %} data-pick-id="{{ file.id }}"{% endif %}>
                                         {% if browser.can_edit and not picker %}
                                             <input type="checkbox" class="form-check-input gm-file-card-check" name="ids[]" value="{{ file.id }}" aria-label="{{ file.originalName }}"
                                                    data-gm-file-selection-target="file" data-action="gm-file-selection#refresh">
                                         {% endif %}
                                         {% if picker %}
                                             <button type="button" class="gm-file-card-preview" title="{{ file.originalName }}"
-                                                    data-action="gm-file-pick#toggle" data-gm-file-pick-file-param="{{ browser.pick_data[file.id]|json_encode }}">
+                                                    data-action="gm-pick#toggle" data-gm-pick-item-param="{{ browser.pick_data[file.id]|json_encode }}">
                                                 {{ m.preview(file, browser.presets) }}
                                             </button>
                                         {% else %}

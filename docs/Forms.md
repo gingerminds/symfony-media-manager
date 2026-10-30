@@ -74,9 +74,10 @@ A media that does not exist, or outside the allowed categories, is a form error.
 needs `view medias`. A change dispatches `gm-media-select:change`, `event.detail.medias` being the
 picked medias.
 
-The picker reads `GET /admin/medias/search` (admin endpoint): a project scoping its public media API
-(by site, language...) does not hide medias from the admin. Change it with
-`resources.media.controller` (`search()`).
+The picker is `GET /admin/medias/picker`, a modal whose Turbo frame is rendered by the server
+(search, category, pages, `categories[]` and `per_page` of the field), the picked medias kept across
+its pages: a project scoping its public media API (by site, language...) does not hide medias from
+the admin. Change it with `resources.media.controller` (`picker()`).
 
 ## Collections of medias
 

@@ -1,14 +1,14 @@
 {#
  # The library browser in a modal (FileLibraryController::picker), loaded once per page by
- # `gm-file-picker`: `gm-file-pick` reloads its frame for each field (accepted types, multiple)
+ # `gm-file-picker`: `gm-pick` reloads its frame for each field (accepted types, multiple)
  # and keeps the picked files across its navigations.
  #}
 {% trans_default_domain 'GingermindsMediaManager' %}
 <div class="modal fade gm-file-picker-modal" id="gm-file-picker-modal" tabindex="-1" aria-labelledby="gm-file-picker-modal-title" aria-hidden="true"
-     data-controller="gm-file-pick"
-     data-gm-file-pick-none-value="{{ 'file.picker.none'|trans }}"
-     data-gm-file-pick-selected-value="{{ 'file.picker.selected'|trans }}"
-     data-action="turbo:frame-load->gm-file-pick#refresh gm-file-upload:uploaded->gm-file-pick#uploaded">
+     data-controller="gm-pick"
+     data-gm-pick-none-value="{{ 'file.picker.none'|trans }}"
+     data-gm-pick-selected-value="{{ 'file.picker.selected'|trans }}"
+     data-action="turbo:frame-load->gm-pick#refresh gm-file-upload:uploaded->gm-pick#uploaded">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-lg-down gm-file-picker-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -19,9 +19,9 @@
                 {% include '@GingermindsMediaManager/components/file/_browser.html.twig' with {browser: browser} only %}
             </div>
             <div class="modal-footer d-flex flex-wrap align-items-center gap-2">
-                <span class="text-muted me-auto text-truncate" data-gm-file-pick-target="summary"></span>
+                <span class="text-muted me-auto text-truncate" data-gm-pick-target="summary"></span>
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ 'file.action.cancel'|trans }}</button>
-                <button type="button" class="btn btn-primary" disabled data-gm-file-pick-target="confirm" data-action="gm-file-pick#confirm">
+                <button type="button" class="btn btn-primary" disabled data-gm-pick-target="confirm" data-action="gm-pick#confirm">
                     <i class="bi bi-check2 me-1"></i> {{ 'file.picker.select'|trans }}
                 </button>
             </div>

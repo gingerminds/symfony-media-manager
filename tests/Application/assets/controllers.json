@@ -20,10 +20,6 @@
                 "enabled": true,
                 "fetch": "lazy"
             },
-            "file-pick": {
-                "enabled": true,
-                "fetch": "lazy"
-            },
             "file-picker": {
                 "enabled": true,
                 "fetch": "lazy"
@@ -36,11 +32,11 @@
                 "enabled": true,
                 "fetch": "lazy"
             },
-            "media-picker": {
+            "media-select": {
                 "enabled": true,
                 "fetch": "lazy"
             },
-            "media-select": {
+            "pick": {
                 "enabled": true,
                 "fetch": "lazy"
             }

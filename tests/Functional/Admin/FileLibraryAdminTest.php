@@ -135,7 +135,7 @@ final class FileLibraryAdminTest extends ApiTestCase
         $images = $this->client->request('GET', '/admin/files/picker?path=&accept[]=image/*&accept[]=invalid');
         self::assertSame(['logo.svg', 'photo.png'], $this->names($images));
         self::assertSame(['image'], $images->filter('#gm-file-browser-type option[value!=""]')->each(static fn (Crawler $option): string => (string) $option->attr('value')));
-        $picked = json_decode((string) $images->filter('[data-file-id="' . $photo->getId() . '"] [data-gm-file-pick-file-param]')->attr('data-gm-file-pick-file-param'), true, flags: \JSON_THROW_ON_ERROR);
+        $picked = json_decode((string) $images->filter('[data-pick-id="' . $photo->getId() . '"] [data-gm-pick-item-param]')->attr('data-gm-pick-item-param'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertSame(['id' => $photo->getId(), 'name' => 'photo.png'], array_intersect_key($picked, ['id' => true, 'name' => true]));
 
         self::assertSame(['notes.txt'], $this->names($this->client->request('GET', '/admin/files/picker?path=&accept[]=text/plain')));
@@ -149,9 +149,9 @@ final class FileLibraryAdminTest extends ApiTestCase
         $crawler = $this->client->request('GET', '/admin/files/picker?dialog=delete');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('#gm-file-picker-modal[data-controller="gm-file-pick"] turbo-frame#gm-file-browser'));
+        self::assertCount(1, $crawler->filter('#gm-file-picker-modal[data-controller="gm-pick"] turbo-frame#gm-file-browser'));
         self::assertCount(0, $crawler->filter('turbo-frame[data-turbo-action]'), 'The modal keeps the page URL.');
-        self::assertCount(1, $crawler->filter('[data-gm-file-pick-target="confirm"]'));
+        self::assertCount(1, $crawler->filter('[data-gm-pick-target="confirm"]'));
         self::assertCount(1, $crawler->filter('input[type="file"]'), 'Uploads are offered.');
         self::assertCount(0, $crawler->filter('.gm-file-card-check, .gm-file-dialog'), 'No selection, no dialog but the new folder.');
         self::assertCount(1, $this->client->request('GET', '/admin/files/picker?dialog=mkdir')->filter('.gm-file-dialog'));

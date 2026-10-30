@@ -34,13 +34,10 @@ media_select:
     reorder: Drag to reorder
     search: Search a media (code, name)…
     all_categories: All categories
-    load_more: Load more
     select: Select
     none: No media selected
     selected: '%count% media(s) selected'
     empty: No media
-    loading: Loading…
-    error: The medias could not be loaded.
     forbidden: You have no access to the media library.
 
 media_category:

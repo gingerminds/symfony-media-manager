@@ -14,7 +14,6 @@ use Gingerminds\MediaManagerBundle\Media\MediaPresenter;
 use Gingerminds\MediaManagerBundle\Media\MediaUsageCounter;
 use Gingerminds\MediaManagerBundle\Repository\Media\MediaCategoryRepository;
 use Symfony\Component\ExpressionLanguage\Expression;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,7 +25,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  */
 class MediaController extends AbstractCrudController
 {
-    public const int MAX_SEARCH_ITEMS = 100;
+    public const int MAX_PICKER_ITEMS = 100;
 
     public function __construct(
         protected readonly MediaCategoryRepository $categories,
@@ -36,57 +35,59 @@ class MediaController extends AbstractCrudController
     }
 
     /**
-     * The media picker modal of the MediaSelectType fields, loaded once per page.
+     * The media picker of the MediaSelectType fields: a modal loaded once per page, its Turbo frame
+     * (`gm-media-picker`) reloaded for each field: `search` (code, name), `category` and the allowed
+     * `categories[]`, their subcategories included, `page`, `per_page`.
      */
     #[Route('/picker', name: 'picker', methods: ['GET'])]
     #[IsGranted(ResourceVoter::VIEW, subject: new Expression(self::RESOURCE_SUBJECT))]
-    public function picker(): Response
+    public function picker(Request $request): Response
     {
-        $categories = [];
+        $query = $request->query;
+        $allowed = array_values(array_filter(array_map(intval(...), $query->all('categories'))));
+        $category = $query->getInt('category');
+        $perPage = min(self::MAX_PICKER_ITEMS, max(1, $query->getInt('per_page', 24)));
+        $parameters = $this->getFilterParameters()->fromQuery($this->getResource()->entity, [
+            'search' => trim($query->getString('search')),
+            'category' => $this->categoryFilter($category, $allowed),
+            'order' => ['name' => 'asc'],
+        ]);
+        $page = $this->getRepository()->paginate($parameters, max(1, $query->getInt('page', 1)), $perPage);
+        $medias = array_values(array_filter($page->getItems(), static fn (object $media): bool => $media instanceof MediaInterface));
 
-        /** @var MediaCategoryInterface $category */
-        foreach (TreeNodes::flatten($this->categories->findTreeNodes()) as [$category, $depth]) {
-            $ancestors = [];
-
-            for ($parent = $category->getParent(); $parent instanceof MediaCategoryInterface; $parent = $parent->getParent()) {
-                $ancestors[] = $parent->getId();
-            }
-
-            $categories[] = ['id' => $category->getId(), 'label' => str_repeat('— ', $depth) . $category, 'ancestors' => $ancestors];
-        }
-
-        return $this->render('@GingermindsMediaManager/components/media/_picker_modal.html.twig', ['categories' => $categories]);
+        return $this->render('@GingermindsMediaManager/components/media/_picker_modal.html.twig', [
+            'medias' => $page,
+            'items' => array_column(array_map($this->presenter->media(...), $medias), null, 'id'),
+            'categories' => 1 === \count($allowed) ? [] : $this->categoryChoices($allowed),
+            'state' => array_filter([
+                'search' => trim($query->getString('search')),
+                'category' => $category,
+                'categories' => $allowed,
+                'per_page' => $perPage,
+            ]),
+        ]);
     }
 
     /**
-     * Medias of the picker: `search` (code, name), `category` and the allowed `categories[]`, their
-     * subcategories included, `page`, `per_page`. Admin endpoint: the public API may be scoped by the project.
+     * The categories of the filter, indented: the allowed ones and their subcategories.
+     *
+     * @param list<int> $allowed none: every category
+     *
+     * @return list<array{id: int|null, label: string}>
      */
-    #[Route('/search', name: 'search', methods: ['GET'])]
-    #[IsGranted(ResourceVoter::VIEW, subject: new Expression(self::RESOURCE_SUBJECT))]
-    public function search(Request $request): JsonResponse
+    private function categoryChoices(array $allowed): array
     {
-        $query = $request->query;
-        $parameters = $this->getFilterParameters()->fromQuery($this->getResource()->entity, [
-            'search' => $query->getString('search'),
-            'category' => $this->categoryFilter($query->getInt('category'), array_values(array_map(intval(...), $query->all('categories')))),
-            'order' => ['name' => 'asc'],
-        ]);
-        $page = $this->getRepository()->paginate(
-            $parameters,
-            max(1, $query->getInt('page', 1)),
-            min(self::MAX_SEARCH_ITEMS, max(1, $query->getInt('per_page', 24))),
-        );
+        $ids = [] === $allowed ? null : array_map(intval(...), $this->categories->findIdsWithDescendants($allowed));
+        $choices = [];
 
-        return new JsonResponse([
-            'items' => array_values(array_map(
-                $this->presenter->media(...),
-                array_filter($page->getItems(), static fn (object $media): bool => $media instanceof MediaInterface),
-            )),
-            'page' => $page->getPage(),
-            'total' => $page->getTotalItems(),
-            'hasMore' => $page->hasNextPage(),
-        ]);
+        /** @var MediaCategoryInterface $category */
+        foreach (TreeNodes::flatten($this->categories->findTreeNodes()) as [$category, $depth]) {
+            if (null === $ids || \in_array($category->getId(), $ids, true)) {
+                $choices[] = ['id' => $category->getId(), 'label' => str_repeat('— ', $depth) . $category];
+            }
+        }
+
+        return $choices;
     }
 
     /**

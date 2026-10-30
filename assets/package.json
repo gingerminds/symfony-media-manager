@@ -21,12 +21,6 @@
                 "fetch": "lazy",
                 "enabled": true
             },
-            "file-pick": {
-                "main": "controllers/file_pick_controller.js",
-                "name": "gm-file-pick",
-                "fetch": "lazy",
-                "enabled": true
-            },
             "file-picker": {
                 "main": "controllers/file_picker_controller.js",
                 "name": "gm-file-picker",
@@ -45,15 +39,15 @@
                 "fetch": "lazy",
                 "enabled": true
             },
-            "media-picker": {
-                "main": "controllers/media_picker_controller.js",
-                "name": "gm-media-picker",
-                "fetch": "lazy",
-                "enabled": true
-            },
             "media-select": {
                 "main": "controllers/media_select_controller.js",
                 "name": "gm-media-select",
+                "fetch": "lazy",
+                "enabled": true
+            },
+            "pick": {
+                "main": "controllers/pick_controller.js",
+                "name": "gm-pick",
                 "fetch": "lazy",
                 "enabled": true
             }

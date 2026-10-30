@@ -1,13 +1,15 @@
-{# Media picker (MediaController::picker), loaded once per page by `gm-media-select` and shared by the fields. #}
+{#
+ # Media picker (MediaController::picker), loaded once per page by `gm-media-select` and shared by
+ # the fields: `gm-pick` reloads its Turbo frame for each field (allowed categories, page size) and
+ # keeps the picked medias across its navigations (search, category, pages).
+ #}
 {% trans_default_domain 'GingermindsMediaManager' %}
-{% set labels = {} %}
-{% for key in ['empty', 'error', 'none', 'selected', 'loading'] %}
-    {% set labels = labels|merge({(key): ('media_select.' ~ key)|trans}) %}
-{% endfor %}
+{% import '@GingermindsMediaManager/components/file/_macros.html.twig' as m %}
 <div class="modal fade gm-media-picker-modal" id="gm-media-picker-modal" tabindex="-1" aria-labelledby="gm-media-picker-modal-title" aria-hidden="true"
-     data-controller="gm-media-picker"
-     data-gm-media-picker-search-url-value="{{ path('gingerminds_media_manager_media_search') }}"
-     data-gm-media-picker-labels-value="{{ labels|json_encode }}">
+     data-controller="gm-pick"
+     data-gm-pick-none-value="{{ 'media_select.none'|trans }}"
+     data-gm-pick-selected-value="{{ 'media_select.selected'|trans }}"
+     data-action="turbo:frame-load->gm-pick#refresh">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-lg-down gm-media-picker-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -15,33 +17,60 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'file.action.close'|trans }}"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-2 mb-3">
-                    <div class="col" data-gm-media-picker-target="searchColumn">
-                        <input type="search" class="form-control" placeholder="{{ 'media_select.search'|trans }}" autocomplete="off"
-                               data-gm-media-picker-target="search" data-action="input->gm-media-picker#search">
+                <turbo-frame id="gm-media-picker" class="d-block">
+                    {% include '@GingermindsCore/components/_flashes.html.twig' %}
+                    <form method="get" action="{{ path('gingerminds_media_manager_media_picker') }}" class="row g-2 mb-3"
+                          data-controller="gm-file-filters" data-action="change->gm-file-filters#submit">
+                        {% for id in state.categories ?? [] %}<input type="hidden" name="categories[]" value="{{ id }}">{% endfor %}
+                        <input type="hidden" name="per_page" value="{{ state.per_page }}">
+                        <div class="col">
+                            <input type="search" name="search" value="{{ state.search ?? '' }}" class="form-control" placeholder="{{ 'media_select.search'|trans }}"
+                                   autocomplete="off" aria-label="{{ 'media_select.search'|trans }}" data-action="gm-file-filters#search">
+                        </div>
+                        {% if categories is not empty %}
+                            <div class="col-md-4">
+                                <select name="category" class="form-select" aria-label="{{ 'media.field.category'|trans }}">
+                                    <option value="">{{ 'media_select.all_categories'|trans }}</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}"{{ category.id == (state.category ?? null) ? ' selected' }}>{{ category.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        {% endif %}
+                    </form>
+
+                    <div class="gm-file-grid">
+                        {% for media in medias %}
+                            {% set item = items[media.id] %}
+                            <div class="gm-file-card" data-media-id="{{ media.id }}" data-pick-id="{{ media.id }}">
+                                <button type="button" class="gm-file-card-preview" title="{{ item.name }}"
+                                        data-action="gm-pick#toggle" data-gm-pick-item-param="{{ item|json_encode }}">
+                                    {% if item.thumbnailUrl %}
+                                        <img src="{{ item.thumbnailUrl }}" alt="" loading="lazy">
+                                    {% else %}
+                                        <i class="bi {{ media.file ? m.icon(media.file) : 'bi-file-earmark' }}"></i>
+                                    {% endif %}
+                                </button>
+                                <span class="gm-file-card-body">
+                                    <span class="gm-file-card-name" title="{{ item.name }}">{{ item.name }}</span>
+                                    <span class="small text-muted text-truncate">{{ item.category ?? item.code }}</span>
+                                </span>
+                            </div>
+                        {% else %}
+                            <div class="text-muted py-5 text-center gm-file-grid-message">{{ 'media_select.empty'|trans }}</div>
+                        {% endfor %}
                     </div>
-                    <div class="col-md-4" data-gm-media-picker-target="categoryColumn">
-                        <select class="form-select" aria-label="{{ 'media.field.category'|trans }}" data-gm-media-picker-target="category" data-action="gm-media-picker#reload">
-                            <option value="">{{ 'media_select.all_categories'|trans }}</option>
-                            {% for category in categories %}
-                                <option value="{{ category.id }}" data-ancestors="{{ category.ancestors|join(' ') }}">{{ category.label }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="mt-3">
+                        {% include '@GingermindsCore/components/list/_pagination.html.twig' with {items: medias, route: 'gingerminds_media_manager_media_picker'} only %}
                     </div>
-                </div>
-                <div class="gm-file-grid" data-gm-media-picker-target="results"></div>
-                <div class="text-center mt-3">
-                    <button type="button" class="btn btn-sm btn-outline-primary d-none" data-gm-media-picker-target="more" data-action="gm-media-picker#more">
-                        {{ 'media_select.load_more'|trans }}
-                    </button>
-                </div>
+                </turbo-frame>
             </div>
             <div class="modal-footer">
-                <span class="text-muted small me-auto" data-gm-media-picker-target="summary"></span>
+                <span class="text-muted small me-auto" data-gm-pick-target="summary"></span>
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ 'file.action.cancel'|trans }}</button>
-                <button type="button" class="btn btn-primary" disabled data-gm-media-picker-target="confirm" data-action="gm-media-picker#confirm">{{ 'media_select.select'|trans }}</button>
+                <button type="button" class="btn btn-primary" disabled data-gm-pick-target="confirm" data-action="gm-pick#confirm">{{ 'media_select.select'|trans }}</button>
             </div>
         </div>
     </div>
 </div>
-

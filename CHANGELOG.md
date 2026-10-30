@@ -76,6 +76,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `breadcrumb()` / `usages()`,
   `FileLibraryController::ID_PLACEHOLDER` (now `FilePickerType::ID_PLACEHOLDER`) and the
   `assets/file_browser/` scripts (`helpers.js` and `modal.js` move to `assets/lib/`).
+- **BC break** Media picker: the modal (`GET /admin/medias/picker`) is a Turbo frame rendered by the
+  server (search, category filter restricted to the allowed categories, pagination instead of
+  "Load more"); the `GET /admin/medias/search` JSON endpoint and `media_picker_controller.js` are
+  removed. The file and media modals share one Stimulus controller, `gm-pick`
+  (`pick_controller.js`, `gm-pick:pick` with `detail.items`), replacing `gm-file-pick` and
+  `gm-media-picker`: a project without Flex updates its `controllers.json`.
 - **BC break** The bundle is a Symfony UX package (`assets/package.json`, `symfony-ux` keyword):
   Flex adds its Stimulus controllers to the project `assets/controllers.json` (lazy, same `gm-*`
   names) and AssetMapper resolves their relative imports. `RelativeImportCompiler` and the inline

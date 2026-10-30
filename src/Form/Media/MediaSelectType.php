@@ -62,7 +62,6 @@ final class MediaSelectType extends AbstractType
         $view->vars['per_page'] = $options['per_page'];
         $view->vars['can_pick'] = $this->authorizationChecker->isGranted(ResourceVoter::VIEW, 'media');
         $view->vars['picker_url'] = $this->urlGenerator->generate('gingerminds_media_manager_media_picker');
-        $view->vars['search_url'] = $this->urlGenerator->generate('gingerminds_media_manager_media_search');
     }
 
     public function configureOptions(OptionsResolver $resolver): void

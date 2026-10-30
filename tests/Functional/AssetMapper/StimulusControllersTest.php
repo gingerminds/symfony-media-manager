@@ -22,7 +22,7 @@ final class StimulusControllersTest extends KernelTestCase
         self::assertInstanceOf(ControllersMapGenerator::class, $generator);
         $controllers = $generator->getControllersMap();
 
-        foreach (['gm-file-upload', 'gm-file-pick', 'gm-file-picker', 'gm-file-dialog', 'gm-file-filters', 'gm-file-selection', 'gm-media-picker', 'gm-media-select'] as $name) {
+        foreach (['gm-file-upload', 'gm-pick', 'gm-file-picker', 'gm-file-dialog', 'gm-file-filters', 'gm-file-selection', 'gm-media-select'] as $name) {
             self::assertArrayHasKey($name, $controllers);
             self::assertTrue($controllers[$name]->isLazy, $name);
         }

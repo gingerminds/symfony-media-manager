@@ -18,7 +18,7 @@ used file cannot be deleted. This page maps each concept; see also the core
 | Policies (`MediaPolicy`, `MediaCategoryPolicy`, `BasketPolicy`) | Core `ResourceVoter`, `BasketVoter` | Same permission names, plus `view\|edit files` (`edit files` deletes too). |
 | `FileUploadService` (`upload`, `replace`, `delete`) | `FileLibrary`, `FileStorage` | No `replace()`: a new file is uploaded to the library and picked. |
 | `<x-...::form.inputs.file>` (upload field) | [`FilePickerType`](Forms.md#filepickertype) | Picks in the library, no direct upload. |
-| `<x-...::form.inputs.media-select>` + `medias.search` | [`MediaSelectType`](Forms.md#mediaselecttype) + `GET /admin/medias/search` | `category-codes` → `categories`, `per-page` → `per_page`. |
+| `<x-...::form.inputs.media-select>` + `medias.search` | [`MediaSelectType`](Forms.md#mediaselecttype) + `GET /admin/medias/picker` | `category-codes` → `categories`, `per-page` → `per_page`. |
 | `MediaCollectionSyncer` (pivot `collection`, `sort_order`) | `AbstractMediaLink` + `MediaCollectionSyncer` + `collection` option | A link entity per pivot table, see [Forms](Forms.md#collections-of-medias). |
 | `HasBasket` trait (polymorphic owner) | `Basket::$owner` (core user) | |
 | `BasketLoginResponseEnricher` | Same name, on the core `LoginResponseEnricherInterface` | |

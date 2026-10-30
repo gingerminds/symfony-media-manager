@@ -109,12 +109,11 @@ yourself:
         "@gingerminds/symfony-media-manager": {
             "file-dialog": {"enabled": true, "fetch": "lazy"},
             "file-filters": {"enabled": true, "fetch": "lazy"},
-            "file-pick": {"enabled": true, "fetch": "lazy"},
             "file-picker": {"enabled": true, "fetch": "lazy"},
             "file-selection": {"enabled": true, "fetch": "lazy"},
             "file-upload": {"enabled": true, "fetch": "lazy"},
-            "media-picker": {"enabled": true, "fetch": "lazy"},
-            "media-select": {"enabled": true, "fetch": "lazy"}
+            "media-select": {"enabled": true, "fetch": "lazy"},
+            "pick": {"enabled": true, "fetch": "lazy"}
         }
     }
 }
