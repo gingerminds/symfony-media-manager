@@ -9,6 +9,7 @@ use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Exception\TranslatableExceptionInterface;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Uid\Uuid;
@@ -27,6 +28,7 @@ abstract class AbstractFileLibraryController extends AbstractController
 
     public function __construct(
         protected readonly FileLibrary $library,
+        protected readonly LibraryDirectories $directories,
         protected readonly FileRepository $files,
         protected readonly FileLibraryPresenter $presenter,
     ) {

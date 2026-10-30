@@ -53,6 +53,7 @@ return static function (ContainerConfigurator $container): void {
     $admin('gingerminds_media_manager.controller.admin.file_library', FileLibraryController::class)
         ->args([
             service('gingerminds_media_manager.file.library'),
+            service('gingerminds_media_manager.file.library_directories'),
             service(FileRepository::class),
             service('gingerminds_media_manager.file.library_presenter'),
             service('gingerminds_media_manager.file.reference_registry'),
@@ -67,6 +68,7 @@ return static function (ContainerConfigurator $container): void {
     $admin('gingerminds_media_manager.controller.admin.file_library_action', FileLibraryActionController::class)
         ->args([
             service('gingerminds_media_manager.file.library'),
+            service('gingerminds_media_manager.file.library_directories'),
             service(FileRepository::class),
             service('gingerminds_media_manager.file.library_presenter'),
             param('gingerminds_media_manager.library.max_directory_move'),

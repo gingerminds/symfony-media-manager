@@ -76,6 +76,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `breadcrumb()` / `usages()`,
   `FileLibraryController::ID_PLACEHOLDER` (now `FilePickerType::ID_PLACEHOLDER`) and the
   `assets/file_browser/` scripts (`helpers.js` and `modal.js` move to `assets/lib/`).
+- **BC break** The folder operations of `FileLibrary` move to `LibraryDirectories`
+  (`gingerminds_media_manager.file.library_directories`): `directories()`, `hasDirectories()`,
+  `mkdir()`, `rmdir()`, `rmdirs()`, `moveDirectory()`, `moveDirectories()`, and `existing()` (an
+  existing folder as a path on the disk). `FileLibrary` keeps the files; it and the library
+  controllers take `LibraryDirectories`, `MoveDirectoryCommand` takes it instead of `FileLibrary`.
 - **BC break** Media picker: the modal (`GET /admin/medias/picker`) is a Turbo frame rendered by the
   server (search, category filter restricted to the allowed categories, pagination instead of
   "Load more"); the `GET /admin/medias/search` JSON endpoint and `media_picker_controller.js` are

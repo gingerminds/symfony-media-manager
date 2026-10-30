@@ -9,6 +9,7 @@ use Gingerminds\MediaManagerBundle\Doctrine\FileEventsListener;
 use Gingerminds\MediaManagerBundle\File\DirectoryMover;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\File\Reference\DoctrineAssociationReferenceSource;
 use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceRegistry;
@@ -58,6 +59,16 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.path_locker'),
         ]);
 
+    $services->set('gingerminds_media_manager.file.library_directories', LibraryDirectories::class)
+        ->args([
+            service('gingerminds_media_manager.storage.disk_registry'),
+            service('gingerminds_media_manager.file.path_guard'),
+            service(FileRepository::class),
+            service('gingerminds_media_manager.file.directory_mover'),
+            service('gingerminds_media_manager.file.path_locker'),
+        ]);
+    $services->alias(LibraryDirectories::class, 'gingerminds_media_manager.file.library_directories');
+
     $services->set('gingerminds_media_manager.file.library', FileLibrary::class)
         ->args([
             service('gingerminds_media_manager.file.storage'),
@@ -67,7 +78,7 @@ return static function (ContainerConfigurator $container): void {
             service('gingerminds_media_manager.file.path_guard'),
             service('gingerminds_media_manager.image.processor'),
             service('doctrine.orm.entity_manager'),
-            service('gingerminds_media_manager.file.directory_mover'),
+            service('gingerminds_media_manager.file.library_directories'),
             param('gingerminds_media_manager.library.per_page'),
             service('gingerminds_media_manager.file.path_locker'),
             service('event_dispatcher'),

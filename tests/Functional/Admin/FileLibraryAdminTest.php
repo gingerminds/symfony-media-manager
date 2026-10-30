@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Tests\Functional\Admin;
 
 use Gingerminds\MediaManagerBundle\Entity\File\File;
-use Gingerminds\MediaManagerBundle\File\FileLibrary;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article;
 use Gingerminds\MediaManagerBundle\Tests\Functional\ApiTestCase;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
@@ -18,7 +18,7 @@ final class FileLibraryAdminTest extends ApiTestCase
     private const array EDITOR = ['view files', 'edit files'];
 
     private FileFactory $files;
-    private FileLibrary $library;
+    private LibraryDirectories $directories;
     private FilesystemOperator $filesystem;
     private string $token = '';
 
@@ -28,7 +28,7 @@ final class FileLibraryAdminTest extends ApiTestCase
         // Same container for every request: the files live in an in-memory storage.
         $this->client->disableReboot();
         $this->files = new FileFactory(self::getContainer()->get('test.file_storage'));
-        $this->library = self::getContainer()->get('test.file_library');
+        $this->directories = self::getContainer()->get('test.library_directories');
         $this->filesystem = self::getContainer()->get('test.storage.default');
     }
 
@@ -78,13 +78,13 @@ final class FileLibraryAdminTest extends ApiTestCase
 
         // #[IsCsrfTokenValid]: not a resource route, the admin firewall handles it.
         self::assertResponseRedirects('/admin/login');
-        self::assertSame([], $this->library->directories(''));
+        self::assertSame([], $this->directories->directories(''));
     }
 
     public function testBrowse(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('docs', 'old');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('docs', 'old');
         $photo = $this->files->png('Photo.png');
         $report = $this->files->text('report.txt', 'report', 'docs');
         $this->files->text('archive.txt', 'archive', 'docs/old');
@@ -194,7 +194,7 @@ final class FileLibraryAdminTest extends ApiTestCase
 
     public function testUpload(): void
     {
-        $this->library->mkdir('', 'docs');
+        $this->directories->mkdir('', 'docs');
         $this->login();
 
         $this->upload($this->files->upload('Mon rapport.txt', 'report'), 'docs');
@@ -233,7 +233,7 @@ final class FileLibraryAdminTest extends ApiTestCase
         self::assertSame(['The folder "actualites-2026" already exists.'], $this->flashes($crawler, 'danger'));
 
         $this->files->text('news.txt', 'news', 'actualites-2026');
-        $this->library->mkdir('', 'empty');
+        $this->directories->mkdir('', 'empty');
         $crawler = $this->post('/admin/files/delete', ['paths' => ['empty', 'actualites-2026']]);
         self::assertSame(['1 folder(s) deleted.'], $this->flashes($crawler, 'success'));
         self::assertSame(['These folders are not empty, they have not been deleted: actualites-2026'], $this->flashes($crawler, 'warning'));
@@ -244,9 +244,9 @@ final class FileLibraryAdminTest extends ApiTestCase
 
     public function testMoveDirectories(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('', 'photos');
-        $this->library->mkdir('', 'archives');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('', 'photos');
+        $this->directories->mkdir('', 'archives');
         $notes = $this->files->text('notes.txt', 'notes', 'docs');
         $this->login();
 
@@ -275,7 +275,7 @@ final class FileLibraryAdminTest extends ApiTestCase
 
     public function testRenameAndMoveFiles(): void
     {
-        $this->library->mkdir('', 'archive');
+        $this->directories->mkdir('', 'archive');
         $file = $this->files->text('report.txt', 'report');
         $this->login();
 
@@ -348,8 +348,8 @@ final class FileLibraryAdminTest extends ApiTestCase
 
     public function testTheDialogs(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('', 'photos');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('', 'photos');
         $file = $this->files->text('notes.txt', 'notes');
         $this->login();
 

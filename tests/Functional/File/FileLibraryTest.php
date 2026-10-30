@@ -12,6 +12,7 @@ use Gingerminds\MediaManagerBundle\Exception\FileInUseException;
 use Gingerminds\MediaManagerBundle\Exception\InvalidPathException;
 use Gingerminds\MediaManagerBundle\Exception\LibraryException;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\File\LibraryQuery;
 use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 use Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article;
@@ -23,6 +24,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 final class FileLibraryTest extends KernelTestCase
 {
     private FileLibrary $library;
+    private LibraryDirectories $directories;
     private FileFactory $files;
     private FilesystemOperator $filesystem;
     private EntityManagerInterface $entityManager;
@@ -31,6 +33,7 @@ final class FileLibraryTest extends KernelTestCase
     {
         self::bootKernel();
         $this->library = self::getContainer()->get('test.file_library');
+        $this->directories = self::getContainer()->get('test.library_directories');
         $this->files = new FileFactory(self::getContainer()->get('test.file_storage'));
         $this->filesystem = self::getContainer()->get('test.storage.default');
         $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
@@ -38,24 +41,24 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testDirectories(): void
     {
-        self::assertSame([], $this->library->directories());
+        self::assertSame([], $this->directories->directories());
 
-        self::assertSame('actualites-2026', $this->library->mkdir('', 'Actualités 2026'));
-        self::assertSame('actualites-2026/fr', $this->library->mkdir('/actualites-2026', 'FR'));
-        $this->library->mkdir('', 'brochures');
+        self::assertSame('actualites-2026', $this->directories->mkdir('', 'Actualités 2026'));
+        self::assertSame('actualites-2026/fr', $this->directories->mkdir('/actualites-2026', 'FR'));
+        $this->directories->mkdir('', 'brochures');
         $this->filesystem->createDirectory('library/.hidden');
 
-        self::assertSame(['actualites-2026', 'brochures'], $this->library->directories());
-        self::assertSame(['actualites-2026/fr'], $this->library->directories('actualites-2026'));
+        self::assertSame(['actualites-2026', 'brochures'], $this->directories->directories());
+        self::assertSame(['actualites-2026/fr'], $this->directories->directories('actualites-2026'));
 
         $this->expectException(LibraryException::class);
-        $this->library->mkdir('', 'brochures');
+        $this->directories->mkdir('', 'brochures');
     }
 
     public function testTheDirectoriesStayInTheLibrary(): void
     {
         $this->expectException(InvalidPathException::class);
-        $this->library->directories('../private');
+        $this->directories->directories('../private');
     }
 
     public function testAMissingDirectoryIsAnError(): void
@@ -66,27 +69,27 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testRmdirOnlyRemovesEmptyDirectories(): void
     {
-        $this->library->mkdir('', 'empty');
-        $this->library->mkdir('', 'full');
+        $this->directories->mkdir('', 'empty');
+        $this->directories->mkdir('', 'full');
         $this->files->text(directory: 'full');
 
-        $this->library->rmdir('empty');
-        self::assertSame(['full'], $this->library->directories());
+        $this->directories->rmdir('empty');
+        self::assertSame(['full'], $this->directories->directories());
 
         try {
-            $this->library->rmdir('full');
+            $this->directories->rmdir('full');
             self::fail('A directory with files is kept.');
         } catch (LibraryException) {
         }
 
         $this->expectException(LibraryException::class);
-        $this->library->rmdir('');
+        $this->directories->rmdir('');
     }
 
     public function testFilesOfADirectory(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('docs', 'old');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('docs', 'old');
         $this->files->text('b.txt', 'bravo', 'docs');
         $this->files->text('A.txt', 'alpha', 'docs');
         $this->files->text('nested.txt', 'nested', 'docs/old');
@@ -125,7 +128,7 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testTheSearchIgnoresTheDirectoryNames(): void
     {
-        $this->library->mkdir('', 'stress-test');
+        $this->directories->mkdir('', 'stress-test');
         $this->files->text('photo.png', 'photo', 'stress-test');
         $this->files->text('Test report.txt', 'report', 'stress-test');
 
@@ -134,7 +137,7 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testUploadReturnsTheExistingFileForAKnownContent(): void
     {
-        $this->library->mkdir('', 'docs');
+        $this->directories->mkdir('', 'docs');
         $first = $this->library->upload($this->files->upload('report.txt', 'same'), 'docs');
         $second = $this->library->upload($this->files->upload('copy of report.txt', 'same'));
 
@@ -148,7 +151,7 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testRenameKeepsTheIdTheDirectoryAndTheExtension(): void
     {
-        $this->library->mkdir('', 'docs');
+        $this->directories->mkdir('', 'docs');
         $file = $this->files->text('report.txt', 'report', 'docs');
         $this->files->text('final.txt', 'taken', 'docs');
         $id = $file->getId();
@@ -179,7 +182,7 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testMove(): void
     {
-        $this->library->mkdir('', 'archive');
+        $this->directories->mkdir('', 'archive');
         $this->files->text('a.txt', 'archived', 'archive');
         $a = $this->files->text('a.txt', 'alpha');
         $b = $this->files->text('b.txt', 'bravo');
@@ -200,7 +203,7 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testAFailedSaveMovesTheFilesBack(): void
     {
-        $this->library->mkdir('', 'archive');
+        $this->directories->mkdir('', 'archive');
         $file = $this->files->text('a.txt', 'alpha');
         $this->entityManager->getConnection()->executeStatement('CREATE TRIGGER fail_files BEFORE UPDATE ON files BEGIN SELECT RAISE(ABORT, \'failure\'); END');
 
@@ -271,12 +274,12 @@ final class FileLibraryTest extends KernelTestCase
 
     public function testMoveAndRenameADirectory(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('docs', 'empty');
-        $this->library->mkdir('', 'archives');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('docs', 'empty');
+        $this->directories->mkdir('', 'archives');
         $notes = $this->files->text('notes.txt', 'notes', 'docs');
         $photo = $this->files->png('photo.png', 20, 20);
-        $this->library->mkdir('docs', 'photos');
+        $this->directories->mkdir('docs', 'photos');
         $this->library->move([$photo], 'docs/photos');
         $this->filesystem->write('library/docs/raw.txt', 'not in the files table');
         $preset = self::getContainer()->get(ImageProcessor::class)->process($photo, 'thumbnail');
@@ -285,7 +288,7 @@ final class FileLibraryTest extends KernelTestCase
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        self::assertSame('archives/docs', $this->library->moveDirectory('docs', 'archives'));
+        self::assertSame('archives/docs', $this->directories->moveDirectory('docs', 'archives'));
 
         self::assertSame('library/archives/docs/notes.txt', $notes->getPath());
         self::assertSame('library/archives/docs/photos/photo.png', $photo->getPath());
@@ -296,19 +299,19 @@ final class FileLibraryTest extends KernelTestCase
         self::assertFalse($this->filesystem->fileExists($preset), 'The presets of the old path are purged.');
         self::assertSame($photo, $article->cover);
 
-        self::assertSame('archives/documents-2026', $this->library->moveDirectory('archives/docs', 'archives', 'Documents 2026'));
+        self::assertSame('archives/documents-2026', $this->directories->moveDirectory('archives/docs', 'archives', 'Documents 2026'));
         $this->entityManager->clear();
         self::assertSame('library/archives/documents-2026/notes.txt', $this->entityManager->find(File::class, $notes->getId())?->getPath());
-        self::assertSame(['archives/documents-2026'], $this->library->directories('archives'));
-        self::assertSame('archives/documents-2026', $this->library->moveDirectory('archives/documents-2026', 'archives'), 'Same place: nothing to do.');
+        self::assertSame(['archives/documents-2026'], $this->directories->directories('archives'));
+        self::assertSame('archives/documents-2026', $this->directories->moveDirectory('archives/documents-2026', 'archives'), 'Same place: nothing to do.');
     }
 
     public function testADirectoryCannotBeMovedAnywhere(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('docs', 'sub');
-        $this->library->mkdir('', 'other');
-        $this->library->mkdir('other', 'docs');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('docs', 'sub');
+        $this->directories->mkdir('', 'other');
+        $this->directories->mkdir('other', 'docs');
 
         foreach ([
             ['', 'other', 'The library root cannot be moved nor renamed.'],
@@ -319,7 +322,7 @@ final class FileLibraryTest extends KernelTestCase
             ['docs', 'missing', 'The folder "missing" does not exist.'],
         ] as [$path, $parent, $message]) {
             try {
-                $this->library->moveDirectory($path, $parent);
+                $this->directories->moveDirectory($path, $parent);
                 self::fail(\sprintf('"%s" moved to "%s".', $path, $parent));
             } catch (LibraryException $exception) {
                 self::assertSame($message, $exception->trans(self::getContainer()->get('translator'), 'en'));
@@ -330,38 +333,38 @@ final class FileLibraryTest extends KernelTestCase
         $this->files->text('b.txt', 'content b', 'docs/sub');
 
         $this->expectExceptionMessage('The directory "docs" holds 2 files, more than 1.');
-        $this->library->moveDirectory('docs', 'other', 'big', 1);
+        $this->directories->moveDirectory('docs', 'other', 'big', 1);
     }
 
     public function testMoveSeveralDirectories(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('docs', 'sub');
-        $this->library->mkdir('', 'photos');
-        $this->library->mkdir('', 'archives');
-        $this->library->mkdir('archives', 'photos');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('docs', 'sub');
+        $this->directories->mkdir('', 'photos');
+        $this->directories->mkdir('', 'archives');
+        $this->directories->mkdir('archives', 'photos');
 
-        self::assertSame(['archives/docs'], $this->library->moveDirectories(['docs', 'docs/sub'], 'archives'), 'A subfolder follows its parent.');
-        self::assertSame(['archives/docs/sub'], $this->library->directories('archives/docs'));
+        self::assertSame(['archives/docs'], $this->directories->moveDirectories(['docs', 'docs/sub'], 'archives'), 'A subfolder follows its parent.');
+        self::assertSame(['archives/docs/sub'], $this->directories->directories('archives/docs'));
 
         $this->expectExceptionMessage('The directory "archives/photos" already exists.');
-        $this->library->moveDirectories(['photos'], 'archives');
+        $this->directories->moveDirectories(['photos'], 'archives');
     }
 
     public function testDeleteSeveralDirectories(): void
     {
-        $this->library->mkdir('', 'empty');
-        $this->library->mkdir('', 'docs');
+        $this->directories->mkdir('', 'empty');
+        $this->directories->mkdir('', 'docs');
         $this->files->text('notes.txt', 'notes', 'docs');
 
-        self::assertSame(['deleted' => ['empty'], 'kept' => ['docs']], $this->library->rmdirs(['empty', 'docs']));
-        self::assertSame(['docs'], $this->library->directories());
+        self::assertSame(['deleted' => ['empty'], 'kept' => ['docs']], $this->directories->rmdirs(['empty', 'docs']));
+        self::assertSame(['docs'], $this->directories->directories());
     }
 
     public function testAFailedMoveOfADirectoryPutsEverythingBack(): void
     {
-        $this->library->mkdir('', 'docs');
-        $this->library->mkdir('', 'archives');
+        $this->directories->mkdir('', 'docs');
+        $this->directories->mkdir('', 'archives');
         $notes = $this->files->text('notes.txt', 'notes', 'docs');
         $failure = new class {
             public function onFlush(): never
@@ -372,7 +375,7 @@ final class FileLibraryTest extends KernelTestCase
         $this->entityManager->getEventManager()->addEventListener('onFlush', $failure);
 
         try {
-            $this->library->moveDirectory('docs', 'archives');
+            $this->directories->moveDirectory('docs', 'archives');
             self::fail('The save failed.');
         } catch (\RuntimeException $exception) {
             self::assertSame('Database down.', $exception->getMessage());

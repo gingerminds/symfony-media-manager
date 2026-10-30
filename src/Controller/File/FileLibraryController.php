@@ -10,6 +10,7 @@ use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Exception\TranslatableExceptionInterface;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\File\LibraryQuery;
 use Gingerminds\MediaManagerBundle\File\LibraryStartPathProviderInterface;
 use Gingerminds\MediaManagerBundle\File\MimeTypePatterns;
@@ -44,6 +45,7 @@ class FileLibraryController extends AbstractFileLibraryController
      */
     public function __construct(
         FileLibrary $library,
+        LibraryDirectories $directories,
         FileRepository $files,
         FileLibraryPresenter $presenter,
         protected readonly FileReferenceRegistry $references,
@@ -52,7 +54,7 @@ class FileLibraryController extends AbstractFileLibraryController
         protected readonly array $allowedMimes,
         protected readonly DisplayTimezone $displayTimezone = new DisplayTimezone(),
     ) {
-        parent::__construct($library, $files, $presenter);
+        parent::__construct($library, $directories, $files, $presenter);
     }
 
     #[Route('', name: 'index', methods: ['GET'])]
@@ -85,7 +87,7 @@ class FileLibraryController extends AbstractFileLibraryController
         $node = $request->query->getString('node');
 
         try {
-            $children = $this->library->directories($node);
+            $children = $this->directories->directories($node);
         } catch (TranslatableExceptionInterface) {
             $children = [];
         }
@@ -140,7 +142,7 @@ class FileLibraryController extends AbstractFileLibraryController
             // The open folders of the tree already list their subfolders.
             'branches' => $this->branches(array_diff(array_merge(...array_values($tree)), array_keys($tree))),
             // Folders stay whatever the filters, to keep navigating, but a search only lists files.
-            'directories' => 1 === $page->getPage() && !isset($state['search']) ? $this->library->directories($path) : [],
+            'directories' => 1 === $page->getPage() && !isset($state['search']) ? $this->directories->directories($path) : [],
             'files' => $page,
             'usages' => array_map(\count(...), $this->references->usages($files)),
             'pick_data' => $picker ? array_column(array_map($this->presenter->file(...), $files), null, 'id') : [],
@@ -243,10 +245,10 @@ class FileLibraryController extends AbstractFileLibraryController
      */
     protected function treeOf(string $path): array
     {
-        $tree = ['' => $this->library->directories()];
+        $tree = ['' => $this->directories->directories()];
 
         foreach ($this->breadcrumb($path) as $ancestor) {
-            $tree[$ancestor] = $this->library->directories($ancestor);
+            $tree[$ancestor] = $this->directories->directories($ancestor);
         }
 
         return $tree;
@@ -265,7 +267,7 @@ class FileLibraryController extends AbstractFileLibraryController
 
         foreach ($nodes as $node) {
             try {
-                $branches[$node] = $this->library->hasDirectories($node);
+                $branches[$node] = $this->directories->hasDirectories($node);
             } catch (TranslatableExceptionInterface) {
                 $branches[$node] = false;
             }

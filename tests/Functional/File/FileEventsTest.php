@@ -10,6 +10,7 @@ use Gingerminds\MediaManagerBundle\Event\FileStoredEvent;
 use Gingerminds\MediaManagerBundle\Event\FileUploadingEvent;
 use Gingerminds\MediaManagerBundle\Exception\FileUploadException;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class FileEventsTest extends KernelTestCase
 {
     private FileLibrary $library;
+    private LibraryDirectories $directories;
     private FileFactory $files;
     private EventDispatcherInterface $dispatcher;
 
@@ -29,6 +31,7 @@ final class FileEventsTest extends KernelTestCase
     {
         self::bootKernel();
         $this->library = self::getContainer()->get('test.file_library');
+        $this->directories = self::getContainer()->get('test.library_directories');
         $this->files = new FileFactory(self::getContainer()->get('test.file_storage'));
         $this->dispatcher = self::getContainer()->get('event_dispatcher');
 
@@ -39,10 +42,10 @@ final class FileEventsTest extends KernelTestCase
 
     public function testTheWritesOfTheRowsAreDispatched(): void
     {
-        $this->library->mkdir('', 'docs');
+        $this->directories->mkdir('', 'docs');
         $file = $this->library->upload($this->files->upload('notes.txt', 'notes'))->file;
         $this->library->move([$file], 'docs');
-        $this->library->moveDirectory('docs', '', 'archives');
+        $this->directories->moveDirectory('docs', '', 'archives');
         $this->library->delete([$file]);
 
         self::assertSame([

@@ -12,6 +12,7 @@ use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\Exception\TranslatableExceptionInterface;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
 use Gingerminds\MediaManagerBundle\File\FileLibraryPresenter;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\GingermindsMediaManagerBundle;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Symfony\Component\ExpressionLanguage\Expression;
@@ -37,11 +38,12 @@ class FileLibraryActionController extends AbstractFileLibraryController
 {
     public function __construct(
         FileLibrary $library,
+        LibraryDirectories $directories,
         FileRepository $files,
         FileLibraryPresenter $presenter,
         protected readonly int $maxDirectoryMove,
     ) {
-        parent::__construct($library, $files, $presenter);
+        parent::__construct($library, $directories, $files, $presenter);
     }
 
     /**
@@ -79,7 +81,7 @@ class FileLibraryActionController extends AbstractFileLibraryController
     public function createDirectory(Request $request, #[MapRequestPayload] DirectoryInput $input): RedirectResponse
     {
         return $this->attempt($request, function () use ($input): void {
-            $this->library->mkdir($input->parent, $input->name);
+            $this->directories->mkdir($input->parent, $input->name);
         });
     }
 
@@ -88,7 +90,7 @@ class FileLibraryActionController extends AbstractFileLibraryController
     {
         return $this->attempt($request, function () use ($input): void {
             $parent = \dirname($input->path);
-            $path = $this->library->moveDirectory($input->path, '.' === $parent ? '' : $parent, $input->name, $this->maxDirectoryMove);
+            $path = $this->directories->moveDirectory($input->path, '.' === $parent ? '' : $parent, $input->name, $this->maxDirectoryMove);
             $this->addFlash('success', $this->message('directory_renamed', ['%name%' => basename($path)]));
         });
     }
@@ -108,7 +110,7 @@ class FileLibraryActionController extends AbstractFileLibraryController
             }
 
             if ([] !== $input->paths) {
-                $moved = $this->library->moveDirectories($input->paths, $input->target, null, $this->maxDirectoryMove);
+                $moved = $this->directories->moveDirectories($input->paths, $input->target, null, $this->maxDirectoryMove);
                 $target = '' === $input->target ? $this->trans('file.root', [], GingermindsMediaManagerBundle::TRANSLATION_DOMAIN) : $input->target;
                 $this->addFlash('success', $this->message('directories_moved', ['%count%' => \count($moved), '%path%' => $target]));
             }
@@ -134,7 +136,7 @@ class FileLibraryActionController extends AbstractFileLibraryController
             }
 
             if ([] !== $input->paths) {
-                $result = $this->library->rmdirs($input->paths);
+                $result = $this->directories->rmdirs($input->paths);
                 $this->flashIf('success', $result['deleted'], $this->message('directories_deleted', ['%count%' => \count($result['deleted'])]));
                 $this->flashIf('warning', $result['kept'], $this->message('directories_kept') . ' ' . implode(', ', $result['kept']));
             }

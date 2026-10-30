@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\Tests\Functional\Command;
 
-use Gingerminds\MediaManagerBundle\File\FileLibrary;
+use Gingerminds\MediaManagerBundle\File\LibraryDirectories;
 use Gingerminds\MediaManagerBundle\Tests\Functional\FileFactory;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -16,11 +16,11 @@ final class MoveDirectoryCommandTest extends KernelTestCase
     public function testMoveAndRenameWithoutTheAdminLimit(): void
     {
         self::bootKernel();
-        /** @var FileLibrary $library */
-        $library = self::getContainer()->get('test.file_library');
+        /** @var LibraryDirectories $directories */
+        $directories = self::getContainer()->get('test.library_directories');
         $files = new FileFactory(self::getContainer()->get('test.file_storage'));
-        $library->mkdir('', 'archives');
-        $library->mkdir('archives', 'docs');
+        $directories->mkdir('', 'archives');
+        $directories->mkdir('archives', 'docs');
 
         foreach (['a', 'b', 'c', 'd'] as $name) {
             $files->text($name . '.txt', 'content ' . $name, 'archives/docs');
@@ -34,7 +34,7 @@ final class MoveDirectoryCommandTest extends KernelTestCase
 
         $tester->execute(['path' => 'archives/docs-2026', 'parent' => '']);
         $tester->assertCommandIsSuccessful();
-        self::assertSame(['archives', 'docs-2026'], $library->directories());
+        self::assertSame(['archives', 'docs-2026'], $directories->directories());
 
         $tester->execute(['path' => 'archives', 'parent' => 'missing']);
         self::assertSame(Command::FAILURE, $tester->getStatusCode());

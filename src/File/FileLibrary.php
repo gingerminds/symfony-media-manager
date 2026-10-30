@@ -15,12 +15,11 @@ use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceRegistry;
 use Gingerminds\MediaManagerBundle\Image\ImageProcessor;
 use Gingerminds\MediaManagerBundle\Repository\File\FileRepository;
 use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
-use League\Flysystem\FilesystemOperator;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
 /**
- * The file library: directories on the library disk, files from the `files` table. Paths are
- * relative to the library root.
+ * The files of the library (the `files` table): listing, upload, rename, move, delete, merge. Paths
+ * are relative to the library root; the folders are LibraryDirectories'.
  */
 class FileLibrary
 {
@@ -32,46 +31,11 @@ class FileLibrary
         private readonly PathGuard $paths,
         private readonly ImageProcessor $images,
         private readonly EntityManagerInterface $entityManager,
-        private readonly DirectoryMover $directoryMover,
+        private readonly LibraryDirectories $directories,
         private readonly int $itemsPerPage,
         private readonly PathLocker $locker,
         private readonly ?EventDispatcherInterface $events = null,
     ) {
-    }
-
-    /**
-     * Subdirectories, hidden ones (".cache"...) excluded.
-     *
-     * @return list<string>
-     */
-    public function directories(string $path = ''): array
-    {
-        $directory = $this->existingDirectory($path);
-        $directories = [];
-
-        foreach ($this->filesystem()->listContents($directory, false) as $item) {
-            if ($item->isDir() && !str_starts_with(basename($item->path()), '.')) {
-                $directories[] = $this->paths->relative($item->path());
-            }
-        }
-
-        natcasesort($directories);
-
-        return array_values($directories);
-    }
-
-    /**
-     * Whether the directory has subdirectories (hidden ones excluded), without listing them all.
-     */
-    public function hasDirectories(string $path): bool
-    {
-        foreach ($this->filesystem()->listContents($this->existingDirectory($path), false) as $item) {
-            if ($item->isDir() && !str_starts_with(basename($item->path()), '.')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -81,114 +45,11 @@ class FileLibrary
     {
         return $this->files->paginateLibrary(
             $this->disks->defaultDisk(),
-            $this->existingDirectory($query->directory),
+            $this->directories->existing($query->directory),
             $query,
             $query->orphans ? $this->references->excludeReferenced(...) : null,
             min(max(1, $query->itemsPerPage ?? $this->itemsPerPage), 500),
         );
-    }
-
-    /**
-     * @return string the new directory, relative to the library root
-     */
-    public function mkdir(string $parent, string $name): string
-    {
-        $parent = $this->existingDirectory($parent);
-        $name = $this->paths->directoryName($name);
-        $directory = $parent . '/' . $name;
-
-        // Locked as a target name: not created in a directory being moved.
-        $this->locker->synchronized([[$this->disks->defaultDisk(), $parent, $name]], function () use ($directory): void {
-            if ($this->filesystem()->directoryExists($directory)) {
-                throw LibraryException::directoryExists($this->paths->relative($directory));
-            }
-
-            $this->filesystem()->createDirectory($directory);
-        });
-
-        return $this->paths->relative($directory);
-    }
-
-    /**
-     * Empty directories only.
-     */
-    public function rmdir(string $path): void
-    {
-        if ('' === $this->paths->normalize(ltrim($path, '/'))) {
-            throw LibraryException::rootDirectory();
-        }
-
-        $directory = $this->existingDirectory($path);
-
-        if (
-            [] !== $this->filesystem()->listContents($directory, false)->toArray()
-            || $this->files->hasFilesUnder($this->disks->defaultDisk(), $directory)
-        ) {
-            throw LibraryException::directoryNotEmpty($path);
-        }
-
-        $this->filesystem()->deleteDirectory($directory);
-    }
-
-    /**
-     * Empty directories are deleted, the others are kept and returned.
-     *
-     * @param list<string> $paths
-     *
-     * @return array{deleted: list<string>, kept: list<string>}
-     */
-    public function rmdirs(array $paths): array
-    {
-        $result = ['deleted' => [], 'kept' => []];
-
-        foreach ($paths as $path) {
-            try {
-                $this->rmdir($path);
-                $result['deleted'][] = $path;
-            } catch (LibraryException $exception) {
-                if (!$exception->isDirectoryNotEmpty()) {
-                    throw $exception;
-                }
-
-                $result['kept'][] = $path;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Moves a directory under $parent, renamed when $name is given; returns its new path.
-     *
-     * @param int $maxFiles 0: no limit
-     */
-    public function moveDirectory(string $path, string $parent, ?string $name = null, int $maxFiles = 0): string
-    {
-        return $this->moveDirectories([$path], $parent, $name, $maxFiles)[0];
-    }
-
-    /**
-     * Moves directories under $parent; returns their new paths. Everything on the disk follows (files
-     * missing from `files` too), the rows get their new paths and the presets are purged. Every move
-     * is checked first and $maxFiles counts the files of all the directories; a directory that fails
-     * is moved back, the previous ones stay moved.
-     *
-     * @param list<string> $paths    a subdirectory of another one follows it
-     * @param string|null  $name     new name, one directory only
-     * @param int          $maxFiles 0: no limit
-     *
-     * @return list<string>
-     */
-    public function moveDirectories(array $paths, string $parent, ?string $name = null, int $maxFiles = 0): array
-    {
-        if (null !== $name && 1 !== \count($paths)) {
-            throw new \InvalidArgumentException('Only one directory is renamed at a time.');
-        }
-
-        $sources = $this->directorySources($paths);
-        $targets = $this->directoryMover->move($sources, $this->existingDirectory($parent), $name, $maxFiles);
-
-        return array_map($this->paths->relative(...), $targets);
     }
 
     /**
@@ -211,7 +72,7 @@ class FileLibrary
                 return new UploadResult($existing, true);
             }
 
-            $directory = $this->paths->relative($this->existingDirectory($directory));
+            $directory = $this->paths->relative($this->directories->existing($directory));
             $this->events?->dispatch(new FileUploadingEvent($file, $directory));
 
             return new UploadResult($this->storage->store($file, $directory, hash: $hash));
@@ -258,7 +119,7 @@ class FileLibrary
      */
     public function move(array $files, string $directory): void
     {
-        $this->relocate($files, $this->existingDirectory($directory));
+        $this->relocate($files, $this->directories->existing($directory));
     }
 
     /**
@@ -390,51 +251,5 @@ class FileLibrary
 
             throw $exception;
         }
-    }
-
-    /**
-     * The directories on the disk, without the subdirectories of another one (they follow it).
-     *
-     * @param list<string> $paths
-     *
-     * @return list<string>
-     */
-    private function directorySources(array $paths): array
-    {
-        $sources = [];
-
-        foreach ($paths as $path) {
-            if ('' === $this->paths->normalize(ltrim($path, '/'))) {
-                throw LibraryException::rootDirectoryMoved();
-            }
-
-            $sources[$this->existingDirectory($path)] = true;
-        }
-
-        $sources = array_keys($sources);
-
-        return array_values(array_filter($sources, static fn (string $source): bool => !array_any(
-            $sources,
-            static fn (string $other): bool => str_starts_with($source, $other . '/'),
-        )));
-    }
-
-    /**
-     * @return string the directory on the disk
-     */
-    private function existingDirectory(string $path): string
-    {
-        $directory = $this->paths->inLibrary($path);
-
-        if ($directory !== $this->paths->root() && !$this->filesystem()->directoryExists($directory)) {
-            throw LibraryException::directoryNotFound($this->paths->relative($directory));
-        }
-
-        return $directory;
-    }
-
-    private function filesystem(): FilesystemOperator
-    {
-        return $this->disks->get($this->disks->defaultDisk());
     }
 }

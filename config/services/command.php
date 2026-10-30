@@ -40,7 +40,7 @@ return static function (ContainerConfigurator $container): void {
         ->tag('console.command');
 
     $services->set('gingerminds_media_manager.command.move_directory', MoveDirectoryCommand::class)
-        ->args([service('gingerminds_media_manager.file.library')])
+        ->args([service('gingerminds_media_manager.file.library_directories')])
         ->tag('console.command');
 
     // Maintenance of the files (imported databases, files copied by hand).

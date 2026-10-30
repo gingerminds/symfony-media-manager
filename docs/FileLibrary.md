@@ -153,7 +153,8 @@ services:
 
   The last three come from the Doctrine flush of the rows, whoever writes them; they are dispatched
   once the flush is done.
-- **Services**: `FileLibrary` (library operations), `FileStorage` (store, read, delete on the
+- **Services**: `FileLibrary` (the files: list, upload, rename, move, delete, merge),
+  `LibraryDirectories` (the folders: list, create, delete, move, rename), `FileStorage` (store, read, delete on the
   disks), `FileReferenceRegistry` (`usages()`, `excludeReferenced()`, `replace()`), `DiskRegistry`.
 - In Twig, `gm_file_url(file, preset = null, absolute = false)` gives the URL of a file or of a
   preset.

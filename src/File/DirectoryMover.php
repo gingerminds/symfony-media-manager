@@ -12,7 +12,7 @@ use Gingerminds\MediaManagerBundle\Storage\DiskRegistry;
 use League\Flysystem\FilesystemOperator;
 
 /**
- * Moves directories of the library disk (FileLibrary::moveDirectories()). Everything on the disk
+ * Moves directories of the library disk (LibraryDirectories::moveDirectories()). Everything on the disk
  * follows, files missing from `files` too; the rows get their new paths and the presets are purged.
  */
 class DirectoryMover
