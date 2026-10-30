@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\File\Reference;
 
+use Doctrine\ORM\QueryBuilder;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 
 /**
@@ -58,19 +59,13 @@ class FileReferenceRegistry
     }
 
     /**
-     * @return list<string>
+     * Restricts a query of the files (root alias $alias) to the files used nowhere.
      */
-    public function usedIds(): array
+    public function excludeReferenced(QueryBuilder $qb, string $alias): void
     {
-        $ids = [];
-
         foreach ($this->sources as $source) {
-            foreach ($source->usedIds() as $id) {
-                $ids[$id] = true;
-            }
+            $source->excludeReferenced($qb, $alias);
         }
-
-        return array_map(strval(...), array_keys($ids));
     }
 
     /**

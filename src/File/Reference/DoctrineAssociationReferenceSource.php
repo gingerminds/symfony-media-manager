@@ -6,6 +6,7 @@ namespace Gingerminds\MediaManagerBundle\File\Reference;
 
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
 use Gingerminds\MediaManagerBundle\Doctrine\AssociationFinder;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 
@@ -46,24 +47,18 @@ final readonly class DoctrineAssociationReferenceSource implements FileReference
         return $references;
     }
 
-    public function usedIds(): array
+    public function excludeReferenced(QueryBuilder $qb, string $alias): void
     {
-        $ids = [];
+        foreach ($this->associations->owningAssociationsTo(FileInterface::class) as $index => [$metadata, $field]) {
+            $owner = 'gm_reference_' . $index;
+            $subquery = $this->entityManager->createQueryBuilder()
+                ->select($owner)
+                ->from($metadata->getName(), $owner)
+                ->join($owner . '.' . $field, $owner . '_file')
+                ->where($owner . '_file = ' . $alias);
 
-        foreach ($this->associations->owningAssociationsTo(FileInterface::class) as [$metadata, $field]) {
-            $rows = $this->entityManager->createQueryBuilder()
-                ->select('DISTINCT f.id')
-                ->from($metadata->getName(), 'o')
-                ->join('o.' . $field, 'f')
-                ->getQuery()
-                ->getSingleColumnResult();
-
-            foreach ($rows as $id) {
-                $ids[(string) $id] = true;
-            }
+            $qb->andWhere($qb->expr()->not($qb->expr()->exists($subquery->getDQL())));
         }
-
-        return array_map(strval(...), array_keys($ids));
     }
 
     public function replace(FileInterface $old, FileInterface $new): int

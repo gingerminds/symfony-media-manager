@@ -80,7 +80,7 @@ class FileLibrary
             $this->disks->defaultDisk(),
             $this->existingDirectory($query->directory),
             $query,
-            $query->orphans ? $this->references->usedIds() : [],
+            $query->orphans ? $this->references->excludeReferenced(...) : null,
             min(max(1, $query->itemsPerPage ?? $this->itemsPerPage), 500),
         );
     }

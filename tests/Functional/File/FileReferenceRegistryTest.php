@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gingerminds\MediaManagerBundle\Tests\Functional\File;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Gingerminds\MediaManagerBundle\Entity\File\File;
 use Gingerminds\MediaManagerBundle\File\Reference\FileReferenceRegistry;
 use Gingerminds\MediaManagerBundle\File\Reference\FileUsage;
 use Gingerminds\MediaManagerBundle\Tests\Application\Entity\Article;
@@ -52,7 +53,10 @@ final class FileReferenceRegistryTest extends KernelTestCase
 
         self::assertTrue($this->registry->isUsed($block));
         self::assertFalse($this->registry->isUsed($unused));
-        self::assertEqualsCanonicalizing([$cover->getId(), $attachment->getId(), $block->getId()], $this->registry->usedIds());
+
+        $qb = $this->entityManager->createQueryBuilder()->select('f')->from(File::class, 'f');
+        $this->registry->excludeReferenced($qb, 'f');
+        self::assertSame([$unused->getId()], array_map(static fn (File $file): string => $file->getId(), $qb->getQuery()->getResult()));
     }
 
     public function testReplacePointsEveryReferenceToTheNewFile(): void

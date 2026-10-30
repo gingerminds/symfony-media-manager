@@ -90,6 +90,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `AssociationFinder` (`gingerminds_media_manager.doctrine.association_finder`): the owning
   associations to an entity, read once from the Doctrine mapping, shared by
   `DoctrineAssociationReferenceSource` and `MediaUsageCounter` (both take it as argument).
+- **BC break** Orphans filter of the library and `files:orphans`: computed by the database, a
+  `NOT EXISTS` per Doctrine association, instead of a `NOT IN` of every referenced id loaded in PHP
+  (and every file row for `files:orphans`). `FileReferenceSourceInterface::usedIds()` and
+  `FileReferenceRegistry::usedIds()` are replaced by `excludeReferenced(QueryBuilder $qb, string $alias)`;
+  `JsonFieldFileReferenceSource` still reads its field in PHP (a `LIKE` on JSON is not portable).
+  `FileRepository::paginateLibrary()` takes that restriction as a closure.
 - `GET /api/files/{id}` and `/{preset}`: the file is read by API Platform (`$data` of
   `ShowFileController` / `ShowFilePresetController`, no repository), a non UUID id is a 404 of the
   routing.

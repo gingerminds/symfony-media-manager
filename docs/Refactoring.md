@@ -20,7 +20,6 @@ Légende — effort : S (≤ ½ j), M (1–3 j), L (> 3 j) ; [H] hypothèse à v
 
 | Constat | Où | Correction | Effort |
 |---|---|---|---|
-| Filtre « orphelins » en `NOT IN` de tous les ids ; parcours complet de table | `src/File/FileLibrary.php:79`, `src/File/Reference/JsonFieldFileReferenceSource.php:45-63` | `NOT EXISTS` | M |
 | 4 allers-retours storage par réponse fichier | `FileResponseFactory` | ETag sur `hash` / `updatedAt` lu en base | M |
 
 ## 5. Doublons à remonter dans le core

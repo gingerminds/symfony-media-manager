@@ -59,10 +59,14 @@ services:
             $field: content
 ```
 
-Other storages implement `FileReferenceSourceInterface` (autoconfigured).
+Other storages implement `FileReferenceSourceInterface` (autoconfigured): `references()` (who uses
+these files), `excludeReferenced()` (restricts a query of the files to the unused ones, the
+"orphans" filter and `files:orphans`: a `NOT EXISTS` per association for the Doctrine
+associations) and `replace()`.
 
 A JSON field has no database integrity: the ids are searched as strings (reliable for UUIDs) with
-`LIKE`, which does not work on a Postgres `jsonb` column (use `json` or `text`).
+`LIKE`, which does not work on a Postgres `jsonb` column (use `json` or `text`). The orphans filter
+reads the field of every row in PHP.
 
 A usage is shown as the label of its owner and a link to its edit page, found through its
 `gingerminds_core` resource. For an owner without admin resource, add a resolver
@@ -135,7 +139,7 @@ services:
   `gingerminds_media_manager.controller.admin.file_library_action` service
   (`FileLibraryActionController`).
 - **Services**: `FileLibrary` (library operations), `FileStorage` (store, read, delete on the
-  disks), `FileReferenceRegistry` (usages, `isUsed()`, `usedIds()`, `replace()`), `DiskRegistry`.
+  disks), `FileReferenceRegistry` (usages, `isUsed()`, `excludeReferenced()`, `replace()`), `DiskRegistry`.
 - In Twig, `gm_file_url(file, preset = null, absolute = false)` gives the URL of a file or of a
   preset.
 

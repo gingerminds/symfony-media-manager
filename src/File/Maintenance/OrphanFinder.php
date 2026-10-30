@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Gingerminds\MediaManagerBundle\File\Maintenance;
 
-use Gingerminds\CoreBundle\Model\TimestampableInterface;
 use Gingerminds\MediaManagerBundle\Entity\File\FileInterface;
 use Gingerminds\MediaManagerBundle\File\DeleteResult;
 use Gingerminds\MediaManagerBundle\File\FileLibrary;
@@ -30,13 +29,15 @@ class OrphanFinder
      */
     public function find(?int $olderThan = null): array
     {
-        $used = array_fill_keys($this->references->usedIds(), true);
-        $limit = null === $olderThan ? null : new \DateTimeImmutable('-' . $olderThan . ' days');
+        $qb = $this->files->createQueryBuilder('f')->orderBy('f.path');
+        $this->references->excludeReferenced($qb, 'f');
 
-        return array_values(array_filter(
-            $this->files->findBy([], ['path' => 'ASC']),
-            static fn (FileInterface $file): bool => !isset($used[$file->getId()]) && (!$limit instanceof \DateTimeImmutable || !self::isNewer($file, $limit)),
-        ));
+        if (null !== $olderThan) {
+            $qb->andWhere('f.createdAt IS NULL OR f.createdAt < :limit')->setParameter('limit', new \DateTimeImmutable('-' . $olderThan . ' days'));
+        }
+
+        /** @var list<FileInterface> */
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -47,12 +48,5 @@ class OrphanFinder
     public function delete(array $files): DeleteResult
     {
         return $this->library->delete($files);
-    }
-
-    private static function isNewer(FileInterface $file, \DateTimeImmutable $limit): bool
-    {
-        $createdAt = $file instanceof TimestampableInterface ? $file->getCreatedAt() : null;
-
-        return $createdAt instanceof \DateTimeImmutable && $createdAt >= $limit;
     }
 }

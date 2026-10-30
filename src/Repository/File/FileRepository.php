@@ -217,12 +217,12 @@ class FileRepository extends AbstractRepository
     }
 
     /**
-     * @param string       $directory on the disk
-     * @param list<string> $usedIds   excluded by the orphans filter
+     * @param string                                      $directory         on the disk
+     * @param (\Closure(QueryBuilder, string): void)|null $excludeReferenced the orphans filter (FileReferenceRegistry)
      *
      * @return Paginator<FileInterface>
      */
-    public function paginateLibrary(string $disk, string $directory, LibraryQuery $query, array $usedIds, int $itemsPerPage): Paginator
+    public function paginateLibrary(string $disk, string $directory, LibraryQuery $query, ?\Closure $excludeReferenced, int $itemsPerPage): Paginator
     {
         $qb = $this->createQueryBuilder('f')
             ->where('f.disk = :disk')
@@ -256,8 +256,8 @@ class FileRepository extends AbstractRepository
             $qb->andWhere('f.createdAt <= :to')->setParameter('to', $query->createdTo);
         }
 
-        if ($query->orphans && [] !== $usedIds) {
-            $qb->andWhere('f.id NOT IN (:used)')->setParameter('used', $usedIds);
+        if ($query->orphans && $excludeReferenced instanceof \Closure) {
+            $excludeReferenced($qb, 'f');
         }
 
         if ($query->duplicates) {
