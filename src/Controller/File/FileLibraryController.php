@@ -124,8 +124,10 @@ class FileLibraryController extends AbstractFileLibraryController
         $path = $state['path'];
         $files = array_values($page->getItems());
         $canEdit = $this->isGranted(ResourceVoter::EDIT, self::RESOURCE);
+        // The picker only creates folders.
+        $dialogs = $picker ? ['mkdir'] : self::DIALOGS;
         $dialog = $request->query->getString('dialog');
-        $dialog = $canEdit && \in_array($dialog, $picker ? ['mkdir'] : self::DIALOGS, true) ? $dialog : null;
+        $dialog = $canEdit && \in_array($dialog, $dialogs, true) ? $dialog : null;
         $tree = $this->treeOf($path);
 
         return [
